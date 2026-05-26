@@ -30,3 +30,4 @@ Thumbs.db
 # Local/env
 .env
 .env.*
+.cursor/
