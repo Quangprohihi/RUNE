@@ -2,6 +2,7 @@ class PrefsKeys {
   const PrefsKeys._();
 
   static const String userProfile = 'user_profile';
+  static const String currentUserId = 'current_user_id';
   static const String pet = 'pet';
   static const String tokens = 'tokens';
   static const String streak = 'streak';

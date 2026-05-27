@@ -7,7 +7,7 @@ class TokenRepository {
 
   final SharedPreferences _prefs;
 
-  int load() => _prefs.getInt(PrefsKeys.tokens) ?? 1234;
+  int load() => _prefs.getInt(PrefsKeys.tokens) ?? 0;
 
   Future<void> save(int tokens) => _prefs.setInt(PrefsKeys.tokens, tokens);
 }

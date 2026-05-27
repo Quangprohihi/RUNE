@@ -17,6 +17,14 @@ class StreakProvider extends ChangeNotifier {
 
   int get streak => _streak;
 
+  void syncFromJson(Map<String, dynamic>? json) {
+    if (json == null) return;
+    _streak = json['currentStreak'] as int? ?? _streak;
+    final rawDate = json['lastFocusDate'] as String?;
+    _lastFocusDate = rawDate?.split('T').first ?? _lastFocusDate;
+    notifyListeners();
+  }
+
   String get todayKey => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   Future<void> applySoftDropIfNeeded() async {

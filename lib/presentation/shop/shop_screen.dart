@@ -19,6 +19,14 @@ class _ShopScreenState extends State<ShopScreen> {
   ShopItemType _selectedType = ShopItemType.potion;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ShopProvider>().loadCatalog();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final shop = context.watch<ShopProvider>();
     final tokens = context.watch<TokenProvider>().tokens;
@@ -258,18 +266,25 @@ class _ShopItemCard extends StatelessWidget {
   }
 
   Future<void> _buy(BuildContext context, ShopItem item) async {
-    final success = await context.read<ShopProvider>().buy(
-      item: item,
-      tokens: context.read<TokenProvider>(),
-      pet: context.read<PetProvider>(),
-    );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success ? '${item.name} applied to Kiki!' : 'Not enough tokens.',
+    try {
+      final success = await context.read<ShopProvider>().buy(
+        item: item,
+        tokens: context.read<TokenProvider>(),
+        pet: context.read<PetProvider>(),
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? '${item.name} applied to Kiki!' : 'Not enough tokens.',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 }

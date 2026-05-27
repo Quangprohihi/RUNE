@@ -5,9 +5,132 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/token_provider.dart';
+import '../widgets/floating_particles.dart';
+import '../widgets/pet_animated_widget.dart';
 
-class PetProfileScreen extends StatelessWidget {
+class PetProfileScreen extends StatefulWidget {
   const PetProfileScreen({super.key});
+
+  @override
+  State<PetProfileScreen> createState() => _PetProfileScreenState();
+}
+
+class _PetProfileScreenState extends State<PetProfileScreen>
+    with SingleTickerProviderStateMixin {
+  // Entrance animation controller
+  late AnimationController _entranceController;
+  late Animation<Offset> _skillSlide;
+  late Animation<Offset> _statusSlide;
+  late Animation<Offset> _achSlide;
+  late Animation<double> _cardFade;
+
+  // Pet state
+  PetAnimationState _petState = PetAnimationState.idle;
+
+  // Particle bursts per action button
+  int _feedParticles = 0;
+  int _playParticles = 0;
+  int _petParticles = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _skillSlide = Tween<Offset>(begin: const Offset(-0.5, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.1, 0.5, curve: Curves.easeOut),
+          ),
+        );
+
+    _statusSlide = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+          ),
+        );
+
+    _achSlide = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.5, 0.9, curve: Curves.easeOut),
+          ),
+        );
+
+    _cardFade = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.1, 0.7, curve: Curves.easeOut),
+      ),
+    );
+
+    // Determine initial pet state
+    final pet = context.read<PetProvider>().pet;
+    _petState = _stateFromMood(pet.mood);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _entranceController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
+  }
+
+  PetAnimationState _stateFromMood(int mood) {
+    if (mood < 30) return PetAnimationState.sad;
+    if (mood >= 70) return PetAnimationState.idle;
+    return PetAnimationState.idle;
+  }
+
+  void _triggerHappy() {
+    setState(() => _petState = PetAnimationState.happy);
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) {
+        setState(() {
+          _petState = _stateFromMood(context.read<PetProvider>().pet.mood);
+        });
+      }
+    });
+  }
+
+  Future<void> _spendForAction(
+    BuildContext context, {
+    required int cost,
+    required String action,
+    required void Function() onParticle,
+  }) async {
+    try {
+      final petProvider = context.read<PetProvider>();
+      await petProvider.performRemoteAction(action: action, cost: cost);
+      final wallet = petProvider.latestWallet;
+      if (wallet != null && context.mounted) {
+        context.read<TokenProvider>().syncWallet(wallet);
+      }
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      return;
+    }
+    if (!context.mounted) return;
+    onParticle();
+    _triggerHappy();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Kiki feels better! 💖')));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +156,11 @@ class PetProfileScreen extends StatelessWidget {
             child: SafeArea(
               child: SingleChildScrollView(
                 child: SizedBox(
-                  height: 960,
+                  height: 980,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      // --- Back button ---
                       Positioned(
                         left: 28 * scale,
                         top: 22,
@@ -44,6 +168,8 @@ class PetProfileScreen extends StatelessWidget {
                           onTap: () => Navigator.of(context).pop(),
                         ),
                       ),
+
+                      // --- Forest background ---
                       Positioned(
                         left: -26 * scale,
                         top: 194,
@@ -56,28 +182,65 @@ class PetProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                      // --- Kiki fox: match Figma coordinates, fixed to the right side ---
                       Positioned(
-                        right: -90 * scale,
-                        top: 90,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 222 * scale,
-                              height: 205,
-                              decoration: const BoxDecoration(
-                                color: Color(0x5E77BBD4),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Image.asset(
-                              'assets/images/fox.png',
-                              width: 305 * scale,
-                              fit: BoxFit.contain,
-                            ),
-                          ],
+                        left: 201 * scale,
+                        top: 166,
+                        child: Container(
+                          width: 222 * scale,
+                          height: 205,
+                          decoration: const BoxDecoration(
+                            color: Color(0x5E77BBD4),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
+                      Positioned(
+                        left: 186 * scale,
+                        top: 92,
+                        child: PetAnimatedWidget(
+                          imagePath: 'assets/images/fox.png',
+                          width: 301 * scale,
+                          state: _petState,
+                          enableMotion: false,
+                          onTap: _triggerHappy,
+                        ),
+                      ),
+                      Positioned(
+                        left: 236 * scale,
+                        top: 170,
+                        child: SizedBox(
+                          width: 180 * scale,
+                          height: 180,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              FloatingParticlesWidget(
+                                trigger: _feedParticles,
+                                emojis: const ['🍖', '🍎', '🐾'],
+                                count: 8,
+                                spread: 80,
+                              ),
+                              FloatingParticlesWidget(
+                                trigger: _playParticles,
+                                emojis: const ['⚽', '🎾', '✨'],
+                                count: 8,
+                                spread: 80,
+                              ),
+                              FloatingParticlesWidget(
+                                trigger: _petParticles,
+                                emojis: const ['❤️', '💖', '💕'],
+                                count: 8,
+                                spread: 80,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // --- Pet name, species, level, EXP bar ---
                       Positioned(
                         left: 30 * scale,
                         top: 80,
@@ -117,12 +280,19 @@ class PetProfileScreen extends StatelessWidget {
                             const SizedBox(height: 4),
                             SizedBox(
                               width: 140 * scale,
-                              child: LinearProgressIndicator(
-                                value: pet.expProgress,
-                                minHeight: 9,
-                                borderRadius: BorderRadius.circular(8),
-                                color: const Color(0xFF77BBD4),
-                                backgroundColor: const Color(0xFFD9D9D9),
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0, end: pet.expProgress),
+                                duration: const Duration(milliseconds: 900),
+                                curve: Curves.easeOut,
+                                builder: (context, value, _) {
+                                  return LinearProgressIndicator(
+                                    value: value,
+                                    minHeight: 9,
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFF77BBD4),
+                                    backgroundColor: const Color(0xFFD9D9D9),
+                                  );
+                                },
                               ),
                             ),
                             SizedBox(
@@ -139,11 +309,21 @@ class PetProfileScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+
+                      // --- Skill card (slide from left) ---
                       Positioned(
                         left: 34 * scale,
                         top: 332,
-                        child: _SkillCard(scale: scale),
+                        child: FadeTransition(
+                          opacity: _cardFade,
+                          child: SlideTransition(
+                            position: _skillSlide,
+                            child: _SkillCard(scale: scale),
+                          ),
+                        ),
                       ),
+
+                      // --- Feed/Play/Pet action buttons ---
                       Positioned(
                         left: 30 * scale,
                         right: 30 * scale,
@@ -157,7 +337,9 @@ class PetProfileScreen extends StatelessWidget {
                                 onTap: () => _spendForAction(
                                   context,
                                   cost: 10,
-                                  action: context.read<PetProvider>().feed,
+                                  action: 'feed',
+                                  onParticle: () =>
+                                      setState(() => _feedParticles++),
                                 ),
                               ),
                             ),
@@ -169,7 +351,9 @@ class PetProfileScreen extends StatelessWidget {
                                 onTap: () => _spendForAction(
                                   context,
                                   cost: 10,
-                                  action: context.read<PetProvider>().play,
+                                  action: 'play',
+                                  onParticle: () =>
+                                      setState(() => _playParticles++),
                                 ),
                               ),
                             ),
@@ -181,29 +365,47 @@ class PetProfileScreen extends StatelessWidget {
                                 onTap: () => _spendForAction(
                                   context,
                                   cost: 5,
-                                  action: context.read<PetProvider>().petKiki,
+                                  action: 'pet',
+                                  onParticle: () =>
+                                      setState(() => _petParticles++),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
+
+                      // --- Status card (animated bars, slide from below) ---
                       Positioned(
                         left: 32 * scale,
                         right: 32 * scale,
                         top: 490,
-                        child: _StatusCard(
-                          energy: pet.energy,
-                          mood: pet.mood,
-                          hunger: pet.hunger,
-                          love: pet.love,
+                        child: FadeTransition(
+                          opacity: _cardFade,
+                          child: SlideTransition(
+                            position: _statusSlide,
+                            child: _StatusCard(
+                              energy: pet.energy,
+                              mood: pet.mood,
+                              hunger: pet.hunger,
+                              love: pet.love,
+                            ),
+                          ),
                         ),
                       ),
+
+                      // --- Achievements card (slide from below) ---
                       Positioned(
                         left: 32 * scale,
                         right: 32 * scale,
-                        top: 710,
-                        child: _AchievementsCard(tokens: tokens),
+                        top: 720,
+                        child: FadeTransition(
+                          opacity: _cardFade,
+                          child: SlideTransition(
+                            position: _achSlide,
+                            child: _AchievementsCard(tokens: tokens),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -215,27 +417,11 @@ class PetProfileScreen extends StatelessWidget {
       ),
     );
   }
-
-  Future<void> _spendForAction(
-    BuildContext context, {
-    required int cost,
-    required Future<void> Function() action,
-  }) async {
-    final paid = await context.read<TokenProvider>().spend(cost);
-    if (!context.mounted) return;
-    if (!paid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not enough focus tokens yet.')),
-      );
-      return;
-    }
-    await action();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Kiki feels better!')));
-  }
 }
+
+// ---------------------------------------------------------------------------
+// Back button
+// ---------------------------------------------------------------------------
 
 class _CircleBackButton extends StatelessWidget {
   const _CircleBackButton({required this.onTap});
@@ -260,6 +446,10 @@ class _CircleBackButton extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Skill card
+// ---------------------------------------------------------------------------
 
 class _SkillCard extends StatelessWidget {
   const _SkillCard({required this.scale});
@@ -304,7 +494,11 @@ class _SkillCard extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Action button with press scale feedback
+// ---------------------------------------------------------------------------
+
+class _ActionButton extends StatefulWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
@@ -316,35 +510,75 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pressController;
+  late Animation<double> _pressScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _pressScale = Tween<double>(begin: 1.0, end: 0.90).animate(
+      CurvedAnimation(parent: _pressController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF289EA0), AppColors.primaryBlue],
-          ),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTextStyles.label.copyWith(color: Colors.white),
+    return GestureDetector(
+      onTapDown: (_) => _pressController.forward(),
+      onTapUp: (_) {
+        _pressController.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _pressController.reverse(),
+      child: AnimatedBuilder(
+        animation: _pressScale,
+        builder: (context, child) =>
+            Transform.scale(scale: _pressScale.value, child: child),
+        child: Container(
+          height: 46,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF289EA0), AppColors.primaryBlue],
             ),
-          ],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, color: Colors.white, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: AppTextStyles.label.copyWith(color: Colors.white),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Status card with animated bars
+// ---------------------------------------------------------------------------
 
 class _StatusCard extends StatelessWidget {
   const _StatusCard({
@@ -363,7 +597,7 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _FigmaCard(
       borderColor: AppColors.accentTeal,
-      height: 180,
+      height: 200,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -380,9 +614,9 @@ class _StatusCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    _StatBar(label: 'Energy', value: energy),
+                    _AnimatedStatBar(label: 'Energy', value: energy),
                     const SizedBox(height: 14),
-                    _StatBar(label: 'Hunger', value: hunger),
+                    _AnimatedStatBar(label: 'Hunger', value: hunger),
                   ],
                 ),
               ),
@@ -390,9 +624,9 @@ class _StatusCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    _StatBar(label: 'Mood', value: mood),
+                    _AnimatedStatBar(label: 'Mood', value: mood),
                     const SizedBox(height: 14),
-                    _StatBar(label: 'Love', value: love),
+                    _AnimatedStatBar(label: 'Love', value: love),
                   ],
                 ),
               ),
@@ -404,33 +638,60 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _StatBar extends StatelessWidget {
-  const _StatBar({required this.label, required this.value});
+// ---------------------------------------------------------------------------
+// Animated stat bar (TweenAnimationBuilder)
+// ---------------------------------------------------------------------------
+
+class _AnimatedStatBar extends StatelessWidget {
+  const _AnimatedStatBar({required this.label, required this.value});
 
   final String label;
   final int value;
+
+  Color _barColor() {
+    if (value >= 70) return const Color(0xFF42A779);
+    if (value >= 40) return const Color(0xFF77BBD4);
+    return const Color(0xFFF6A53A);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.label.copyWith(color: AppColors.primaryBlue),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: AppTextStyles.label.copyWith(color: AppColors.primaryBlue),
+            ),
+            Text('$value%', style: AppTextStyles.muted.copyWith(fontSize: 11)),
+          ],
         ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: value / 100,
-          minHeight: 9,
-          borderRadius: BorderRadius.circular(8),
-          color: const Color(0xFF77BBD4),
-          backgroundColor: const Color(0xFFD9D9D9),
+        const SizedBox(height: 6),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: value / 100),
+          duration: const Duration(milliseconds: 900),
+          curve: Curves.easeOut,
+          builder: (context, animValue, _) {
+            return LinearProgressIndicator(
+              value: animValue,
+              minHeight: 9,
+              borderRadius: BorderRadius.circular(8),
+              color: _barColor(),
+              backgroundColor: const Color(0xFFD9D9D9),
+            );
+          },
         ),
       ],
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Achievements card
+// ---------------------------------------------------------------------------
 
 class _AchievementsCard extends StatelessWidget {
   const _AchievementsCard({required this.tokens});
@@ -494,6 +755,10 @@ class _AchievementsCard extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Base card container
+// ---------------------------------------------------------------------------
 
 class _FigmaCard extends StatelessWidget {
   const _FigmaCard({

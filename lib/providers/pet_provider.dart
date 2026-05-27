@@ -1,18 +1,28 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/api/api_client.dart';
 import '../data/repositories/pet_repository.dart';
 import '../models/pet.dart';
 import '../models/shop_item.dart';
+import '../models/wallet.dart';
 
 class PetProvider extends ChangeNotifier {
-  PetProvider(this._repository) : _pet = _repository.load() {
+  PetProvider(this._repository, this._api) : _pet = _repository.load() {
     applyPassiveDecay();
   }
 
   final PetRepository _repository;
+  final ApiClient _api;
   Pet _pet;
+  Wallet? _latestWallet;
 
   Pet get pet => _pet;
+  Wallet? get latestWallet => _latestWallet;
+
+  void syncPet(Pet pet) {
+    _pet = pet;
+    notifyListeners();
+  }
 
   Future<void> applyPassiveDecay() async {
     final hours = DateTime.now().difference(_pet.lastUpdatedAt).inHours;
@@ -49,6 +59,22 @@ class PetProvider extends ChangeNotifier {
   Future<void> play() => applyEffect(PetEffectType.mood, 18);
 
   Future<void> petKiki() => applyEffect(PetEffectType.love, 16);
+
+  Future<bool> performRemoteAction({
+    required String action,
+    required int cost,
+  }) async {
+    final response =
+        await _api.post('/pet/actions', body: {'action': action, 'cost': cost})
+            as Map<String, dynamic>;
+    _pet = Pet.fromJson(response['pet'] as Map<String, dynamic>? ?? const {});
+    _latestWallet = Wallet.fromJson(
+      response['wallet'] as Map<String, dynamic>? ?? const {},
+    );
+    await _repository.save(_pet);
+    notifyListeners();
+    return true;
+  }
 
   Future<void> applyEffect(PetEffectType effectType, int value) async {
     _pet = _pet.copyWith(
