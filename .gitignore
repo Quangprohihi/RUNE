@@ -43,3 +43,5 @@ backend/.env
 # Test/coverage
 coverage/
 backend/coverage/
+
+docs/zenzoo_cp1_implementation_summary.md
