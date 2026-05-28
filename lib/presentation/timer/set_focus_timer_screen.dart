@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/focus_provider.dart';
+import '../../providers/shop_provider.dart';
 import '../../routes/app_routes.dart';
 
 class SetFocusTimerScreen extends StatefulWidget {
@@ -19,10 +20,28 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
   final _tasks = const ['Study', 'Write', 'Break'];
   final _durationPresets = const [25, 45, 50];
   final _companions = const [
-    _Companion('Kiki', 'assets/images/fox.png', '+5% Alertness'),
-    _Companion('Podo', null, '+5% Calm'),
-    _Companion('Luna', null, '+5% Focus'),
-    _Companion('Orion', null, '+5% Wisdom'),
+    _Companion('kiki', 'Kiki', '🦊', 'assets/images/fox.png', '+5% Alertness'),
+    _Companion(
+      'companion_eagle',
+      'Eagle',
+      '🦅',
+      'assets/images/companion_eagle.png',
+      '+5% Vision',
+    ),
+    _Companion(
+      'companion_frog',
+      'Frog',
+      '🐸',
+      'assets/images/companion_frog.png',
+      '+5% Calm',
+    ),
+    _Companion(
+      'companion_giraffe',
+      'Giraffe',
+      '🦒',
+      'assets/images/companion_giraffe.png',
+      '+5% Stamina',
+    ),
   ];
 
   String _selectedTask = 'Study';
@@ -34,6 +53,9 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
   void initState() {
     super.initState();
     _goalController.addListener(_handleGoalChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ShopProvider>().loadCatalog();
+    });
   }
 
   @override
@@ -152,6 +174,7 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
   Widget build(BuildContext context) {
     final companion = _companions[_selectedCompanion];
     final focus = context.watch<FocusProvider>();
+    final shop = context.watch<ShopProvider>();
     final hasActiveFocus = focus.phase != FocusPhase.idle;
 
     return Scaffold(
@@ -194,6 +217,8 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
                       _CompanionSelector(
                         companions: _companions,
                         selectedIndex: _selectedCompanion,
+                        selectedBonus: companion.bonus,
+                        isUnlocked: shop.isCompanionUnlocked,
                         onSelected: (index) =>
                             setState(() => _selectedCompanion = index),
                       ),
@@ -470,11 +495,15 @@ class _CompanionSelector extends StatelessWidget {
   const _CompanionSelector({
     required this.companions,
     required this.selectedIndex,
+    required this.selectedBonus,
+    required this.isUnlocked,
     required this.onSelected,
   });
 
   final List<_Companion> companions;
   final int selectedIndex;
+  final String selectedBonus;
+  final bool Function(String code) isUnlocked;
   final ValueChanged<int> onSelected;
 
   @override
@@ -500,7 +529,7 @@ class _CompanionSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
-                '+5% Alertness',
+                selectedBonus,
                 style: AppTextStyles.muted.copyWith(
                   color: AppColors.success,
                   fontWeight: FontWeight.w800,
@@ -514,14 +543,14 @@ class _CompanionSelector extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(companions.length, (index) {
             final companion = companions[index];
-            final locked = index != 0;
+            final locked = !isUnlocked(companion.code);
             final selected = !locked && index == selectedIndex;
             return GestureDetector(
               onTap: () {
                 if (locked) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('This companion is coming soon.'),
+                      content: Text('Buy this companion in Shop to unlock.'),
                     ),
                   );
                   return;
@@ -561,20 +590,22 @@ class _CompanionSelector extends StatelessWidget {
                                 : null,
                           ),
                           child: ClipOval(
-                            child: companion.assetPath == null
-                                ? Container(
-                                    color: const Color(0xFFE8F4EF),
-                                    child: Center(
-                                      child: Text(
-                                        ['🦝', '🐈‍⬛', '🦉'][index - 1],
-                                        style: const TextStyle(fontSize: 30),
+                            child: Container(
+                              color: const Color(0xFFE8F4EF),
+                              alignment: Alignment.center,
+                              child: companion.assetPath == null
+                                  ? Text(
+                                      companion.emoji,
+                                      style: const TextStyle(fontSize: 30),
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.all(3),
+                                      child: Image.asset(
+                                        companion.assetPath!,
+                                        fit: BoxFit.contain,
                                       ),
                                     ),
-                                  )
-                                : Image.asset(
-                                    companion.assetPath!,
-                                    fit: BoxFit.cover,
-                                  ),
+                            ),
                           ),
                         ),
                       ),
@@ -610,7 +641,7 @@ class _CompanionSelector extends StatelessWidget {
                   ),
                   if (locked)
                     Text(
-                      'Soon',
+                      'Shop',
                       style: AppTextStyles.muted.copyWith(
                         fontSize: 10,
                         color: const Color(0xFF90A1B9),
@@ -973,9 +1004,17 @@ class _RewardBadge extends StatelessWidget {
 }
 
 class _Companion {
-  const _Companion(this.name, this.assetPath, this.bonus);
+  const _Companion(
+    this.code,
+    this.name,
+    this.emoji,
+    this.assetPath,
+    this.bonus,
+  );
 
+  final String code;
   final String name;
+  final String emoji;
   final String? assetPath;
   final String bonus;
 }

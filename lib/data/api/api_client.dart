@@ -39,6 +39,15 @@ class ApiClient {
     return _decode(response);
   }
 
+  Future<dynamic> patch(String path, {Object? body}) async {
+    final response = await _http.patch(
+      _uri(path),
+      headers: _headers,
+      body: jsonEncode(body ?? const {}),
+    );
+    return _decode(response);
+  }
+
   Uri _uri(String path, [Map<String, String>? query]) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse('$baseUrl$normalizedPath').replace(queryParameters: query);

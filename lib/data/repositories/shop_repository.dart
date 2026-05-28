@@ -11,6 +11,7 @@ class ShopRepository {
   List<ShopItem> get catalog => const [
     ShopItem(
       id: 'energy_potion',
+      code: 'energy_potion',
       name: 'Energy Potion',
       emoji: '⚡',
       priceTokens: 150,
@@ -21,6 +22,7 @@ class ShopRepository {
     ),
     ShopItem(
       id: 'mood_booster',
+      code: 'mood_booster',
       name: 'Mood Booster',
       emoji: '🌸',
       priceTokens: 120,
@@ -30,6 +32,7 @@ class ShopRepository {
     ),
     ShopItem(
       id: 'fresh_berries',
+      code: 'fresh_berries',
       name: 'Fresh Berries',
       emoji: '🍓',
       priceTokens: 100,
@@ -40,12 +43,44 @@ class ShopRepository {
     ),
     ShopItem(
       id: 'cozy_pet',
+      code: 'cozy_pet',
       name: 'Cozy Pet',
       emoji: '✨',
       priceTokens: 90,
       type: ShopItemType.potion,
       effectType: PetEffectType.love,
       effectValue: 18,
+    ),
+    ShopItem(
+      id: 'companion_eagle',
+      code: 'companion_eagle',
+      name: 'Eagle',
+      emoji: '🦅',
+      priceTokens: 260,
+      type: ShopItemType.companion,
+      effectType: PetEffectType.love,
+      effectValue: 0,
+      isHot: true,
+    ),
+    ShopItem(
+      id: 'companion_frog',
+      code: 'companion_frog',
+      name: 'Frog',
+      emoji: '🐸',
+      priceTokens: 180,
+      type: ShopItemType.companion,
+      effectType: PetEffectType.love,
+      effectValue: 0,
+    ),
+    ShopItem(
+      id: 'companion_giraffe',
+      code: 'companion_giraffe',
+      name: 'Giraffe',
+      emoji: '🦒',
+      priceTokens: 320,
+      type: ShopItemType.companion,
+      effectType: PetEffectType.love,
+      effectValue: 0,
     ),
   ];
 

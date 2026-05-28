@@ -96,6 +96,34 @@ async function main() {
       effectType: 'love',
       effectValue: 18,
     },
+    {
+      code: 'companion_eagle',
+      name: 'Eagle',
+      emoji: '🦅',
+      itemType: 'companion',
+      priceTokens: 260,
+      effectType: 'love',
+      effectValue: 0,
+      isHot: true,
+    },
+    {
+      code: 'companion_frog',
+      name: 'Frog',
+      emoji: '🐸',
+      itemType: 'companion',
+      priceTokens: 180,
+      effectType: 'love',
+      effectValue: 0,
+    },
+    {
+      code: 'companion_giraffe',
+      name: 'Giraffe',
+      emoji: '🦒',
+      itemType: 'companion',
+      priceTokens: 320,
+      effectType: 'love',
+      effectValue: 0,
+    },
   ];
 
   for (const item of shopItems) {

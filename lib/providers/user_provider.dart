@@ -61,6 +61,16 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> logout() async {
+    _profile = UserProfile.guest();
+    _latestWallet = null;
+    _latestPet = null;
+    _latestStreak = null;
+    _api.userId = null;
+    await _repository.clear();
+    notifyListeners();
+  }
+
   void _applyBootstrap(Map<String, dynamic> response) {
     final user = response['user'] as Map<String, dynamic>? ?? const {};
     _profile = UserProfile(

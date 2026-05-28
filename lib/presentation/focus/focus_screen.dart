@@ -5,11 +5,13 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/pet.dart';
+import '../../models/focus_summary.dart';
 import '../../models/wallet.dart';
 import '../../providers/focus_provider.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/streak_provider.dart';
 import '../../providers/token_provider.dart';
+import '../../routes/app_routes.dart';
 import '../widgets/floating_particles.dart';
 import '../widgets/pet_animated_widget.dart';
 
@@ -371,6 +373,12 @@ class _FocusScreenState extends State<FocusScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Reward claimed! Kiki feels motivated. 🎉')),
     );
+    if (result != null && context.mounted) {
+      Navigator.of(context).pushReplacementNamed(
+        AppRoutes.focusSummary,
+        arguments: FocusSummary.fromClaimResult(result),
+      );
+    }
   }
 }
 

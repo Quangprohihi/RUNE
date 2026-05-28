@@ -22,4 +22,8 @@ class UserRepository {
       jsonEncode(profile.toJson()),
     );
   }
+
+  Future<void> clear() {
+    return _prefs.remove(PrefsKeys.userProfile);
+  }
 }

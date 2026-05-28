@@ -6,6 +6,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/activity_event.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/streak_provider.dart';
+import '../../routes/app_routes.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -149,6 +150,16 @@ class _HistoryScreenState extends State<HistoryScreen>
                 ),
               ),
               const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.analytics),
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('View stats'),
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // --- Activity list ---
               Expanded(

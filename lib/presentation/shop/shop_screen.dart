@@ -74,12 +74,11 @@ class _ShopScreenState extends State<ShopScreen> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Text(
-                      _selectedType == ShopItemType.potion
-                          ? '🧪 Potions'
-                          : '🍎 Food',
-                      style: AppTextStyles.title,
-                    ),
+                    Text(switch (_selectedType) {
+                      ShopItemType.potion => '🧪 Potions',
+                      ShopItemType.food => '🍎 Food',
+                      ShopItemType.companion => '🦊 Companions',
+                    }, style: AppTextStyles.title),
                     const Expanded(child: Divider(indent: 12, endIndent: 12)),
                     Text('${items.length} items', style: AppTextStyles.muted),
                   ],
@@ -152,6 +151,11 @@ class _Tabs extends StatelessWidget {
             label: '🍎 Food',
             selected: selectedType == ShopItemType.food,
             onTap: () => onSelected(ShopItemType.food),
+          ),
+          _TabButton(
+            label: '🦊 Pets',
+            selected: selectedType == ShopItemType.companion,
+            onTap: () => onSelected(ShopItemType.companion),
           ),
         ],
       ),
@@ -234,7 +238,7 @@ class _ShopItemCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(item.emoji, style: const TextStyle(fontSize: 42)),
+              _ShopItemVisual(item: item),
               const SizedBox(height: 8),
               Text(
                 item.name,
@@ -243,7 +247,9 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '+${item.effectValue} ${item.effectType.name}',
+                item.isCompanion
+                    ? item.companionBonus
+                    : '+${item.effectValue} ${item.effectType.name}',
                 style: AppTextStyles.muted,
                 textAlign: TextAlign.center,
               ),
@@ -276,7 +282,11 @@ class _ShopItemCard extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? '${item.name} applied to Kiki!' : 'Not enough tokens.',
+            success
+                ? item.isCompanion
+                      ? '${item.name} joined your habitat!'
+                      : '${item.name} applied to Kiki!'
+                : 'Not enough tokens.',
           ),
         ),
       );
@@ -286,5 +296,24 @@ class _ShopItemCard extends StatelessWidget {
         context,
       ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
+  }
+}
+
+class _ShopItemVisual extends StatelessWidget {
+  const _ShopItemVisual({required this.item});
+
+  final ShopItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = item.companionAssetPath;
+    if (assetPath == null) {
+      return Text(item.emoji, style: const TextStyle(fontSize: 42));
+    }
+
+    return SizedBox(
+      height: 58,
+      child: Image.asset(assetPath, fit: BoxFit.contain),
+    );
   }
 }

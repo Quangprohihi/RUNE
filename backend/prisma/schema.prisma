@@ -26,8 +26,34 @@ model User {
   inventory          UserInventory[]
   activityEvents     ActivityEvent[]
   notifications      Notification[]
+  settings           UserSettings?
+  subscription       Subscription?
 
   @@map("users")
+}
+
+model UserSettings {
+  userId           String   @id @map("user_id") @db.Uuid
+  soundEnabled     Boolean  @default(true) @map("sound_enabled")
+  vibrationEnabled Boolean  @default(true) @map("vibration_enabled")
+  focusReminders   Boolean  @default(true) @map("focus_reminders")
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model Subscription {
+  userId    String    @id @map("user_id") @db.Uuid
+  plan      String    @default("free")
+  status    String    @default("active")
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
 
 model Pet {

@@ -32,6 +32,12 @@ const petActionSchema = z.object({
   cost: z.number().int().nonnegative().default(0),
 });
 
+const settingsSchema = z.object({
+  soundEnabled: z.boolean().optional(),
+  vibrationEnabled: z.boolean().optional(),
+  focusReminders: z.boolean().optional(),
+});
+
 function currentUserId(req: Request) {
   return req.header('x-user-id') ?? '';
 }
@@ -101,6 +107,18 @@ async function createDefaultsForUser(userId: string) {
   await prisma.userStreak.upsert({
     where: { userId },
     create: { userId, currentStreak: 0, bestStreak: 0 },
+    update: {},
+  });
+
+  await prisma.userSettings.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
+
+  await prisma.subscription.upsert({
+    where: { userId },
+    create: { userId },
     update: {},
   });
 }
@@ -330,6 +348,148 @@ app.get('/me/bootstrap', async (req, res, next) => {
   }
 });
 
+app.get('/me/settings', async (req, res, next) => {
+  try {
+    const userId = requireUser(req);
+    await createDefaultsForUser(userId);
+    const [settings, user, subscription] = await Promise.all([
+      prisma.userSettings.findUniqueOrThrow({ where: { userId } }),
+      prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+      prisma.subscription.findUniqueOrThrow({ where: { userId } }),
+    ]);
+    res.json({ settings, user, subscription });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch('/me/settings', async (req, res, next) => {
+  try {
+    const userId = requireUser(req);
+    const body = settingsSchema.parse(req.body);
+    await createDefaultsForUser(userId);
+    const settings = await prisma.userSettings.update({
+      where: { userId },
+      data: body,
+    });
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/me/subscription', async (req, res, next) => {
+  try {
+    const userId = requireUser(req);
+    await createDefaultsForUser(userId);
+    res.json(await prisma.subscription.findUniqueOrThrow({ where: { userId } }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/me/subscription/demo-upgrade', async (req, res, next) => {
+  try {
+    const userId = requireUser(req);
+    await createDefaultsForUser(userId);
+    const expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 30);
+    const subscription = await prisma.subscription.update({
+      where: { userId },
+      data: { plan: 'premium', status: 'active', expiresAt },
+    });
+    res.json(subscription);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/analytics/summary', async (req, res, next) => {
+  try {
+    const userId = requireUser(req);
+    const now = new Date();
+    const today = todayDate();
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 6);
+
+    const [sessions, events, streak] = await Promise.all([
+      prisma.focusSession.findMany({
+        where: { userId, status: 'completed', completedAt: { gte: sevenDaysAgo } },
+        orderBy: { completedAt: 'asc' },
+      }),
+      prisma.activityEvent.findMany({
+        where: {
+          userId,
+          eventType: 'focus_completed',
+          createdAt: { gte: sevenDaysAgo },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.userStreak.findUnique({ where: { userId } }),
+    ]);
+
+    const allSessions = await prisma.focusSession.findMany({
+      where: { userId, status: 'completed' },
+      select: { plannedMinutes: true, completedAt: true },
+    });
+    const totalFocusMinutes = allSessions.reduce((sum, session) => sum + session.plannedMinutes, 0);
+    const sessionsToday = allSessions.filter((session) => {
+      const completedAt = session.completedAt ?? now;
+      return completedAt >= today && completedAt < tomorrow;
+    }).length;
+    const pomodorosToday = sessions
+      .filter((session) => {
+        const completedAt = session.completedAt ?? now;
+        return completedAt >= today && completedAt < tomorrow;
+      })
+      .reduce((sum, session) => sum + pomodoroCountForMinutes(session.plannedMinutes), 0);
+    const pomodorosThisWeek = sessions.reduce(
+      (sum, session) => sum + pomodoroCountForMinutes(session.plannedMinutes),
+      0,
+    );
+
+    const focusByDay = Array.from({ length: 7 }, (_, index) => {
+      const day = new Date(sevenDaysAgo);
+      day.setUTCDate(sevenDaysAgo.getUTCDate() + index);
+      const nextDay = new Date(day);
+      nextDay.setUTCDate(day.getUTCDate() + 1);
+      const minutes = sessions
+        .filter((session) => {
+          const completedAt = session.completedAt ?? now;
+          return completedAt >= day && completedAt < nextDay;
+        })
+        .reduce((sum, session) => sum + session.plannedMinutes, 0);
+      return { date: day.toISOString().slice(0, 10), minutes };
+    });
+
+    const categoryTotals = new Map<string, number>();
+    for (const event of events) {
+      const metadata = event.metadata as { category?: string; plannedMinutes?: number };
+      const category = metadata.category ?? 'Focus';
+      categoryTotals.set(category, (categoryTotals.get(category) ?? 0) + (metadata.plannedMinutes ?? 0));
+    }
+    const categoryBreakdown = Array.from(categoryTotals.entries()).map(([category, minutes]) => ({
+      category,
+      minutes,
+    }));
+
+    res.json({
+      totalFocusMinutes,
+      sessionsToday,
+      pomodorosToday,
+      pomodorosThisWeek,
+      currentStreak: streak?.currentStreak ?? 0,
+      bestStreak: streak?.bestStreak ?? 0,
+      focusByDay,
+      categoryBreakdown,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/daily-tasks/today', async (req, res, next) => {
   try {
     const userId = requireUser(req);
@@ -494,7 +654,16 @@ app.post('/focus-sessions/:id/complete', async (req, res, next) => {
         },
       });
 
-      return { session: updatedSession, pet, wallet, streak };
+      return {
+        session: updatedSession,
+        pet,
+        wallet,
+        streak,
+        rewardTokens,
+        rewardExp,
+        category,
+        pomodoroCount,
+      };
     });
 
     res.json(result);
@@ -573,6 +742,17 @@ app.post('/shop/items/:id/buy', async (req, res, next) => {
 
     const result = await prisma.$transaction(async (tx) => {
       const item = await tx.shopItem.findUniqueOrThrow({ where: { id: itemId } });
+      const existingInventory = await tx.userInventory.findUnique({
+        where: { userId_shopItemId: { userId, shopItemId: item.id } },
+      });
+      if (item.itemType === 'companion' && existingInventory) {
+        const [wallet, pet] = await Promise.all([
+          tx.wallet.findUniqueOrThrow({ where: { userId } }),
+          tx.pet.findUniqueOrThrow({ where: { userId } }),
+        ]);
+        return { item, wallet, pet };
+      }
+
       const wallet = await tx.wallet.findUniqueOrThrow({ where: { userId } });
       if (wallet.tokens < item.priceTokens) {
         throw Object.assign(new Error('Not enough tokens'), { status: 400 });
@@ -598,22 +778,28 @@ app.post('/shop/items/:id/buy', async (req, res, next) => {
         update: { quantity: { increment: 1 } },
       });
       const currentPet = await tx.pet.findUniqueOrThrow({ where: { userId } });
-      const pet = await tx.pet.update({
-        where: { userId },
-        data: {
-          [item.effectType]: clampStat(
-            Number(currentPet[item.effectType as keyof typeof currentPet]) +
-              item.effectValue,
-          ),
-          lastUpdatedAt: new Date(),
-        },
-      });
+      const pet =
+        item.itemType === 'companion' || item.effectValue <= 0
+          ? currentPet
+          : await tx.pet.update({
+              where: { userId },
+              data: {
+                [item.effectType]: clampStat(
+                  Number(currentPet[item.effectType as keyof typeof currentPet]) +
+                    item.effectValue,
+                ),
+                lastUpdatedAt: new Date(),
+              },
+            });
       await createEventAndNotification(tx, userId, {
         eventType: 'shop_purchase',
         title: 'Shop purchase',
         subtitle: `${item.name} · ${item.priceTokens} tokens spent`,
         icon: item.emoji,
-        notificationMessage: `${item.name} was applied to Kiki.`,
+        notificationMessage:
+          item.itemType === 'companion'
+            ? `${item.name} joined your habitat.`
+            : `${item.name} was applied to Kiki.`,
         metadata: { itemId: item.id },
       });
       return { item, wallet: updatedWallet, pet };

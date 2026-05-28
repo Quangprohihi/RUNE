@@ -12,11 +12,14 @@ import 'data/repositories/token_repository.dart';
 import 'data/repositories/user_repository.dart';
 import 'providers/focus_provider.dart';
 import 'providers/activity_provider.dart';
+import 'providers/analytics_provider.dart';
 import 'providers/daily_task_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/pet_provider.dart';
+import 'providers/settings_provider.dart';
 import 'providers/shop_provider.dart';
 import 'providers/streak_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'providers/token_provider.dart';
 import 'providers/user_provider.dart';
 
@@ -50,6 +53,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => DailyTaskProvider(apiClient)),
         ChangeNotifierProvider(create: (_) => ActivityProvider(apiClient)),
         ChangeNotifierProvider(create: (_) => NotificationProvider(apiClient)),
+        ChangeNotifierProvider(create: (_) => SettingsProvider(apiClient)),
+        ChangeNotifierProvider(create: (_) => AnalyticsProvider(apiClient)),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider(apiClient)),
       ],
       child: const ZenZooApp(),
     ),

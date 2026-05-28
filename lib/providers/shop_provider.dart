@@ -25,6 +25,19 @@ class ShopProvider extends ChangeNotifier {
   Pet? get latestPet => _latestPet;
 
   bool isOwned(String itemId) => _ownedItems.contains(itemId);
+  bool isCompanionUnlocked(String code) {
+    if (code == 'kiki') return true;
+    return catalog.any(
+      (item) => item.code == code && _ownedItems.contains(item.id),
+    );
+  }
+
+  List<String> get ownedCompanionCodes {
+    return catalog
+        .where((item) => item.isCompanion && _ownedItems.contains(item.id))
+        .map((item) => item.code)
+        .toList(growable: false);
+  }
 
   Future<void> loadCatalog() async {
     final response = await _api.get('/shop/items') as Map<String, dynamic>;
@@ -40,6 +53,7 @@ class ShopProvider extends ChangeNotifier {
             .map((item) => item['shopItemId'] as String? ?? '')
             .where((id) => id.isNotEmpty),
       );
+    await _repository.saveOwnedItems(_ownedItems);
     notifyListeners();
   }
 

@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/focus_provider.dart';
 import '../../providers/pet_provider.dart';
+import '../../providers/shop_provider.dart';
 import '../../providers/streak_provider.dart';
 import '../../providers/token_provider.dart';
 import '../../providers/user_provider.dart';
@@ -99,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (wallet != null) context.read<TokenProvider>().syncWallet(wallet);
     if (pet != null) context.read<PetProvider>().syncPet(pet);
     context.read<StreakProvider>().syncFromJson(user.latestStreak);
+    await context.read<ShopProvider>().loadCatalog();
   }
 
   @override
@@ -221,7 +223,12 @@ class _HomeScreenState extends State<HomeScreen>
                       behavior: HitTestBehavior.opaque,
                       onTap: () =>
                           Navigator.of(context).pushNamed(AppRoutes.pet),
-                      child: _Habitat(scale: scale),
+                      child: _Habitat(
+                        scale: scale,
+                        ownedCompanions: context
+                            .watch<ShopProvider>()
+                            .ownedCompanionCodes,
+                      ),
                     ),
                   ),
 
@@ -260,7 +267,8 @@ class _HomeScreenState extends State<HomeScreen>
                             Navigator.of(context).pushNamed(AppRoutes.shop),
                         onTasks: () =>
                             Navigator.of(context).pushNamed(AppRoutes.tasks),
-                        onPro: () => _showComingSoon(context, 'Go Pro'),
+                        onPro: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.premium),
                       ),
                     ),
                   ),
@@ -315,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _SettingsMenuCard(
                     onSetting: () {
                       Navigator.of(dialogContext).pop();
-                      _showComingSoon(context, 'Settings');
+                      Navigator.of(context).pushNamed(AppRoutes.settings);
                     },
                     onLogin: () {
                       Navigator.of(dialogContext).pop();
@@ -347,29 +355,96 @@ class _HomeScreenState extends State<HomeScreen>
 // ---------------------------------------------------------------------------
 
 class _Habitat extends StatelessWidget {
-  const _Habitat({required this.scale});
+  const _Habitat({required this.scale, required this.ownedCompanions});
 
   final double scale;
+  final List<String> ownedCompanions;
 
   @override
   Widget build(BuildContext context) {
+    final hasEagle = ownedCompanions.contains('companion_eagle');
+    final hasFrog = ownedCompanions.contains('companion_frog');
+    final hasGiraffe = ownedCompanions.contains('companion_giraffe');
+
     return SizedBox(
       height: 455,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: 6 * scale,
-            right: 6 * scale,
-            top: 0,
+            left: 1 * scale,
+            top: 1,
             child: Image.asset(
-              'assets/images/home_scene.png',
-              height: 430,
+              'assets/images/home_habitat_figma.png',
+              width: 376.205 * scale,
+              height: 440.433,
               fit: BoxFit.contain,
             ),
           ),
+          Positioned(
+            left: 250.25 * scale,
+            top: 94.37,
+            child: Image.asset(
+              'assets/images/fox.png',
+              width: 81.852 * scale,
+              height: 102.324,
+              fit: BoxFit.contain,
+            ),
+          ),
+          if (hasEagle)
+            Positioned(
+              left: 89.76 * scale,
+              top: 24,
+              child: _IslandAnimalLayer(
+                assetPath: 'assets/images/companion_eagle.png',
+                width: 68.373 * scale,
+                height: 85.457,
+              ),
+            ),
+          if (hasFrog)
+            Positioned(
+              left: 175.48 * scale,
+              top: 123.77,
+              child: _IslandAnimalLayer(
+                assetPath: 'assets/images/companion_frog.png',
+                width: 62.969 * scale,
+                height: 78.711,
+              ),
+            ),
+          if (hasGiraffe)
+            Positioned(
+              left: 53.25 * scale,
+              top: 156.73,
+              child: _IslandAnimalLayer(
+                assetPath: 'assets/images/companion_giraffe.png',
+                width: 116.942 * scale,
+                height: 146.177,
+              ),
+            ),
         ],
       ),
+    );
+  }
+}
+
+class _IslandAnimalLayer extends StatelessWidget {
+  const _IslandAnimalLayer({
+    required this.assetPath,
+    required this.width,
+    required this.height,
+  });
+
+  final String assetPath;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      assetPath,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
     );
   }
 }
