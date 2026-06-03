@@ -82,6 +82,10 @@ class FocusSummaryScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                _CompanionBonusCard(summary: summary),
+                const SizedBox(height: 16),
+                _DailyProgressCard(summary: summary),
+                const SizedBox(height: 16),
                 _PetProgressCard(summary: summary),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -127,7 +131,7 @@ class _HeroCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Image.asset('assets/images/fox.png', height: 110),
+          Image.asset(summary.pet.skinAssetPath, height: 110),
           const SizedBox(height: 10),
           Text(
             summary.label,
@@ -179,6 +183,127 @@ class _MetricCard extends StatelessWidget {
               color: color,
               fontWeight: FontWeight.w900,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompanionBonusCard extends StatelessWidget {
+  const _CompanionBonusCard({required this.summary});
+
+  final FocusSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final bonuses = [
+      if (summary.bonusTokens > 0) '+${summary.bonusTokens} tokens',
+      if (summary.bonusExp > 0) '+${summary.bonusExp} EXP',
+      if (summary.energySaved > 0) '${summary.energySaved} energy saved',
+    ];
+    final detail = bonuses.isEmpty
+        ? summary.skillDescription
+        : '${summary.skillDescription} · ${bonuses.join(' · ')}';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFB4EAA9), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 22,
+            backgroundColor: Color(0xFFEAF7FF),
+            child: Icon(Icons.pets, color: AppColors.primaryBlue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${summary.companionName}: ${summary.skillName}',
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.primaryBlue,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(detail, style: AppTextStyles.muted),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyProgressCard extends StatelessWidget {
+  const _DailyProgressCard({required this.summary});
+
+  final FocusSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (summary.dailyGoalProgress * 100).round();
+    final subtitle = summary.dailyGoalCompleted
+        ? 'Daily goal complete. Great focus today!'
+        : '${summary.dailyGoalRemainingMinutes} min left for today.';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Today's Progress",
+                  style: AppTextStyles.title.copyWith(
+                    color: AppColors.primaryBlue,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            value: summary.dailyGoalProgress,
+            minHeight: 8,
+            backgroundColor: const Color(0xFFEAF7FF),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              AppColors.accentTeal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${summary.todayFocusMinutes} / ${summary.dailyGoalMinutes} min focused · $subtitle',
+            style: AppTextStyles.muted,
           ),
         ],
       ),

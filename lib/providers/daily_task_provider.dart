@@ -60,4 +60,14 @@ class DailyTaskProvider extends ChangeNotifier {
     );
     await loadToday();
   }
+
+  Future<void> claimMilestone(String milestoneId) async {
+    final response =
+        await _api.post('/daily-milestones/$milestoneId/claim')
+            as Map<String, dynamic>;
+    _latestWallet = Wallet.fromJson(
+      response['wallet'] as Map<String, dynamic>? ?? const {},
+    );
+    await loadToday();
+  }
 }

@@ -100,7 +100,11 @@ class _HomeScreenState extends State<HomeScreen>
     if (wallet != null) context.read<TokenProvider>().syncWallet(wallet);
     if (pet != null) context.read<PetProvider>().syncPet(pet);
     context.read<StreakProvider>().syncFromJson(user.latestStreak);
-    await context.read<ShopProvider>().loadCatalog();
+    try {
+      await context.read<ShopProvider>().loadCatalog();
+    } catch (_) {
+      // Keep Home usable when the backend database is not available.
+    }
   }
 
   @override
@@ -109,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
     final tokens = wallet.tokens;
     final streak = context.watch<StreakProvider>().streak;
     final focus = context.watch<FocusProvider>();
+    final pet = context.watch<PetProvider>().pet;
 
     return Scaffold(
       body: LayoutBuilder(
@@ -135,7 +140,12 @@ class _HomeScreenState extends State<HomeScreen>
                     top: 20,
                     child: SlideTransition(
                       position: _streakSlide,
-                      child: _StreakBadge(streak: streak),
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.history),
+                        child: _StreakBadge(streak: streak),
+                      ),
                     ),
                   ),
 
@@ -198,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
                   Positioned(
                     left: 96 * scale,
                     right: 96 * scale,
-                    top: 198,
+                    top: 184,
                     child: SlideTransition(
                       position: _timerSlide,
                       child: FadeTransition(
@@ -214,17 +224,28 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
 
+                  Positioned(
+                    left: 42 * scale,
+                    right: 42 * scale,
+                    top: 272,
+                    child: FadeTransition(
+                      opacity: _pillFade3,
+                      child: _DailyGoalCard(focus: focus),
+                    ),
+                  ),
+
                   // --- Habitat with animated Kiki ---
                   Positioned(
                     left: 10 * scale,
                     right: 8 * scale,
-                    top: 282,
+                    top: 336,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () =>
                           Navigator.of(context).pushNamed(AppRoutes.pet),
                       child: _Habitat(
                         scale: scale,
+                        kikiAssetPath: pet.skinAssetPath,
                         ownedCompanions: context
                             .watch<ShopProvider>()
                             .ownedCompanionCodes,
@@ -355,9 +376,14 @@ class _HomeScreenState extends State<HomeScreen>
 // ---------------------------------------------------------------------------
 
 class _Habitat extends StatelessWidget {
-  const _Habitat({required this.scale, required this.ownedCompanions});
+  const _Habitat({
+    required this.scale,
+    required this.kikiAssetPath,
+    required this.ownedCompanions,
+  });
 
   final double scale;
+  final String kikiAssetPath;
   final List<String> ownedCompanions;
 
   @override
@@ -385,7 +411,7 @@ class _Habitat extends StatelessWidget {
             left: 250.25 * scale,
             top: 94.37,
             child: Image.asset(
-              'assets/images/fox.png',
+              kikiAssetPath,
               width: 81.852 * scale,
               height: 102.324,
               fit: BoxFit.contain,
@@ -585,6 +611,87 @@ class _TimerCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Daily goal progress
+// ---------------------------------------------------------------------------
+
+class _DailyGoalCard extends StatelessWidget {
+  const _DailyGoalCard({required this.focus});
+
+  final FocusProvider focus;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (focus.dailyGoalProgress * 100).round();
+    final message = focus.dailyGoalCompleted
+        ? 'Goal complete! Kiki is proud of you.'
+        : '${focus.dailyGoalRemainingMinutes} min left to complete today.';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.88),
+        border: Border.all(color: const Color(0xFFB7EFE7), width: 1.2),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x225A9CAE),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Today's Goal",
+                  style: AppTextStyles.label.copyWith(
+                    color: AppColors.primaryBlue,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 8,
+              value: focus.dailyGoalProgress,
+              backgroundColor: const Color(0xFFEAF7FF),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.accentTeal,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${focus.todayFocusMinutes} / ${focus.dailyGoalMinutes} min focused · $message',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.muted.copyWith(
+              color: const Color(0xFF4367A3),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

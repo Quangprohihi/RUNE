@@ -70,6 +70,8 @@ class DailyMilestone {
     required this.pointsRequired,
     required this.rewardTokens,
     required this.rewardDiamonds,
+    required this.isClaimed,
+    this.claimedAt,
   });
 
   factory DailyMilestone.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,8 @@ class DailyMilestone {
       pointsRequired: json['pointsRequired'] as int? ?? 0,
       rewardTokens: json['rewardTokens'] as int? ?? 0,
       rewardDiamonds: json['rewardDiamonds'] as int? ?? 0,
+      isClaimed: json['isClaimed'] as bool? ?? false,
+      claimedAt: DateTime.tryParse(json['claimedAt'] as String? ?? ''),
     );
   }
 
@@ -85,4 +89,8 @@ class DailyMilestone {
   final int pointsRequired;
   final int rewardTokens;
   final int rewardDiamonds;
+  final bool isClaimed;
+  final DateTime? claimedAt;
+
+  bool canClaim(int totalPoints) => totalPoints >= pointsRequired && !isClaimed;
 }

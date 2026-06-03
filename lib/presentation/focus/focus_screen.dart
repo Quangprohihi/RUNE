@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +9,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../models/pet.dart';
 import '../../models/focus_summary.dart';
 import '../../models/wallet.dart';
+import '../../providers/app_block_provider.dart';
 import '../../providers/focus_provider.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/streak_provider.dart';
@@ -132,6 +135,7 @@ class _FocusScreenState extends State<FocusScreen>
         });
 
       case FocusPhase.done:
+        unawaited(context.read<AppBlockProvider>().stopBlocking());
         _phaseColorController.reverse();
         setState(() {
           _currentPhrase = _donePhrases[_phraseIndex % _donePhrases.length];
@@ -140,6 +144,7 @@ class _FocusScreenState extends State<FocusScreen>
         });
 
       case FocusPhase.idle:
+        unawaited(context.read<AppBlockProvider>().stopBlocking());
         setState(() {
           _currentPhrase = _focusPhrases[0];
           _petState = PetAnimationState.idle;
@@ -256,6 +261,7 @@ class _FocusScreenState extends State<FocusScreen>
                         children: [
                           _PartnerPanel(
                             petName: pet.name,
+                            imagePath: pet.skinAssetPath,
                             phrase: _currentPhrase,
                             petState: _petState,
                           ),
@@ -311,7 +317,7 @@ class _FocusScreenState extends State<FocusScreen>
     } else if (focus.phase == FocusPhase.focusing) {
       return OutlinedButton(
         key: const ValueKey('cancel'),
-        onPressed: focus.cancel,
+        onPressed: () => _cancelFocus(focus),
         child: const Text('Cancel focus'),
       );
     } else if (focus.canStartBreakAfterFocus) {
@@ -331,7 +337,7 @@ class _FocusScreenState extends State<FocusScreen>
         onPressed: () => focus.start(label: 'Study'),
         child: Text(
           AppConstants.useTestFocusDuration
-              ? 'Start 3-second test focus'
+              ? 'Start ${AppConstants.testFocusSeconds}s test focus'
               : 'Start ${AppConstants.focusMinutes}-minute focus',
         ),
       );
@@ -341,13 +347,20 @@ class _FocusScreenState extends State<FocusScreen>
 
   bool isDone(FocusProvider focus) => focus.phase == FocusPhase.done;
 
+  Future<void> _cancelFocus(FocusProvider focus) async {
+    focus.cancel();
+    await context.read<AppBlockProvider>().stopBlocking();
+  }
+
   Future<void> _claimReward(BuildContext context) async {
     final focus = context.read<FocusProvider>();
     final tokens = context.read<TokenProvider>();
     final pet = context.read<PetProvider>();
     final streak = context.read<StreakProvider>();
+    final appBlock = context.read<AppBlockProvider>();
 
     final result = await focus.claimReward();
+    await appBlock.stopBlocking();
     final walletJson = result?['wallet'] as Map<String, dynamic>?;
     final petJson = result?['pet'] as Map<String, dynamic>?;
     final streakJson = result?['streak'] as Map<String, dynamic>?;
@@ -376,7 +389,11 @@ class _FocusScreenState extends State<FocusScreen>
     if (result != null && context.mounted) {
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.focusSummary,
-        arguments: FocusSummary.fromClaimResult(result),
+        arguments: FocusSummary.fromClaimResult(
+          result,
+          todayFocusMinutes: focus.todayFocusMinutes,
+          dailyGoalMinutes: focus.dailyGoalMinutes,
+        ),
       );
     }
   }
@@ -432,11 +449,13 @@ class _FocusSessionSummary extends StatelessWidget {
 class _PartnerPanel extends StatelessWidget {
   const _PartnerPanel({
     required this.petName,
+    required this.imagePath,
     required this.phrase,
     required this.petState,
   });
 
   final String petName;
+  final String imagePath;
   final String phrase;
   final PetAnimationState petState;
 
@@ -497,7 +516,7 @@ class _PartnerPanel extends StatelessWidget {
               radius: 40,
               backgroundColor: Colors.white,
               child: PetAnimatedWidget(
-                imagePath: 'assets/images/fox.png',
+                imagePath: imagePath,
                 width: 72,
                 state: petState,
               ),

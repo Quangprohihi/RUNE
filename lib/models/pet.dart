@@ -10,6 +10,7 @@ class Pet {
     required this.energy,
     required this.mood,
     required this.love,
+    required this.selectedSkinCode,
     required this.lastUpdatedAt,
   });
 
@@ -25,6 +26,7 @@ class Pet {
       energy: 80,
       mood: 76,
       love: 68,
+      selectedSkinCode: 'standard',
       lastUpdatedAt: DateTime.now(),
     );
   }
@@ -41,6 +43,7 @@ class Pet {
       energy: json['energy'] as int? ?? 80,
       mood: json['mood'] as int? ?? 76,
       love: json['love'] as int? ?? 68,
+      selectedSkinCode: json['selectedSkinCode'] as String? ?? 'standard',
       lastUpdatedAt:
           DateTime.tryParse(json['lastUpdatedAt'] as String? ?? '') ??
           DateTime.now(),
@@ -57,6 +60,7 @@ class Pet {
   final int energy;
   final int mood;
   final int love;
+  final String selectedSkinCode;
   final DateTime lastUpdatedAt;
 
   String get moodLabel {
@@ -66,6 +70,14 @@ class Pet {
   }
 
   double get expProgress => (exp / expToNext).clamp(0, 1).toDouble();
+
+  String get skinAssetPath {
+    return switch (selectedSkinCode) {
+      'spirit' => 'assets/images/fox_spirit.png',
+      'celestial' => 'assets/images/fox_celestial.png',
+      _ => 'assets/images/fox_standard.png',
+    };
+  }
 
   Pet copyWith({
     String? id,
@@ -78,6 +90,7 @@ class Pet {
     int? energy,
     int? mood,
     int? love,
+    String? selectedSkinCode,
     DateTime? lastUpdatedAt,
   }) {
     return Pet(
@@ -91,6 +104,7 @@ class Pet {
       energy: energy ?? this.energy,
       mood: mood ?? this.mood,
       love: love ?? this.love,
+      selectedSkinCode: selectedSkinCode ?? this.selectedSkinCode,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }
@@ -107,6 +121,7 @@ class Pet {
       'energy': energy,
       'mood': mood,
       'love': love,
+      'selectedSkinCode': selectedSkinCode,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
     };
   }

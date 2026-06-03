@@ -88,6 +88,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamed(AppRoutes.appBlocking),
+                        icon: const Icon(Icons.shield_outlined),
+                        label: const Text('Focus Guard'),
+                      ),
+                      const SizedBox(height: 10),
                       OutlinedButton(
                         onPressed: () =>
                             Navigator.of(context).pushNamed(AppRoutes.premium),

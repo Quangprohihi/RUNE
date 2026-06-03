@@ -203,6 +203,8 @@ class _ShopItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shop = context.watch<ShopProvider>();
     final owned = shop.isOwned(item.id);
+    final quantity = shop.quantityFor(item.id);
+    final canBuy = !item.isCompanion || !owned;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -255,13 +257,23 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text('${item.priceTokens} ⚡', style: AppTextStyles.label),
+              if (!item.isCompanion && quantity > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Owned: x$quantity',
+                  style: AppTextStyles.muted.copyWith(
+                    color: AppColors.primaryBlue,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               SizedBox(
                 height: 40,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: owned ? null : () => _buy(context, item),
-                  child: Text(owned ? 'Owned' : 'Buy'),
+                  onPressed: canBuy ? () => _buy(context, item) : null,
+                  child: Text(item.isCompanion && owned ? 'Owned' : 'Buy'),
                 ),
               ),
             ],
@@ -285,7 +297,7 @@ class _ShopItemCard extends StatelessWidget {
             success
                 ? item.isCompanion
                       ? '${item.name} joined your habitat!'
-                      : '${item.name} applied to Kiki!'
+                      : '${item.name} added to inventory!'
                 : 'Not enough tokens.',
           ),
         ),

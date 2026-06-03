@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/activity_event.dart';
+import '../../models/analytics_summary.dart';
 import '../../providers/activity_provider.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/streak_provider.dart';
-import '../../routes/app_routes.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -18,10 +19,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _entranceController;
-  late List<Animation<Offset>> _itemSlides;
   late Animation<double> _headerFade;
-
-  static const int _itemCount = 7;
 
   @override
   void initState() {
@@ -38,23 +36,10 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
     );
 
-    _itemSlides = List.generate(_itemCount, (i) {
-      final start = 0.1 + i * 0.08;
-      final end = (start + 0.35).clamp(0.0, 1.0);
-      return Tween<Offset>(
-        begin: const Offset(0.4, 0),
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _entranceController,
-          curve: Interval(start, end, curve: Curves.easeOut),
-        ),
-      );
-    });
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _entranceController.forward();
       context.read<ActivityProvider>().load();
+      context.read<AnalyticsProvider>().load();
     });
   }
 
@@ -68,6 +53,13 @@ class _HistoryScreenState extends State<HistoryScreen>
   Widget build(BuildContext context) {
     final streak = context.watch<StreakProvider>().streak;
     final activity = context.watch<ActivityProvider>();
+    final analytics = context.watch<AnalyticsProvider>();
+    final summary = analytics.summary;
+    final isInitialLoading =
+        analytics.isLoading &&
+        activity.isLoading &&
+        summary.focusByDay.isEmpty &&
+        activity.events.isEmpty;
 
     return Scaffold(
       body: Container(
@@ -75,125 +67,597 @@ class _HistoryScreenState extends State<HistoryScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFE8FBF8), Color(0xFFD0F2FF)],
+            colors: [Colors.white, Color(0xFFD8F6FF), Color(0xFFE6FFE8)],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- Header ---
-              FadeTransition(
-                opacity: _headerFade,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  child: Row(
-                    children: [
-                      Material(
-                        color: AppColors.accentTeal,
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => Navigator.of(context).pop(),
-                          child: const SizedBox(
-                            height: 36,
-                            width: 36,
-                            child: Icon(
-                              Icons.chevron_left,
-                              color: Colors.white,
-                            ),
-                          ),
+          child: isInitialLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    await Future.wait([
+                      context.read<ActivityProvider>().load(),
+                      context.read<AnalyticsProvider>().load(),
+                    ]);
+                  },
+                  child: FadeTransition(
+                    opacity: _headerFade,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+                      children: [
+                        _HistoryHeader(streak: streak),
+                        const SizedBox(height: 18),
+                        _ChartCard(days: summary.focusByDay),
+                        const SizedBox(height: 18),
+                        _OverviewCard(summary: summary),
+                        const SizedBox(height: 18),
+                        _DistributionCard(
+                          categories: summary.categoryBreakdown,
+                          totalMinutes: summary.weeklyFocusMinutes,
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Text(
-                        'Activity History',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 22,
-                          color: AppColors.primaryBlue,
+                        const SizedBox(height: 18),
+                        _RecentActivitySection(
+                          activity: activity,
+                          analyticsError: analytics.error,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-
-              // --- Streak + stats summary ---
-              FadeTransition(
-                opacity: _headerFade,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      _StatChip(
-                        emoji: '🔥',
-                        label: '$streak day streak',
-                        color: const Color(0xFFFFB0BE),
-                      ),
-                      const SizedBox(width: 12),
-                      _StatChip(
-                        emoji: '⚡',
-                        label: '${activity.totalFocusMinutes} min total',
-                        color: const Color(0xFFB4EAA9),
-                      ),
-                      const SizedBox(width: 12),
-                      _StatChip(
-                        emoji: '📅',
-                        label: '${activity.sessionsToday} sessions today',
-                        color: const Color(0xFFBDE8FF),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.analytics),
-                  icon: const Icon(Icons.insights_outlined),
-                  label: const Text('View stats'),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // --- Activity list ---
-              Expanded(
-                child: activity.isLoading && activity.events.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : activity.error != null && activity.events.isEmpty
-                    ? _EmptyState(message: activity.error!)
-                    : activity.events.isEmpty
-                    ? const _EmptyState(message: 'No activity yet.')
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: activity.events.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final slide = index < _itemSlides.length
-                              ? _itemSlides[index]
-                              : _itemSlides.last;
-                          final item = activity.events[index];
-                          return SlideTransition(
-                            position: slide,
-                            child: FadeTransition(
-                              opacity: _headerFade,
-                              child: _ActivityCard(item: item),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
         ),
       ),
     );
+  }
+}
+
+class _HistoryHeader extends StatelessWidget {
+  const _HistoryHeader({required this.streak});
+
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Material(
+              color: AppColors.accentTeal,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => Navigator.of(context).pop(),
+                child: const SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: Icon(Icons.chevron_left, color: Colors.white),
+                ),
+              ),
+            ),
+            const Spacer(),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$streak',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 72,
+                color: const Color(0xFF4DC7BD),
+                fontWeight: FontWeight.w900,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(0, 3),
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 58,
+              height: 58,
+              margin: const EdgeInsets.only(bottom: 13),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFB0BE),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.local_fire_department,
+                color: Colors.white,
+                size: 34,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          'ACTIVITY HISTORY',
+          style: AppTextStyles.heading.copyWith(
+            fontSize: 22,
+            color: const Color(0xFF238CA3),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({required this.days});
+
+  final List<FocusDayStat> days;
+
+  @override
+  Widget build(BuildContext context) {
+    return _HistoryPanel(
+      title: 'Total Focus Time (min) per Day',
+      child: days.isEmpty
+          ? const _EmptyInline(
+              message: 'Complete a focus session to draw your chart.',
+            )
+          : SizedBox(
+              height: 220,
+              child: CustomPaint(
+                painter: _FocusLineChartPainter(days),
+                child: const SizedBox.expand(),
+              ),
+            ),
+    );
+  }
+}
+
+class _OverviewCard extends StatelessWidget {
+  const _OverviewCard({required this.summary});
+
+  final AnalyticsSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final averageHours = summary.averageMinutesPerDay / 60;
+    final mostActive = summary.mostActiveDay;
+    final mostActiveLabel = mostActive == null
+        ? 'No focus yet'
+        : '${_weekdayName(mostActive.date.weekday)} (${_formatHours(mostActive.minutes)})';
+    final weeklyHours = _formatHours(summary.weeklyFocusMinutes);
+
+    return _HistoryPanel(
+      title: 'Overview',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Last Week (${summary.weekRangeLabel})',
+            style: AppTextStyles.label.copyWith(
+              color: const Color(0xFF238CA3),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _RichMetricLine(
+            label: 'Average:',
+            value: averageHours.toStringAsFixed(1),
+            suffix: ' hours per day',
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Most Active Day: $mostActiveLabel',
+            style: AppTextStyles.label.copyWith(
+              color: const Color(0xFF238CA3),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.accentTeal, width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/fox.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  summary.weeklyFocusMinutes == 0
+                      ? 'Kiki is ready for your first focus session this week.'
+                      : 'Kiki has focused with you for $weeklyHours this week.',
+                  style: AppTextStyles.muted.copyWith(
+                    color: const Color(0xFF238CA3),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatHours(int minutes) {
+    final hours = minutes / 60;
+    if (hours == 0) return '0h';
+    if (hours < 1) return '${minutes}m';
+    return '${hours.toStringAsFixed(hours >= 10 ? 0 : 1)}h';
+  }
+
+  String _weekdayName(int weekday) {
+    const names = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    return names[weekday - 1];
+  }
+}
+
+class _RichMetricLine extends StatelessWidget {
+  const _RichMetricLine({
+    required this.label,
+    required this.value,
+    required this.suffix,
+  });
+
+  final String label;
+  final String value;
+  final String suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: AppTextStyles.label.copyWith(
+          color: const Color(0xFF238CA3),
+          fontWeight: FontWeight.w800,
+        ),
+        children: [
+          TextSpan(text: '$label '),
+          TextSpan(
+            text: value,
+            style: AppTextStyles.title.copyWith(
+              color: const Color(0xFF4FD7AC),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          TextSpan(text: suffix),
+        ],
+      ),
+    );
+  }
+}
+
+class _DistributionCard extends StatelessWidget {
+  const _DistributionCard({
+    required this.categories,
+    required this.totalMinutes,
+  });
+
+  final List<CategoryFocusStat> categories;
+  final int totalMinutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleCategories = categories
+        .where((category) => category.minutes > 0)
+        .toList(growable: false);
+
+    return _HistoryPanel(
+      title: 'Time distribution',
+      child: visibleCategories.isEmpty
+          ? const _EmptyInline(message: 'Focus categories will appear here.')
+          : Column(
+              children: visibleCategories.map((category) {
+                final ratio = totalMinutes == 0
+                    ? 0.0
+                    : (category.minutes / totalMinutes).clamp(0, 1).toDouble();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _DistributionBar(category: category, ratio: ratio),
+                );
+              }).toList(),
+            ),
+    );
+  }
+}
+
+class _DistributionBar extends StatelessWidget {
+  const _DistributionBar({required this.category, required this.ratio});
+
+  final CategoryFocusStat category;
+  final double ratio;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                category.category,
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.primaryBlue,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Text(
+              '${category.minutes}m',
+              style: AppTextStyles.muted.copyWith(
+                color: const Color(0xFF238CA3),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 10,
+            backgroundColor: const Color(0xFFEAF7FF),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              AppColors.accentTeal,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentActivitySection extends StatelessWidget {
+  const _RecentActivitySection({
+    required this.activity,
+    required this.analyticsError,
+  });
+
+  final ActivityProvider activity;
+  final String? analyticsError;
+
+  @override
+  Widget build(BuildContext context) {
+    final events = activity.events.take(5).toList(growable: false);
+    final error = activity.error ?? analyticsError;
+
+    return _HistoryPanel(
+      title: 'Recent activity',
+      child: activity.isLoading && events.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : error != null && events.isEmpty
+          ? _EmptyInline(message: error)
+          : events.isEmpty
+          ? const _EmptyInline(
+              message: 'No activity yet. Start focusing with Kiki.',
+            )
+          : Column(
+              children: [
+                for (var index = 0; index < events.length; index++) ...[
+                  _ActivityCard(item: events[index]),
+                  if (index != events.length - 1) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+    );
+  }
+}
+
+class _HistoryPanel extends StatelessWidget {
+  const _HistoryPanel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        border: Border.all(color: const Color(0xFF8DDEE0)),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x143A9BBE),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.title.copyWith(
+              color: const Color(0xFF238CA3),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyInline extends StatelessWidget {
+  const _EmptyInline({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Text(
+        message,
+        style: AppTextStyles.muted.copyWith(color: AppColors.primaryBlue),
+      ),
+    );
+  }
+}
+
+class _FocusLineChartPainter extends CustomPainter {
+  const _FocusLineChartPainter(this.days);
+
+  final List<FocusDayStat> days;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (days.isEmpty) return;
+
+    const leftPadding = 34.0;
+    const rightPadding = 12.0;
+    const topPadding = 16.0;
+    const bottomPadding = 28.0;
+    final chartWidth = size.width - leftPadding - rightPadding;
+    final chartHeight = size.height - topPadding - bottomPadding;
+    final maxMinutes = days.fold<int>(
+      1,
+      (max, day) => day.minutes > max ? day.minutes : max,
+    );
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE5EEF2)
+      ..strokeWidth = 1;
+    final labelPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+
+    for (var i = 0; i <= 4; i++) {
+      final y = topPadding + chartHeight * i / 4;
+      canvas.drawLine(
+        Offset(leftPadding, y),
+        Offset(leftPadding + chartWidth, y),
+        gridPaint,
+      );
+
+      final label = (maxMinutes * (4 - i) / 4).round().toString();
+      labelPainter.text = TextSpan(
+        text: label,
+        style: AppTextStyles.muted.copyWith(fontSize: 10),
+      );
+      labelPainter.layout();
+      labelPainter.paint(canvas, Offset(0, y - 7));
+    }
+
+    final points = <Offset>[];
+    for (var i = 0; i < days.length; i++) {
+      final x =
+          leftPadding +
+          (days.length == 1 ? 0 : chartWidth * i / (days.length - 1));
+      final y =
+          topPadding +
+          chartHeight -
+          (days[i].minutes / maxMinutes) * chartHeight;
+      points.add(Offset(x, y));
+    }
+
+    final areaPath = Path()..moveTo(points.first.dx, topPadding + chartHeight);
+    for (final point in points) {
+      areaPath.lineTo(point.dx, point.dy);
+    }
+    areaPath
+      ..lineTo(points.last.dx, topPadding + chartHeight)
+      ..close();
+
+    final areaPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0x5547A8E5), Color(0x0047A8E5)],
+      ).createShader(Rect.fromLTWH(0, topPadding, size.width, chartHeight));
+    canvas.drawPath(areaPath, areaPaint);
+
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+    for (final point in points.skip(1)) {
+      linePath.lineTo(point.dx, point.dy);
+    }
+
+    final linePaint = Paint()
+      ..color = const Color(0xFF47A8E5)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3;
+    canvas.drawPath(linePath, linePaint);
+
+    final dotPaint = Paint()..color = const Color(0xFF47A8E5);
+    final last = points.last;
+    canvas.drawCircle(last, 5, dotPaint);
+    canvas.drawCircle(last, 12, Paint()..color = const Color(0x2247A8E5));
+
+    for (var i = 0; i < days.length; i++) {
+      labelPainter.text = TextSpan(
+        text: i == 0 ? _monthDay(days[i].date) : '${days[i].date.day}',
+        style: AppTextStyles.muted.copyWith(fontSize: 10),
+      );
+      labelPainter.layout();
+      labelPainter.paint(
+        canvas,
+        Offset(
+          points[i].dx - labelPainter.width / 2,
+          topPadding + chartHeight + 8,
+        ),
+      );
+    }
+  }
+
+  String _monthDay(DateTime date) {
+    const names = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${names[date.month - 1]} ${date.day}';
+  }
+
+  @override
+  bool shouldRepaint(covariant _FocusLineChartPainter oldDelegate) {
+    return oldDelegate.days != days;
   }
 }
 
@@ -267,6 +731,15 @@ class _ActivityCard extends StatelessWidget {
     final pomodoroCount = metadata['pomodoroCount'];
     final rewardTokens = metadata['rewardTokens'];
     final rewardExp = metadata['rewardExp'];
+    final skillName = metadata['skillName'] as String?;
+    final bonusTokens = metadata['bonusTokens'];
+    final bonusExp = metadata['bonusExp'];
+    final energySaved = metadata['energySaved'];
+    final bonusParts = [
+      if (bonusTokens is int && bonusTokens > 0) '+$bonusTokens tokens',
+      if (bonusExp is int && bonusExp > 0) '+$bonusExp EXP',
+      if (energySaved is int && energySaved > 0) '$energySaved energy saved',
+    ];
     return [
       if (category != null && category.isNotEmpty)
         _MiniMetaChip(label: category, color: const Color(0xFFEFF6FF)),
@@ -282,6 +755,11 @@ class _ActivityCard extends StatelessWidget {
         ),
       if (rewardExp is int)
         _MiniMetaChip(label: '+$rewardExp EXP', color: const Color(0xFFE0E7FF)),
+      if (skillName != null && skillName.isNotEmpty && bonusParts.isNotEmpty)
+        _MiniMetaChip(
+          label: '$skillName ${bonusParts.join(', ')}',
+          color: const Color(0xFFEAF7FF),
+        ),
     ];
   }
 
@@ -312,26 +790,6 @@ class _ActivityCard extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(
-          message,
-          style: AppTextStyles.body.copyWith(color: AppColors.primaryBlue),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
 class _MiniMetaChip extends StatelessWidget {
   const _MiniMetaChip({required this.label, required this.color});
 
@@ -352,52 +810,6 @@ class _MiniMetaChip extends StatelessWidget {
           fontSize: 10,
           color: AppColors.primaryBlue,
           fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Stat chip
-// ---------------------------------------------------------------------------
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.emoji,
-    required this.label,
-    required this.color,
-  });
-
-  final String emoji;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: AppTextStyles.muted.copyWith(
-                  fontSize: 11,
-                  color: AppColors.primaryBlue,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ),
       ),
     );

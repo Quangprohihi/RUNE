@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../models/focus_plan.dart';
+import '../../providers/app_block_provider.dart';
 import '../../providers/focus_provider.dart';
+import '../../providers/focus_plan_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../routes/app_routes.dart';
 
@@ -20,41 +23,41 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
   final _tasks = const ['Study', 'Write', 'Break'];
   final _durationPresets = const [25, 45, 50];
   final _companions = const [
-    _Companion('kiki', 'Kiki', '🦊', 'assets/images/fox.png', '+5% Alertness'),
+    _Companion('kiki', 'Kiki', '🦊', 'assets/images/fox.png', '+5% EXP'),
     _Companion(
       'companion_eagle',
       'Eagle',
       '🦅',
       'assets/images/companion_eagle.png',
-      '+5% Vision',
+      '+10% tokens',
     ),
     _Companion(
       'companion_frog',
       'Frog',
       '🐸',
       'assets/images/companion_frog.png',
-      '+5% Calm',
+      '20% less energy loss',
     ),
     _Companion(
       'companion_giraffe',
       'Giraffe',
       '🦒',
       'assets/images/companion_giraffe.png',
-      '+5% Stamina',
+      '+10 tokens for 45+ min',
     ),
   ];
 
   String _selectedTask = 'Study';
   int _selectedCompanion = 0;
-  bool _aiFocusDesignerEnabled = true;
   int _selectedMinutes = 45;
+  FocusPlan? _appliedPlan;
 
   @override
   void initState() {
     super.initState();
     _goalController.addListener(_handleGoalChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ShopProvider>().loadCatalog();
+      context.read<ShopProvider>().loadCatalog().catchError((_) {});
     });
   }
 
@@ -65,117 +68,110 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
     super.dispose();
   }
 
-  void _handleGoalChanged() => setState(() {});
+  void _handleGoalChanged() {
+    _clearFocusPlan();
+  }
 
-  void _startFocus() {
+  void _clearFocusPlan() {
+    if (!mounted) return;
+    _appliedPlan = null;
+    context.read<FocusPlanProvider>().clear();
+    setState(() {});
+  }
+
+  Future<void> _startFocus() async {
     final focus = context.read<FocusProvider>();
     if (focus.phase != FocusPhase.idle) {
       Navigator.of(context).pushNamed(AppRoutes.focus);
       return;
     }
-    final label = _goalController.text.trim().isEmpty
-        ? _selectedTask
-        : _goalController.text.trim();
-    focus.start(label: label, durationSeconds: _selectedMinutes * 60);
+    final appBlock = context.read<AppBlockProvider>();
+    if (appBlock.blockingEnabled) {
+      final started = await appBlock.startBlocking();
+      if (!started && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Focus Guard needs all required permissions.'),
+          ),
+        );
+      }
+    }
+    if (!mounted) return;
+    final label =
+        _appliedPlan?.normalizedLabel ??
+        (_goalController.text.trim().isEmpty
+            ? _selectedTask
+            : _goalController.text.trim());
+    focus.start(
+      label: label,
+      durationSeconds: _selectedMinutes * 60,
+      companionCode: _companions[_selectedCompanion].code,
+    );
     Navigator.of(context).pushNamed(AppRoutes.focus);
   }
 
-  int get _rewardTokens => AppConstants.rewardTokensPerBlock + _selectedMinutes;
-
-  int get _rewardExp => AppConstants.rewardExpPerBlock;
-
-  int get _petEnergyCost => (_selectedMinutes / 5).floor();
-
-  String get _suggestedPomodoroText {
-    if (_selectedMinutes <= 25) return '1 Pomodoro';
-    return 'Deep Focus · 2 Pomodoros';
+  Future<void> _analyzeFocusPlan() {
+    return context.read<FocusPlanProvider>().analyze(
+      goal: _goalController.text,
+      selectedMinutes: _selectedMinutes,
+      selectedTask: _selectedTask,
+    );
   }
 
-  String get _focusCategory {
-    final goal = _goalController.text.trim().toLowerCase();
-    if (_containsAny(goal, const [
-      'english',
-      'vocabulary',
-      'ielts',
-      'toeic',
-      'listening',
-      'speaking',
-    ])) {
-      return 'English';
-    }
-    if (_containsAny(goal, const [
-      'code',
-      'coding',
-      'flutter',
-      'programming',
-      'debug',
-      'api',
-    ])) {
-      return 'Code';
-    }
-    if (_containsAny(goal, const [
-      'write',
-      'viết',
-      'report',
-      'essay',
-      'draft',
-    ])) {
-      return 'Write';
-    }
-    if (_containsAny(goal, const [
-      'ôn',
-      'học',
-      'study',
-      'review',
-      'prm',
-      'exam',
-      'quiz',
-    ])) {
-      return 'Review';
-    }
-    if (_selectedTask == 'Break') return 'Reset';
-    return _selectedTask;
+  void _applyFocusPlan(FocusPlan plan) {
+    setState(() {
+      _appliedPlan = plan;
+      _selectedMinutes = plan.recommendedMinutes;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${plan.focusMode} applied to this session.')),
+    );
   }
 
-  String get _focusPlanText {
-    final goal = _goalController.text.trim().toLowerCase();
-    switch (_focusCategory) {
-      case 'English':
-        if (_selectedMinutes <= 25) {
-          return 'Learn 10 words, then write 5 example sentences.';
-        }
-        return 'Vocabulary, listening practice, then quick recall review.';
-      case 'Code':
-        if (_selectedMinutes <= 25) {
-          return 'Pick one small feature, code it, then run a quick check.';
-        }
-        return 'Read requirements, build one slice, then test the flow.';
-      case 'Write':
-        if (_selectedMinutes <= 25) {
-          return 'Create an outline, then draft the first section.';
-        }
-        return 'Outline, write the draft, then polish weak paragraphs.';
-      case 'Review':
-        if (goal.contains('prm')) {
-          return 'Review PRM concepts, then test yourself with questions.';
-        }
-        return 'Review key points, then practice recall.';
-      case 'Reset':
-        return 'Use this as a light reset before the next focus.';
+  int get _baseRewardTokens =>
+      AppConstants.rewardTokensPerBlock + _selectedMinutes;
+
+  int get _rewardTokens {
+    final companion = _companions[_selectedCompanion];
+    if (companion.code == 'companion_eagle') {
+      return _baseRewardTokens + (_baseRewardTokens * 0.1).ceil();
     }
-    return 'Focus on one clear task until the timer ends.';
+    if (companion.code == 'companion_giraffe' && _selectedMinutes >= 45) {
+      return _baseRewardTokens + 10;
+    }
+    return _baseRewardTokens;
   }
 
-  bool _containsAny(String source, List<String> keywords) {
-    return keywords.any(source.contains);
+  int get _rewardExp {
+    final baseExp = AppConstants.rewardExpPerBlock;
+    if (_companions[_selectedCompanion].code == 'kiki') {
+      return baseExp + (baseExp * 0.05).ceil();
+    }
+    return baseExp;
+  }
+
+  int get _petEnergyCost {
+    final baseCost = (_selectedMinutes / 5).floor();
+    if (_companions[_selectedCompanion].code == 'companion_frog') {
+      return (baseCost - (baseCost * 0.2).ceil()).clamp(0, baseCost);
+    }
+    return baseCost;
   }
 
   @override
   Widget build(BuildContext context) {
     final companion = _companions[_selectedCompanion];
     final focus = context.watch<FocusProvider>();
+    final focusPlanState = context.watch<FocusPlanProvider>();
     final shop = context.watch<ShopProvider>();
     final hasActiveFocus = focus.phase != FocusPhase.idle;
+    final activePlan =
+        focusPlanState.plan ??
+        FocusPlan.fallback(
+          goal: _goalController.text,
+          selectedMinutes: _selectedMinutes,
+          selectedTask: _selectedTask,
+        );
 
     return Scaffold(
       body: Container(
@@ -201,8 +197,10 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
                       _TaskChips(
                         tasks: _tasks,
                         selectedTask: _selectedTask,
-                        onSelected: (task) =>
-                            setState(() => _selectedTask = task),
+                        onSelected: (task) {
+                          _clearFocusPlan();
+                          setState(() => _selectedTask = task);
+                        },
                       ),
                       const SizedBox(height: 28),
                       _TimerDial(minutes: _selectedMinutes),
@@ -210,8 +208,10 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
                       _DurationPresets(
                         presets: _durationPresets,
                         selectedMinutes: _selectedMinutes,
-                        onSelected: (minutes) =>
-                            setState(() => _selectedMinutes = minutes),
+                        onSelected: (minutes) {
+                          _clearFocusPlan();
+                          setState(() => _selectedMinutes = minutes);
+                        },
                       ),
                       const SizedBox(height: 28),
                       _CompanionSelector(
@@ -226,15 +226,15 @@ class _SetFocusTimerScreenState extends State<SetFocusTimerScreen> {
                       _CompanionSummary(companion: companion),
                       const SizedBox(height: 26),
                       _AiFocusDesignerCard(
-                        enabled: _aiFocusDesignerEnabled,
-                        category: _focusCategory,
-                        suggestedText: _suggestedPomodoroText,
-                        planText: _focusPlanText,
+                        plan: activePlan,
+                        status: focusPlanState.status,
+                        error: focusPlanState.error,
+                        applied: _appliedPlan == activePlan,
                         rewardTokens: _rewardTokens,
                         rewardExp: _rewardExp,
                         petEnergyCost: _petEnergyCost,
-                        onChanged: (value) =>
-                            setState(() => _aiFocusDesignerEnabled = value),
+                        onAnalyze: _analyzeFocusPlan,
+                        onApply: () => _applyFocusPlan(activePlan),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -696,27 +696,30 @@ class _CompanionSummary extends StatelessWidget {
 
 class _AiFocusDesignerCard extends StatelessWidget {
   const _AiFocusDesignerCard({
-    required this.enabled,
-    required this.category,
-    required this.suggestedText,
-    required this.planText,
+    required this.plan,
+    required this.status,
+    required this.error,
+    required this.applied,
     required this.rewardTokens,
     required this.rewardExp,
     required this.petEnergyCost,
-    required this.onChanged,
+    required this.onAnalyze,
+    required this.onApply,
   });
 
-  final bool enabled;
-  final String category;
-  final String suggestedText;
-  final String planText;
+  final FocusPlan plan;
+  final FocusPlanStatus status;
+  final String? error;
+  final bool applied;
   final int rewardTokens;
   final int rewardExp;
   final int petEnergyCost;
-  final ValueChanged<bool> onChanged;
+  final VoidCallback onAnalyze;
+  final VoidCallback onApply;
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = status == FocusPlanStatus.loading;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -742,7 +745,7 @@ class _AiFocusDesignerCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'AI Focus Designer',
+                  'Focus Plan Preview',
                   style: AppTextStyles.title.copyWith(
                     fontSize: 16,
                     color: const Color(0xFF1D293D),
@@ -757,21 +760,48 @@ class _AiFocusDesignerCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  category,
+                  plan.subject,
                   style: AppTextStyles.muted.copyWith(
                     color: const Color(0xFF2B7FFF),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Switch(value: enabled, onChanged: onChanged),
             ],
           ),
           const SizedBox(height: 12),
-          _InfoRow(label: 'Suggested', value: suggestedText),
+          _InfoRow(label: 'Clarity', value: plan.clarityLabel),
           const SizedBox(height: 10),
-          _InfoRow(label: 'Plan', value: planText),
+          _InfoRow(label: 'Mode', value: plan.focusMode),
+          const SizedBox(height: 10),
+          _InfoRow(
+            label: 'Suggested',
+            value: '${plan.recommendedMinutes} min · ${plan.pomodoroLabel}',
+          ),
+          const SizedBox(height: 10),
+          _InfoRow(label: 'Advice', value: plan.advice),
+          const SizedBox(height: 12),
+          ...plan.steps
+              .take(3)
+              .map(
+                (step) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _PlanStep(text: step),
+                ),
+              ),
+          if (plan.warnings.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ...plan.warnings.map(
+              (warning) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: _PlanWarning(text: warning),
+              ),
+            ),
+          ],
+          if (error != null && status == FocusPlanStatus.error) ...[
+            const SizedBox(height: 8),
+            _PlanWarning(text: 'Backend unavailable, using local fallback.'),
+          ],
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -820,7 +850,89 @@ class _AiFocusDesignerCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isLoading ? null : onAnalyze,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome, size: 18),
+                  label: Text(isLoading ? 'Analyzing...' : 'Analyze Focus'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : onApply,
+                  icon: Icon(applied ? Icons.check_circle : Icons.task_alt),
+                  label: Text(applied ? 'Applied' : 'Apply Plan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF48BB78),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _PlanStep extends StatelessWidget {
+  const _PlanStep({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.check_circle, size: 16, color: Color(0xFF48BB78)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.muted.copyWith(
+              color: const Color(0xFF45556C),
+              height: 1.25,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlanWarning extends StatelessWidget {
+  const _PlanWarning({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Text(
+        text,
+        style: AppTextStyles.muted.copyWith(
+          color: const Color(0xFF92400E),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

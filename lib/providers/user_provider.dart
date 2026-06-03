@@ -29,13 +29,46 @@ class UserProvider extends ChangeNotifier {
 
   bool get hasLoggedIn => _profile.hasLoggedIn && _profile.id.isNotEmpty;
 
-  Future<void> login(String email) async {
+  Future<void> login({required String email, required String password}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
       final response =
-          await _api.post('/auth/demo-login', body: {'email': email.trim()})
+          await _api.post(
+                '/auth/login',
+                body: {'email': email.trim(), 'password': password},
+              )
+              as Map<String, dynamic>;
+      _applyBootstrap(response);
+      await _repository.save(_profile);
+    } catch (error) {
+      _error = error.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> register({
+    required String displayName,
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response =
+          await _api.post(
+                '/auth/register',
+                body: {
+                  'displayName': displayName.trim(),
+                  'email': email.trim(),
+                  'password': password,
+                },
+              )
               as Map<String, dynamic>;
       _applyBootstrap(response);
       await _repository.save(_profile);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../presentation/analytics/analytics_screen.dart';
+import '../presentation/blocking/app_blocking_screen.dart';
 import '../presentation/focus/focus_screen.dart';
 import '../presentation/focus/focus_summary_screen.dart';
 import '../presentation/history/history_screen.dart';
@@ -30,6 +31,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String analytics = '/analytics';
   static const String premium = '/premium';
+  static const String appBlocking = '/app-blocking';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (_) => const LoginScreen(),
@@ -45,5 +47,6 @@ class AppRoutes {
     settings: (_) => const SettingsScreen(),
     analytics: (_) => const AnalyticsScreen(),
     premium: (_) => const PremiumScreen(),
+    appBlocking: (_) => const AppBlockingScreen(),
   };
 }

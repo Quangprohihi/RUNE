@@ -39,6 +39,24 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     ).showSnackBar(SnackBar(content: Text('${task.template.title} claimed!')));
   }
 
+  Future<void> _claimMilestone(DailyMilestone milestone) async {
+    if (!milestone.canClaim(context.read<DailyTaskProvider>().totalPoints)) {
+      return;
+    }
+    final provider = context.read<DailyTaskProvider>();
+    await provider.claimMilestone(milestone.id);
+    final wallet = provider.latestWallet;
+    if (wallet != null && mounted) {
+      context.read<TokenProvider>().syncWallet(wallet);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${milestone.pointsRequired} pts reward claimed!'),
+      ),
+    );
+  }
+
   void _goToFocusTimer() {
     Navigator.of(context).pushNamed(AppRoutes.setFocusTimer);
   }
@@ -105,6 +123,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       _MilestoneRewardsCard(
                         totalPoints: tasks.totalPoints,
                         milestones: tasks.milestones,
+                        onClaim: _claimMilestone,
                       ),
                       const SizedBox(height: 16),
                       if (dailyLogin != null)
@@ -125,9 +144,13 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                         ),
                       const SizedBox(height: 16),
                       if (deepFocus != null)
-                        _LockedTaskPreview(
+                        _TaskCard.fromTask(
                           task: deepFocus,
-                          onTap: _goToFocusTimer,
+                          icon: Icons.self_improvement,
+                          onAction: deepFocus.canClaim
+                              ? () => _claimTask(deepFocus)
+                              : _goToFocusTimer,
+                          softAction: !deepFocus.canClaim,
                         ),
                       const SizedBox(height: 18),
                       _StreakPanel(streak: streak),
@@ -263,10 +286,12 @@ class _MilestoneRewardsCard extends StatelessWidget {
   const _MilestoneRewardsCard({
     required this.totalPoints,
     required this.milestones,
+    required this.onClaim,
   });
 
   final int totalPoints;
   final List<DailyMilestone> milestones;
+  final ValueChanged<DailyMilestone> onClaim;
 
   @override
   Widget build(BuildContext context) {
@@ -323,17 +348,16 @@ class _MilestoneRewardsCard extends StatelessWidget {
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(
-                    milestones.length.clamp(1, 5).toInt(),
-                    (index) {
-                      final active =
-                          totalPoints >=
-                          (index < milestones.length
-                              ? milestones[index].pointsRequired
-                              : maxPoints);
-                      return _MilestoneIcon(active: active);
-                    },
-                  ),
+                  children: milestones.isEmpty
+                      ? const [_MilestoneIcon()]
+                      : milestones.map((milestone) {
+                          return _MilestoneIcon(
+                            isClaimed: milestone.isClaimed,
+                            canClaim: milestone.canClaim(totalPoints),
+                            isUnlocked: totalPoints >= milestone.pointsRequired,
+                            onTap: () => onClaim(milestone),
+                          );
+                        }).toList(),
                 ),
               ],
             ),
@@ -498,50 +522,6 @@ class _TaskCard extends StatelessWidget {
   }
 }
 
-class _LockedTaskPreview extends StatelessWidget {
-  const _LockedTaskPreview({required this.task, required this.onTap});
-
-  final DailyTask task;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.35,
-      child: _TaskSurface(
-        height: 92,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Color(0xFFE9FFF2),
-                  child: Icon(Icons.self_improvement, color: AppColors.success),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    task.template.title,
-                    style: AppTextStyles.label.copyWith(
-                      color: const Color(0xFF1D293D),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.lock_outline, color: Color(0xFF90A1B9)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _StreakPanel extends StatelessWidget {
   const _StreakPanel({required this.streak});
 
@@ -679,26 +659,42 @@ class _TaskSurface extends StatelessWidget {
 }
 
 class _MilestoneIcon extends StatelessWidget {
-  const _MilestoneIcon({required this.active});
+  const _MilestoneIcon({
+    this.isClaimed = false,
+    this.canClaim = false,
+    this.isUnlocked = false,
+    this.onTap,
+  });
 
-  final bool active;
+  final bool isClaimed;
+  final bool canClaim;
+  final bool isUnlocked;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: active ? const Color(0xFF00B9EF) : const Color(0xFFDCE5EF),
-          width: active ? 2 : 3,
+    final color = isClaimed
+        ? const Color(0xFF48C77E)
+        : isUnlocked
+        ? const Color(0xFF00B9EF)
+        : const Color(0xFFDCE5EF);
+    final icon = isClaimed
+        ? Icons.check_rounded
+        : isUnlocked
+        ? Icons.diamond
+        : Icons.lock_outline;
+
+    return GestureDetector(
+      onTap: canClaim ? onTap : null,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: canClaim ? const Color(0xFFE9FBFF) : Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: isUnlocked ? 2 : 3),
         ),
-      ),
-      child: Icon(
-        active ? Icons.diamond : Icons.inventory_2_outlined,
-        color: active ? const Color(0xFF00B9EF) : const Color(0xFFC4CEDB),
+        child: Icon(icon, color: color),
       ),
     );
   }

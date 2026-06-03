@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/shop_item.dart';
@@ -90,5 +92,21 @@ class ShopRepository {
 
   Future<void> saveOwnedItems(List<String> value) {
     return _prefs.setStringList(PrefsKeys.ownedItems, value);
+  }
+
+  Map<String, int> loadInventoryQuantities() {
+    final raw = _prefs.getString(PrefsKeys.inventoryQuantities);
+    if (raw == null) {
+      return {for (final itemId in loadOwnedItems()) itemId: 1};
+    }
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map(
+      (key, value) =>
+          MapEntry(key, value is int ? value : int.tryParse('$value') ?? 0),
+    )..removeWhere((_, quantity) => quantity <= 0);
+  }
+
+  Future<void> saveInventoryQuantities(Map<String, int> value) {
+    return _prefs.setString(PrefsKeys.inventoryQuantities, jsonEncode(value));
   }
 }

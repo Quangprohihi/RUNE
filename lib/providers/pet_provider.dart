@@ -25,13 +25,13 @@ class PetProvider extends ChangeNotifier {
   }
 
   Future<void> applyPassiveDecay() async {
-    final hours = DateTime.now().difference(_pet.lastUpdatedAt).inHours;
-    if (hours <= 0) return;
+    final ticks = DateTime.now().difference(_pet.lastUpdatedAt).inMinutes ~/ 30;
+    if (ticks <= 0) return;
+    final cappedTicks = ticks.clamp(0, 24).toInt();
     _pet = _pet.copyWith(
-      hunger: (_pet.hunger - hours * 2).clamp(0, 100),
-      energy: (_pet.energy - hours).clamp(0, 100),
-      mood: (_pet.mood - hours).clamp(0, 100),
-      love: (_pet.love - hours).clamp(0, 100),
+      hunger: (_pet.hunger - cappedTicks * 2).clamp(0, 100),
+      mood: (_pet.mood - cappedTicks).clamp(0, 100),
+      love: (_pet.love - cappedTicks).clamp(0, 100),
       lastUpdatedAt: DateTime.now(),
     );
     await _repository.save(_pet);
@@ -71,6 +71,16 @@ class PetProvider extends ChangeNotifier {
     _latestWallet = Wallet.fromJson(
       response['wallet'] as Map<String, dynamic>? ?? const {},
     );
+    await _repository.save(_pet);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> selectEvolutionSkin(String skinCode) async {
+    final response =
+        await _api.post('/pet/evolution/select', body: {'skinCode': skinCode})
+            as Map<String, dynamic>;
+    _pet = Pet.fromJson(response['pet'] as Map<String, dynamic>? ?? const {});
     await _repository.save(_pet);
     notifyListeners();
     return true;

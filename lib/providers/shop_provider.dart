@@ -10,31 +10,35 @@ import 'token_provider.dart';
 
 class ShopProvider extends ChangeNotifier {
   ShopProvider(this._repository, this._api)
-    : _ownedItems = List.of(_repository.loadOwnedItems());
+    : _inventoryQuantities = Map.of(_repository.loadInventoryQuantities());
 
   final ShopRepository _repository;
   final ApiClient _api;
-  final List<String> _ownedItems;
+  final Map<String, int> _inventoryQuantities;
   List<ShopItem>? _remoteCatalog;
   Wallet? _latestWallet;
   Pet? _latestPet;
 
   List<ShopItem> get catalog => _remoteCatalog ?? _repository.catalog;
-  List<String> get ownedItems => List.unmodifiable(_ownedItems);
+  List<String> get ownedItems => _inventoryQuantities.entries
+      .where((entry) => entry.value > 0)
+      .map((entry) => entry.key)
+      .toList(growable: false);
+  Map<String, int> get inventoryQuantities =>
+      Map.unmodifiable(_inventoryQuantities);
   Wallet? get latestWallet => _latestWallet;
   Pet? get latestPet => _latestPet;
 
-  bool isOwned(String itemId) => _ownedItems.contains(itemId);
+  int quantityFor(String itemId) => _inventoryQuantities[itemId] ?? 0;
+  bool isOwned(String itemId) => quantityFor(itemId) > 0;
   bool isCompanionUnlocked(String code) {
     if (code == 'kiki') return true;
-    return catalog.any(
-      (item) => item.code == code && _ownedItems.contains(item.id),
-    );
+    return catalog.any((item) => item.code == code && quantityFor(item.id) > 0);
   }
 
   List<String> get ownedCompanionCodes {
     return catalog
-        .where((item) => item.isCompanion && _ownedItems.contains(item.id))
+        .where((item) => item.isCompanion && quantityFor(item.id) > 0)
         .map((item) => item.code)
         .toList(growable: false);
   }
@@ -45,15 +49,7 @@ class ShopProvider extends ChangeNotifier {
         .cast<Map<String, dynamic>>()
         .map(ShopItem.fromJson)
         .toList();
-    _ownedItems
-      ..clear()
-      ..addAll(
-        (response['inventory'] as List<dynamic>? ?? const [])
-            .cast<Map<String, dynamic>>()
-            .map((item) => item['shopItemId'] as String? ?? '')
-            .where((id) => id.isNotEmpty),
-      );
-    await _repository.saveOwnedItems(_ownedItems);
+    await _syncInventory(response['inventory'] as List<dynamic>? ?? const []);
     notifyListeners();
   }
 
@@ -72,9 +68,62 @@ class ShopProvider extends ChangeNotifier {
     );
     tokens.syncWallet(_latestWallet!);
     pet.syncPet(_latestPet!);
-    if (!_ownedItems.contains(item.id)) _ownedItems.add(item.id);
-    await _repository.saveOwnedItems(_ownedItems);
+    final inventory = response['inventory'] as List<dynamic>?;
+    if (inventory == null) {
+      _inventoryQuantities[item.id] = quantityFor(item.id) + 1;
+      await _saveInventory();
+    } else {
+      await _syncInventory(inventory);
+    }
     notifyListeners();
     return true;
+  }
+
+  Future<bool> useItem({
+    required ShopItem item,
+    required PetProvider pet,
+  }) async {
+    final response =
+        await _api.post('/shop/items/${item.id}/use') as Map<String, dynamic>;
+    _latestPet = Pet.fromJson(
+      response['pet'] as Map<String, dynamic>? ?? const {},
+    );
+    pet.syncPet(_latestPet!);
+    await _syncInventory(response['inventory'] as List<dynamic>? ?? const []);
+    notifyListeners();
+    return true;
+  }
+
+  List<ShopItem> ownedItemsForEffect(Set<PetEffectType> effects) {
+    return catalog
+        .where(
+          (item) =>
+              !item.isCompanion &&
+              effects.contains(item.effectType) &&
+              quantityFor(item.id) > 0,
+        )
+        .toList(growable: false);
+  }
+
+  Future<void> _syncInventory(List<dynamic> inventory) async {
+    _inventoryQuantities
+      ..clear()
+      ..addEntries(
+        inventory
+            .cast<Map<String, dynamic>>()
+            .map((item) {
+              return MapEntry(
+                item['shopItemId'] as String? ?? '',
+                item['quantity'] as int? ?? 0,
+              );
+            })
+            .where((entry) => entry.key.isNotEmpty && entry.value > 0),
+      );
+    await _saveInventory();
+  }
+
+  Future<void> _saveInventory() async {
+    await _repository.saveInventoryQuantities(_inventoryQuantities);
+    await _repository.saveOwnedItems(ownedItems);
   }
 }

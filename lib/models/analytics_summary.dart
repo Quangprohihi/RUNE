@@ -51,6 +51,48 @@ class AnalyticsSummary {
   final int bestStreak;
   final List<FocusDayStat> focusByDay;
   final List<CategoryFocusStat> categoryBreakdown;
+
+  int get weeklyFocusMinutes {
+    return focusByDay.fold(0, (sum, day) => sum + day.minutes);
+  }
+
+  double get averageMinutesPerDay {
+    if (focusByDay.isEmpty) return 0;
+    return weeklyFocusMinutes / focusByDay.length;
+  }
+
+  FocusDayStat? get mostActiveDay {
+    if (focusByDay.isEmpty) return null;
+    return focusByDay.reduce(
+      (best, day) => day.minutes > best.minutes ? day : best,
+    );
+  }
+
+  String get weekRangeLabel {
+    if (focusByDay.isEmpty) return 'This week';
+    final first = focusByDay.first.date;
+    final last = focusByDay.last.date;
+    return '${_monthName(first.month)} ${first.day} - ${_monthName(last.month)} ${last.day}';
+  }
+
+  static String _monthName(int month) {
+    const names = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (month < 1 || month > 12) return '';
+    return names[month - 1];
+  }
 }
 
 class FocusDayStat {

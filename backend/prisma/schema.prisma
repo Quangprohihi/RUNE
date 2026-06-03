@@ -7,14 +7,15 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid()) @db.Uuid
-  email       String   @unique
-  displayName String   @map("display_name")
-  avatarUrl   String?  @map("avatar_url")
-  provider    String   @default("demo")
-  providerId  String?  @map("provider_id")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  displayName  String   @map("display_name")
+  passwordHash String?  @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  provider     String   @default("demo")
+  providerId   String?  @map("provider_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   pet                Pet?
   wallet             Wallet?
@@ -23,6 +24,7 @@ model User {
   streak             UserStreak?
   dailyTasks         UserDailyTask[]
   dailyMilestones    UserDailyMilestone[]
+  achievements       UserAchievement[]
   inventory          UserInventory[]
   activityEvents     ActivityEvent[]
   notifications      Notification[]
@@ -57,20 +59,21 @@ model Subscription {
 }
 
 model Pet {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @unique @map("user_id") @db.Uuid
-  name          String
-  species       String
-  level         Int      @default(1)
-  exp           Int      @default(0)
-  expToNext     Int      @default(100) @map("exp_to_next")
-  hunger        Int      @default(72)
-  energy        Int      @default(80)
-  mood          Int      @default(76)
-  love          Int      @default(68)
-  lastUpdatedAt DateTime @default(now()) @map("last_updated_at") @db.Timestamptz(6)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  name             String
+  species          String
+  level            Int      @default(1)
+  exp              Int      @default(0)
+  expToNext        Int      @default(100) @map("exp_to_next")
+  hunger           Int      @default(72)
+  energy           Int      @default(80)
+  mood             Int      @default(76)
+  love             Int      @default(68)
+  selectedSkinCode String   @default("standard") @map("selected_skin_code")
+  lastUpdatedAt    DateTime @default(now()) @map("last_updated_at") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -110,6 +113,7 @@ model FocusSession {
   userId         String    @map("user_id") @db.Uuid
   label          String
   plannedMinutes Int       @map("planned_minutes")
+  companionCode  String?   @map("companion_code")
   actualSeconds  Int       @default(0) @map("actual_seconds")
   status         String
   startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
@@ -191,6 +195,20 @@ model UserDailyMilestone {
 
   @@unique([userId, milestoneId, taskDate])
   @@map("user_daily_milestones")
+}
+
+model UserAchievement {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  code      String
+  claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@index([userId, claimedAt])
+  @@map("user_achievements")
 }
 
 model ShopItem {

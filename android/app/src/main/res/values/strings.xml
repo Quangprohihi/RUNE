@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">ZenZoo uses this service only during focus sessions to detect blocked apps and bring you back to your focus timer.</string>
+</resources>

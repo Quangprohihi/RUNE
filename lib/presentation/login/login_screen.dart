@@ -10,6 +10,8 @@ import '../../providers/user_provider.dart';
 import '../../routes/app_routes.dart';
 import '../widgets/pet_animated_widget.dart';
 
+enum _AuthMode { login, register }
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -19,7 +21,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  _AuthMode _mode = _AuthMode.login;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   // Entrance animation controllers
   late AnimationController _logoController;
@@ -98,7 +106,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _logoController.dispose();
     _panelController.dispose();
     _petController.dispose();
@@ -106,9 +117,40 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _continue() async {
+    final displayName = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showAuthMessage('Please enter email and password.');
+      return;
+    }
+    if (_mode == _AuthMode.register) {
+      if (displayName.length < 2) {
+        _showAuthMessage('Please enter your name.');
+        return;
+      }
+      if (password.length < 6) {
+        _showAuthMessage('Password must be at least 6 characters.');
+        return;
+      }
+      if (password != confirmPassword) {
+        _showAuthMessage('Password confirmation does not match.');
+        return;
+      }
+    }
+
     try {
       final user = context.read<UserProvider>();
-      await user.login(_emailController.text);
+      if (_mode == _AuthMode.login) {
+        await user.login(email: email, password: password);
+      } else {
+        await user.register(
+          displayName: displayName,
+          email: email,
+          password: password,
+        );
+      }
       final wallet = user.latestWallet;
       final pet = user.latestPet;
       if (wallet != null && mounted) {
@@ -121,14 +163,27 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Login failed: $error')));
+      _showAuthMessage(
+        '${_mode == _AuthMode.login ? 'Login' : 'Sign up'} failed: $error',
+      );
     }
+  }
+
+  void _showAuthMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showSocialComingSoon() {
+    _showAuthMessage('Social login will be added after email/password auth.');
   }
 
   @override
   Widget build(BuildContext context) {
+    final isRegister = _mode == _AuthMode.register;
+    final userState = context.watch<UserProvider>();
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -235,21 +290,43 @@ class _LoginScreenState extends State<LoginScreen>
                         child: Column(
                           children: [
                             Text(
-                              'Get Started!',
+                              isRegister ? 'Create Account' : 'Welcome Back',
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 24,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Enter your email to sign up for this app',
+                              isRegister
+                                  ? 'Sign up to start growing Kiki.'
+                                  : 'Log in with your email and password.',
                               style: AppTextStyles.body,
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 26),
+                            const SizedBox(height: 20),
+                            _AuthModeSwitch(
+                              mode: _mode,
+                              onChanged: (mode) => setState(() => _mode = mode),
+                            ),
+                            const SizedBox(height: 18),
+                            if (isRegister) ...[
+                              TextField(
+                                controller: _nameController,
+                                textInputAction: TextInputAction.next,
+                                decoration: const InputDecoration(
+                                  hintText: 'Your name',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                             TextField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
                               decoration: const InputDecoration(
                                 hintText: 'email@domain.com',
                                 contentPadding: EdgeInsets.symmetric(
@@ -258,10 +335,73 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              textInputAction: isRegister
+                                  ? TextInputAction.next
+                                  : TextInputAction.done,
+                              onSubmitted: (_) {
+                                if (!isRegister) _continue();
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Password',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (isRegister) ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _confirmPasswordController,
+                                obscureText: _obscureConfirmPassword,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => _continue(),
+                                decoration: InputDecoration(
+                                  hintText: 'Confirm password',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    onPressed: () => setState(
+                                      () => _obscureConfirmPassword =
+                                          !_obscureConfirmPassword,
+                                    ),
+                                    icon: Icon(
+                                      _obscureConfirmPassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: _continue,
-                              child: const Text('Continue'),
+                              onPressed: userState.isLoading ? null : _continue,
+                              child: userState.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(isRegister ? 'Sign up' : 'Log in'),
                             ),
                             const SizedBox(height: 28),
                             Row(
@@ -280,19 +420,19 @@ class _LoginScreenState extends State<LoginScreen>
                             _SocialButton(
                               icon: 'G',
                               label: 'Continue with Google',
-                              onPressed: _continue,
+                              onPressed: _showSocialComingSoon,
                             ),
                             const SizedBox(height: 10),
                             _SocialButton(
                               icon: '',
                               label: 'Continue with Apple',
-                              onPressed: _continue,
+                              onPressed: _showSocialComingSoon,
                             ),
                             const SizedBox(height: 10),
                             _SocialButton(
                               icon: 'f',
                               label: 'Continue with Facebook',
-                              onPressed: _continue,
+                              onPressed: _showSocialComingSoon,
                             ),
                             const SizedBox(height: 48),
                             Text.rich(
@@ -325,6 +465,74 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthModeSwitch extends StatelessWidget {
+  const _AuthModeSwitch({required this.mode, required this.onChanged});
+
+  final _AuthMode mode;
+  final ValueChanged<_AuthMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          _AuthModePill(
+            label: 'Log in',
+            selected: mode == _AuthMode.login,
+            onTap: () => onChanged(_AuthMode.login),
+          ),
+          _AuthModePill(
+            label: 'Sign up',
+            selected: mode == _AuthMode.register,
+            onTap: () => onChanged(_AuthMode.register),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthModePill extends StatelessWidget {
+  const _AuthModePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primaryBlue : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              color: selected ? Colors.white : AppColors.primaryBlue,
+            ),
           ),
         ),
       ),
