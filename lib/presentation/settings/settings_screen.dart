@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../data/native/focus_silence_service.dart';
 import '../../models/user_settings.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
@@ -16,13 +17,42 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
+  final _focusSilence = const FocusSilenceService();
+  bool _hasFocusSilenceAccess = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SettingsProvider>().load();
+      _refreshFocusSilenceAccess();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshFocusSilenceAccess();
+    }
+  }
+
+  Future<void> _refreshFocusSilenceAccess() async {
+    final hasAccess = await _focusSilence.hasNotificationPolicyAccess();
+    if (!mounted) return;
+    setState(() => _hasFocusSilenceAccess = hasAccess);
+  }
+
+  Future<void> _openFocusSilenceSettings() async {
+    await _focusSilence.openNotificationPolicySettings();
   }
 
   Future<void> _update(UserSettings settings) async {
@@ -34,6 +64,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Could not save settings.')));
     }
+  }
+
+  Future<void> _updateFocusSilence(bool enabled) async {
+    if (enabled) {
+      final hasAccess = await _focusSilence.hasNotificationPolicyAccess();
+      if (mounted) {
+        setState(() => _hasFocusSilenceAccess = hasAccess);
+      }
+      if (!hasAccess) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Allow Do Not Disturb access so ZenZoo can silence notifications during focus.',
+            ),
+          ),
+        );
+        await _focusSilence.openNotificationPolicySettings();
+      }
+    }
+    if (!mounted) return;
+    await _update(
+      context.read<SettingsProvider>().settings.copyWith(
+        silenceNotificationsDuringFocus: enabled,
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -76,7 +132,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         plan: subscription.displayName,
                       ),
                       const SizedBox(height: 16),
-                      _SettingsCard(settings: settings, onChanged: _update),
+                      _SettingsCard(
+                        settings: settings,
+                        hasFocusSilenceAccess: _hasFocusSilenceAccess,
+                        onChanged: _update,
+                        onFocusSilenceChanged: _updateFocusSilence,
+                        onOpenFocusSilenceSettings: _openFocusSilenceSettings,
+                      ),
                       const SizedBox(height: 16),
                       _InfoCard(
                         title: 'Runtime',
@@ -195,10 +257,19 @@ class _AccountCard extends StatelessWidget {
 }
 
 class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({required this.settings, required this.onChanged});
+  const _SettingsCard({
+    required this.settings,
+    required this.hasFocusSilenceAccess,
+    required this.onChanged,
+    required this.onFocusSilenceChanged,
+    required this.onOpenFocusSilenceSettings,
+  });
 
   final UserSettings settings;
+  final bool hasFocusSilenceAccess;
   final ValueChanged<UserSettings> onChanged;
+  final ValueChanged<bool> onFocusSilenceChanged;
+  final VoidCallback onOpenFocusSilenceSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -229,8 +300,71 @@ class _SettingsCard extends StatelessWidget {
             onChanged: (value) =>
                 onChanged(settings.copyWith(focusReminders: value)),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Silence notifications during focus'),
+            subtitle: const Text(
+              'Uses Android Do Not Disturb while focus is running',
+            ),
+            value: settings.silenceNotificationsDuringFocus,
+            onChanged: onFocusSilenceChanged,
+          ),
+          if (settings.silenceNotificationsDuringFocus) ...[
+            const Divider(height: 22),
+            _DndPermissionRow(
+              granted: hasFocusSilenceAccess,
+              onPressed: onOpenFocusSilenceSettings,
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _DndPermissionRow extends StatelessWidget {
+  const _DndPermissionRow({required this.granted, required this.onPressed});
+
+  final bool granted;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          granted ? Icons.check_circle : Icons.info_outline,
+          color: granted ? AppColors.success : AppColors.warning,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Do Not Disturb access',
+                style: AppTextStyles.label.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1D293D),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                granted
+                    ? 'ZenZoo can silence notifications while focus is running.'
+                    : 'Open Android settings and allow ZenZoo to control Do Not Disturb.',
+                style: AppTextStyles.muted,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton(
+          onPressed: granted ? null : onPressed,
+          child: Text(granted ? 'Granted' : 'Open'),
+        ),
+      ],
     );
   }
 }

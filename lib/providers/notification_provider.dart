@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/api/api_client.dart';
+import '../data/repositories/notification_repository.dart';
 import '../models/app_notification.dart';
 
 class NotificationProvider extends ChangeNotifier {
-  NotificationProvider(this._api);
+  NotificationProvider(this._repository);
 
-  final ApiClient _api;
+  final NotificationRepository _repository;
   final List<AppNotification> _notifications = [];
   bool _isLoading = false;
   String? _error;
@@ -21,12 +21,10 @@ class NotificationProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final response = await _api.get('/notifications') as List<dynamic>;
+      final notifications = await _repository.loadNotifications();
       _notifications
         ..clear()
-        ..addAll(
-          response.cast<Map<String, dynamic>>().map(AppNotification.fromJson),
-        );
+        ..addAll(notifications);
     } catch (error) {
       _error = error.toString();
     } finally {
@@ -36,7 +34,7 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   Future<void> markAllRead() async {
-    await _api.post('/notifications/mark-all-read');
+    await _repository.markAllRead();
     await load();
   }
 }

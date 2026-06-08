@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_text_styles.dart';
+import '../../providers/payment_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../routes/app_routes.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -24,15 +27,26 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _upgrade() async {
     try {
-      await context.read<SubscriptionProvider>().demoUpgrade();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Zen Pro demo activated for 30 days.')),
+      final productCode = _yearly ? 'zen_pro_yearly' : 'zen_pro_monthly';
+      final checkout = await context.read<PaymentProvider>().createVnpayPayment(
+        productCode,
       );
-    } catch (_) {
+      final launched = await launchUrl(
+        Uri.parse(checkout.paymentUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw StateError('Could not open VNPAY checkout.');
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushNamed(
+        AppRoutes.paymentResult,
+        arguments: {'orderId': checkout.orderId, 'status': 'pending'},
+      );
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not upgrade right now.')),
+        SnackBar(content: Text('Could not start VNPAY payment: $error')),
       );
     }
   }
@@ -40,6 +54,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SubscriptionProvider>();
+    final payment = context.watch<PaymentProvider>();
     final subscription = provider.subscription;
 
     return Scaffold(
@@ -68,7 +83,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 const SizedBox(height: 22),
                 _ZenProCard(
                   isCurrent: subscription.isPremium,
-                  isLoading: provider.isLoading,
+                  isLoading: provider.isLoading || payment.isLoading,
                   price: _yearly ? '279k VND' : '29k VND',
                   onUpgrade: _upgrade,
                 ),

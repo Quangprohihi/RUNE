@@ -1,4 +1,4 @@
-package com.example.rune
+package com.zenzoo.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -280,9 +280,9 @@ class FocusBlockService : Service() {
     }
 
     companion object {
-        const val ACTION_START = "com.example.rune.action.START_FOCUS_BLOCKING"
-        const val ACTION_STOP = "com.example.rune.action.STOP_FOCUS_BLOCKING"
-        const val ACTION_USER_LEFT = "com.example.rune.action.USER_LEFT_FOCUS_APP"
+        const val ACTION_START = "com.zenzoo.app.action.START_FOCUS_BLOCKING"
+        const val ACTION_STOP = "com.zenzoo.app.action.STOP_FOCUS_BLOCKING"
+        const val ACTION_USER_LEFT = "com.zenzoo.app.action.USER_LEFT_FOCUS_APP"
         const val EXTRA_BLOCKED_PACKAGES = "blocked_packages"
         const val EXTRA_BLOCKED_PACKAGE = "blocked_package"
 
@@ -294,3 +294,4 @@ class FocusBlockService : Service() {
         private const val USER_LEFT_GRACE_MS = 1200L
     }
 }
+

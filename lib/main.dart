@@ -4,7 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'data/api/api_client.dart';
+import 'data/repositories/activity_repository.dart';
+import 'data/repositories/auth_token_repository.dart';
 import 'data/repositories/focus_repository.dart';
+import 'data/repositories/notification_repository.dart';
+import 'data/repositories/payment_repository.dart';
 import 'data/repositories/pet_repository.dart';
 import 'data/repositories/shop_repository.dart';
 import 'data/repositories/streak_repository.dart';
@@ -19,6 +23,7 @@ import 'providers/achievement_provider.dart';
 import 'providers/analytics_provider.dart';
 import 'providers/daily_task_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/payment_provider.dart';
 import 'providers/pet_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shop_provider.dart';
@@ -30,14 +35,17 @@ import 'providers/user_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  final apiClient = ApiClient();
+  final tokenRepository = AuthTokenRepository();
+  final apiClient = ApiClient(tokenRepository: tokenRepository);
 
   runApp(
     MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: apiClient),
+        Provider<AuthTokenRepository>.value(value: tokenRepository),
         ChangeNotifierProvider(
-          create: (_) => UserProvider(UserRepository(prefs), apiClient),
+          create: (_) =>
+              UserProvider(UserRepository(prefs), tokenRepository, apiClient),
         ),
         ChangeNotifierProvider(
           create: (_) => TokenProvider(TokenRepository(prefs), apiClient),
@@ -59,12 +67,20 @@ Future<void> main() async {
           create: (_) => ShopProvider(ShopRepository(prefs), apiClient),
         ),
         ChangeNotifierProvider(create: (_) => DailyTaskProvider(apiClient)),
-        ChangeNotifierProvider(create: (_) => ActivityProvider(apiClient)),
+        ChangeNotifierProvider(
+          create: (_) => ActivityProvider(ActivityRepository(apiClient)),
+        ),
         ChangeNotifierProvider(create: (_) => AchievementProvider(apiClient)),
-        ChangeNotifierProvider(create: (_) => NotificationProvider(apiClient)),
+        ChangeNotifierProvider(
+          create: (_) =>
+              NotificationProvider(NotificationRepository(apiClient)),
+        ),
         ChangeNotifierProvider(create: (_) => SettingsProvider(apiClient)),
         ChangeNotifierProvider(create: (_) => AnalyticsProvider(apiClient)),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider(apiClient)),
+        ChangeNotifierProvider(
+          create: (_) => PaymentProvider(PaymentRepository(apiClient)),
+        ),
       ],
       child: const ZenZooApp(),
     ),

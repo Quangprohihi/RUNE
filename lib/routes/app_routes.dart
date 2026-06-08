@@ -8,6 +8,7 @@ import '../presentation/history/history_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/login/login_screen.dart';
 import '../presentation/notifications/notifications_screen.dart';
+import '../presentation/payment/payment_result_screen.dart';
 import '../presentation/pet/pet_profile_screen.dart';
 import '../presentation/premium/premium_screen.dart';
 import '../presentation/settings/settings_screen.dart';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String analytics = '/analytics';
   static const String premium = '/premium';
+  static const String paymentResult = '/payment-result';
   static const String appBlocking = '/app-blocking';
 
   static Map<String, WidgetBuilder> get routes => {
@@ -47,6 +49,25 @@ class AppRoutes {
     settings: (_) => const SettingsScreen(),
     analytics: (_) => const AnalyticsScreen(),
     premium: (_) => const PremiumScreen(),
+    paymentResult: (_) => const PaymentResultScreen(),
     appBlocking: (_) => const AppBlockingScreen(),
   };
+
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final uri = Uri.tryParse(settings.name ?? '');
+    if (uri == null) return null;
+
+    final isPaymentResult =
+        uri.path == paymentResult ||
+        (uri.scheme == 'zenzoo' && uri.host == 'payment-result');
+    if (!isPaymentResult) return null;
+
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (_) => PaymentResultScreen(
+        initialOrderId: uri.queryParameters['orderId'],
+        initialStatus: uri.queryParameters['status'],
+      ),
+    );
+  }
 }

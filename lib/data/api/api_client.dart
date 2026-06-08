@@ -2,10 +2,16 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../repositories/auth_token_repository.dart';
+
 class ApiClient {
-  ApiClient({String? baseUrl, http.Client? httpClient})
-    : baseUrl = baseUrl ?? _defaultBaseUrl,
-      _http = httpClient ?? http.Client();
+  ApiClient({
+    String? baseUrl,
+    http.Client? httpClient,
+    AuthTokenRepository? tokenRepository,
+  }) : baseUrl = baseUrl ?? _defaultBaseUrl,
+       _http = httpClient ?? http.Client(),
+       _tokenRepository = tokenRepository;
 
   static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -18,34 +24,98 @@ class ApiClient {
 
   final String baseUrl;
   final http.Client _http;
+  final AuthTokenRepository? _tokenRepository;
+  String? accessToken;
   String? userId;
 
-  Map<String, String> get _headers => {
-    'content-type': 'application/json',
-    if (userId != null && userId!.isNotEmpty) 'x-user-id': userId!,
-  };
+  Map<String, String> _headers({bool includeAuth = true}) {
+    final headers = <String, String>{'content-type': 'application/json'};
+    if (!includeAuth) return headers;
 
-  Future<dynamic> get(String path, {Map<String, String>? query}) async {
-    final response = await _http.get(_uri(path, query), headers: _headers);
+    if (accessToken != null && accessToken!.isNotEmpty) {
+      headers['authorization'] = 'Bearer $accessToken';
+    } else if (userId != null && userId!.isNotEmpty) {
+      headers['x-user-id'] = userId!;
+    }
+    return headers;
+  }
+
+  Future<dynamic> get(String path, {Map<String, String>? query}) {
+    return _send(() => _http.get(_uri(path, query), headers: _headers()));
+  }
+
+  Future<dynamic> post(String path, {Object? body}) {
+    return _send(
+      () => _http.post(
+        _uri(path),
+        headers: _headers(),
+        body: jsonEncode(body ?? const {}),
+      ),
+    );
+  }
+
+  Future<dynamic> patch(String path, {Object? body}) {
+    return _send(
+      () => _http.patch(
+        _uri(path),
+        headers: _headers(),
+        body: jsonEncode(body ?? const {}),
+      ),
+    );
+  }
+
+  Future<dynamic> _send(
+    Future<http.Response> Function() request, {
+    bool allowRefresh = true,
+  }) async {
+    var response = await request();
+    if (response.statusCode == 401 &&
+        allowRefresh &&
+        _tokenRepository != null) {
+      final refreshed = await _refreshAccessToken();
+      if (refreshed) {
+        response = await request();
+      }
+    }
     return _decode(response);
   }
 
-  Future<dynamic> post(String path, {Object? body}) async {
-    final response = await _http.post(
-      _uri(path),
-      headers: _headers,
-      body: jsonEncode(body ?? const {}),
-    );
-    return _decode(response);
-  }
+  Future<bool> _refreshAccessToken() async {
+    final repository = _tokenRepository;
+    if (repository == null) return false;
 
-  Future<dynamic> patch(String path, {Object? body}) async {
-    final response = await _http.patch(
-      _uri(path),
-      headers: _headers,
-      body: jsonEncode(body ?? const {}),
-    );
-    return _decode(response);
+    final refreshToken = await repository.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+
+    try {
+      final response = await _http.post(
+        _uri('/auth/refresh'),
+        headers: const {'content-type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return false;
+      }
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final nextAccess = body['accessToken'] as String?;
+      final nextRefresh = body['refreshToken'] as String?;
+      if (nextAccess == null ||
+          nextRefresh == null ||
+          nextAccess.isEmpty ||
+          nextRefresh.isEmpty) {
+        return false;
+      }
+
+      accessToken = nextAccess;
+      await repository.saveTokens(
+        accessToken: nextAccess,
+        refreshToken: nextRefresh,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Uri _uri(String path, [Map<String, String>? query]) {

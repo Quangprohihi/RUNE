@@ -6,17 +6,24 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../data/native/focus_silence_service.dart';
 import '../../models/pet.dart';
 import '../../models/focus_summary.dart';
 import '../../models/wallet.dart';
 import '../../providers/app_block_provider.dart';
 import '../../providers/focus_provider.dart';
 import '../../providers/pet_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/streak_provider.dart';
 import '../../providers/token_provider.dart';
 import '../../routes/app_routes.dart';
 import '../widgets/floating_particles.dart';
 import '../widgets/pet_animated_widget.dart';
+import 'widgets/focus_claim_panel.dart';
+import 'widgets/focus_partner_panel.dart';
+import 'widgets/focus_session_summary.dart';
+import 'widgets/focus_silence_indicator.dart';
+import 'widgets/focus_timer_circle.dart';
 
 // ---------------------------------------------------------------------------
 // Motivational phrases for Kiki
@@ -52,6 +59,8 @@ class FocusScreen extends StatefulWidget {
 
 class _FocusScreenState extends State<FocusScreen>
     with TickerProviderStateMixin {
+  final _focusSilence = const FocusSilenceService();
+
   // Phase color tween controller
   late AnimationController _phaseColorController;
   late Animation<Color?> _ringColor;
@@ -136,6 +145,7 @@ class _FocusScreenState extends State<FocusScreen>
 
       case FocusPhase.done:
         unawaited(context.read<AppBlockProvider>().stopBlocking());
+        unawaited(_focusSilence.disableFocusSilence());
         _phaseColorController.reverse();
         setState(() {
           _currentPhrase = _donePhrases[_phraseIndex % _donePhrases.length];
@@ -145,6 +155,7 @@ class _FocusScreenState extends State<FocusScreen>
 
       case FocusPhase.idle:
         unawaited(context.read<AppBlockProvider>().stopBlocking());
+        unawaited(_focusSilence.disableFocusSilence());
         setState(() {
           _currentPhrase = _focusPhrases[0];
           _petState = PetAnimationState.idle;
@@ -164,6 +175,7 @@ class _FocusScreenState extends State<FocusScreen>
   Widget build(BuildContext context) {
     final focus = context.watch<FocusProvider>();
     final pet = context.watch<PetProvider>().pet;
+    final settings = context.watch<SettingsProvider>().settings;
 
     // React to phase changes
     _schedulePhaseChange(focus.phase);
@@ -212,7 +224,12 @@ class _FocusScreenState extends State<FocusScreen>
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      _FocusSessionSummary(focus: focus),
+                      FocusSessionSummary(focus: focus),
+                      if (settings.silenceNotificationsDuringFocus &&
+                          focus.isRunning) ...[
+                        const SizedBox(height: 10),
+                        const FocusSilenceIndicator(),
+                      ],
                       const SizedBox(height: 18),
 
                       // Animated timer circle with glow
@@ -239,7 +256,7 @@ class _FocusScreenState extends State<FocusScreen>
                             ),
                           );
                         },
-                        child: _TimerCircle(
+                        child: FocusTimerCircle(
                           progress: focus.progress,
                           text: focus.phase == FocusPhase.idle
                               ? AppConstants.useTestFocusDuration
@@ -259,7 +276,7 @@ class _FocusScreenState extends State<FocusScreen>
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
                         children: [
-                          _PartnerPanel(
+                          FocusPartnerPanel(
                             petName: pet.name,
                             imagePath: pet.skinAssetPath,
                             phrase: _currentPhrase,
@@ -277,7 +294,7 @@ class _FocusScreenState extends State<FocusScreen>
                       const SizedBox(height: 24),
 
                       // Claim panel
-                      _ClaimPanel(
+                      FocusClaimPanel(
                         canClaim: isDone,
                         rewardTokens:
                             AppConstants.rewardTokensPerBlock +
@@ -334,7 +351,7 @@ class _FocusScreenState extends State<FocusScreen>
     } else if (!isDone(focus)) {
       return ElevatedButton(
         key: const ValueKey('start'),
-        onPressed: () => focus.start(label: 'Study'),
+        onPressed: () => _startFocusFromScreen(focus),
         child: Text(
           AppConstants.useTestFocusDuration
               ? 'Start ${AppConstants.testFocusSeconds}s test focus'
@@ -347,9 +364,40 @@ class _FocusScreenState extends State<FocusScreen>
 
   bool isDone(FocusProvider focus) => focus.phase == FocusPhase.done;
 
+  Future<void> _startFocusFromScreen(FocusProvider focus) async {
+    final settingsProvider = context.read<SettingsProvider>();
+    if (settingsProvider.profile == null) {
+      await settingsProvider.load();
+    }
+    if (settingsProvider.settings.silenceNotificationsDuringFocus) {
+      final hasAccess = await _focusSilence.hasNotificationPolicyAccess();
+      if (!hasAccess) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Grant Do Not Disturb access, then start focus again.',
+            ),
+          ),
+        );
+        await _focusSilence.openNotificationPolicySettings();
+        return;
+      }
+      final enabled = await _focusSilence.enableFocusSilence();
+      if (!enabled && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not silence notifications.')),
+        );
+      }
+    }
+    focus.start(label: 'Study');
+  }
+
   Future<void> _cancelFocus(FocusProvider focus) async {
+    final appBlock = context.read<AppBlockProvider>();
     focus.cancel();
-    await context.read<AppBlockProvider>().stopBlocking();
+    await _focusSilence.disableFocusSilence();
+    await appBlock.stopBlocking();
   }
 
   Future<void> _claimReward(BuildContext context) async {
@@ -360,6 +408,7 @@ class _FocusScreenState extends State<FocusScreen>
     final appBlock = context.read<AppBlockProvider>();
 
     final result = await focus.claimReward();
+    await _focusSilence.disableFocusSilence();
     await appBlock.stopBlocking();
     final walletJson = result?['wallet'] as Map<String, dynamic>?;
     final petJson = result?['pet'] as Map<String, dynamic>?;
@@ -396,338 +445,5 @@ class _FocusScreenState extends State<FocusScreen>
         ),
       );
     }
-  }
-}
-
-class _FocusSessionSummary extends StatelessWidget {
-  const _FocusSessionSummary({required this.focus});
-
-  final FocusProvider focus;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE0F2FE)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.local_fire_department, color: AppColors.warning),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              focus.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.label.copyWith(
-                color: const Color(0xFF1D293D),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            focus.pomodoroLabel,
-            style: AppTextStyles.muted.copyWith(
-              color: AppColors.primaryBlue,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Partner panel – animated Kiki + dynamic phrase
-// ---------------------------------------------------------------------------
-
-class _PartnerPanel extends StatelessWidget {
-  const _PartnerPanel({
-    required this.petName,
-    required this.imagePath,
-    required this.phrase,
-    required this.petState,
-  });
-
-  final String petName;
-  final String imagePath;
-  final String phrase;
-  final PetAnimationState petState;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Card background
-          Positioned(
-            left: 32,
-            right: 0,
-            top: 14,
-            child: Container(
-              height: 60,
-              padding: const EdgeInsets.only(left: 60, right: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.accentSky),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Partner',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 20,
-                      color: AppColors.accentSky,
-                    ),
-                  ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: Text(
-                      phrase,
-                      key: ValueKey(phrase),
-                      style: AppTextStyles.muted.copyWith(
-                        color: AppColors.primaryBlue,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Animated Kiki avatar
-          Positioned(
-            left: 0,
-            top: 0,
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.white,
-              child: PetAnimatedWidget(
-                imagePath: imagePath,
-                width: 72,
-                state: petState,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Timer circle with animated progress and colour transition
-// ---------------------------------------------------------------------------
-
-class _TimerCircle extends StatelessWidget {
-  const _TimerCircle({
-    required this.progress,
-    required this.text,
-    required this.subtitle,
-    required this.ringColorAnim,
-  });
-
-  final double progress;
-  final String text;
-  final String subtitle;
-  final Animation<Color?> ringColorAnim;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 200,
-      width: 200,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Animated progress ring
-          SizedBox(
-            height: 200,
-            width: 200,
-            child: AnimatedBuilder(
-              animation: ringColorAnim,
-              builder: (context, _) {
-                return TweenAnimationBuilder<double>(
-                  tween: Tween(
-                    begin: 0,
-                    end: progress <= 0 ? 0.78 : progress.clamp(0.0, 1.0),
-                  ),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeOut,
-                  builder: (context, value, _) {
-                    return CircularProgressIndicator(
-                      value: value,
-                      strokeWidth: 16,
-                      backgroundColor: Colors.white,
-                      color: ringColorAnim.value ?? const Color(0xFF41B8D5),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Inner circle with text
-          Container(
-            height: 152,
-            width: 152,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 120,
-                  height: 64,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    transitionBuilder: (child, anim) => ScaleTransition(
-                      scale: anim,
-                      child: FadeTransition(opacity: anim, child: child),
-                    ),
-                    child: FittedBox(
-                      key: ValueKey(text),
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        text,
-                        maxLines: 1,
-                        softWrap: false,
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: text.contains(':') ? 42 : 54,
-                          height: 1,
-                          color: const Color(0xFF6CE5E8),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTextStyles.title.copyWith(
-                    color: const Color(0xFF41B8D5),
-                    fontSize: 22,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Claim panel
-// ---------------------------------------------------------------------------
-
-class _ClaimPanel extends StatelessWidget {
-  const _ClaimPanel({
-    required this.canClaim,
-    required this.rewardTokens,
-    required this.rewardExp,
-    required this.onClaim,
-  });
-
-  final bool canClaim;
-  final int rewardTokens;
-  final int rewardExp;
-  final VoidCallback onClaim;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Transform.translate(
-          offset: const Offset(16, 8),
-          child: Text(
-            'Claim',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 24,
-              color: AppColors.accentSky,
-            ),
-          ),
-        ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 20, 18, 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(
-              color: canClaim ? AppColors.success : AppColors.primaryBlue,
-              width: canClaim ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: canClaim
-                ? const [
-                    BoxShadow(
-                      color: Color(0x3342A779),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    '+$rewardTokens ⚡',
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primaryBlue,
-                    ),
-                  ),
-                  Text(
-                    '$rewardExp EXP',
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primaryBlue,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'after finish',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.primaryBlue,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AnimatedScale(
-                scale: canClaim ? 1.04 : 1.0,
-                duration: const Duration(milliseconds: 300),
-                child: ElevatedButton(
-                  onPressed: canClaim ? onClaim : null,
-                  child: Text(
-                    canClaim ? 'Claim reward 🎉' : 'Finish focus to claim',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }

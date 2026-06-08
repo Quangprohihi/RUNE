@@ -1,7 +1,8 @@
-package com.example.rune
+package com.zenzoo.app
 
 import android.Manifest
 import android.app.AppOpsManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -50,6 +51,24 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            FOCUS_SILENCE_CHANNEL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasNotificationPolicyAccess" -> result.success(hasNotificationPolicyAccess())
+                "openNotificationPolicySettings" -> {
+                    openSettings(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+                    result.success(null)
+                }
+                "enableFocusSilence" -> result.success(enableFocusSilence())
+                "disableFocusSilence" -> {
+                    disableFocusSilence()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun hasUsageAccess(): Boolean {
@@ -77,6 +96,13 @@ class MainActivity : FlutterActivity() {
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasNotificationPolicyAccess(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return notificationManager.isNotificationPolicyAccessGranted
     }
 
     private fun hasAccessibilityPermission(): Boolean {
@@ -118,6 +144,42 @@ class MainActivity : FlutterActivity() {
         ContextCompat.startForegroundService(this, intent)
     }
 
+    private fun enableFocusSilence(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !hasNotificationPolicyAccess()) {
+            return false
+        }
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val prefs = getSharedPreferences(FOCUS_SILENCE_PREFS, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_SILENCE_ACTIVE, false)) {
+            prefs.edit()
+                .putBoolean(KEY_SILENCE_ACTIVE, true)
+                .putInt(KEY_PREVIOUS_FILTER, notificationManager.currentInterruptionFilter)
+                .apply()
+        }
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+        return true
+    }
+
+    private fun disableFocusSilence() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !hasNotificationPolicyAccess()) {
+            return
+        }
+        val prefs = getSharedPreferences(FOCUS_SILENCE_PREFS, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_SILENCE_ACTIVE, false)) return
+        val previousFilter = prefs.getInt(
+            KEY_PREVIOUS_FILTER,
+            NotificationManager.INTERRUPTION_FILTER_ALL
+        )
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.setInterruptionFilter(previousFilter)
+        prefs.edit()
+            .putBoolean(KEY_SILENCE_ACTIVE, false)
+            .remove(KEY_PREVIOUS_FILTER)
+            .apply()
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         try {
@@ -148,6 +210,11 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val APP_BLOCK_CHANNEL = "zenzoo/app_block"
+        private const val FOCUS_SILENCE_CHANNEL = "zenzoo/focus_silence"
+        private const val FOCUS_SILENCE_PREFS = "zenzoo_focus_silence"
+        private const val KEY_SILENCE_ACTIVE = "silence_active"
+        private const val KEY_PREVIOUS_FILTER = "previous_filter"
         private const val NOTIFICATION_PERMISSION_REQUEST = 4207
     }
 }
+

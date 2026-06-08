@@ -176,8 +176,28 @@ class _LoginScreenState extends State<LoginScreen>
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _continueWithGoogle() async {
+    try {
+      final user = context.read<UserProvider>();
+      await user.loginWithGoogle();
+      final wallet = user.latestWallet;
+      final pet = user.latestPet;
+      if (wallet != null && mounted) {
+        context.read<TokenProvider>().syncWallet(wallet);
+      }
+      if (pet != null && mounted) context.read<PetProvider>().syncPet(pet);
+      if (mounted) {
+        context.read<StreakProvider>().syncFromJson(user.latestStreak);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      _showAuthMessage('Google login failed: $error');
+    }
+  }
+
   void _showSocialComingSoon() {
-    _showAuthMessage('Social login will be added after email/password auth.');
+    _showAuthMessage('This social login will be added later.');
   }
 
   @override
@@ -418,19 +438,25 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             const SizedBox(height: 28),
                             _SocialButton(
-                              icon: 'G',
+                              icon: const _GoogleLogo(),
                               label: 'Continue with Google',
-                              onPressed: _showSocialComingSoon,
+                              onPressed: userState.isLoading
+                                  ? null
+                                  : _continueWithGoogle,
                             ),
                             const SizedBox(height: 10),
                             _SocialButton(
-                              icon: '',
+                              icon: const Icon(
+                                Icons.apple,
+                                size: 22,
+                                color: Colors.black,
+                              ),
                               label: 'Continue with Apple',
                               onPressed: _showSocialComingSoon,
                             ),
                             const SizedBox(height: 10),
                             _SocialButton(
-                              icon: 'f',
+                              icon: const _FacebookLogo(),
                               label: 'Continue with Facebook',
                               onPressed: _showSocialComingSoon,
                             ),
@@ -547,29 +573,87 @@ class _SocialButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  final String icon;
+  final Widget icon;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 40,
+      height: 46,
       width: double.infinity,
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.surfaceLight,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 0,
+          backgroundColor: const Color(0xFFF2F4F7),
+          foregroundColor: const Color(0xFF202124),
+          disabledBackgroundColor: const Color(0xFFE8EAED),
+          disabledForegroundColor: const Color(0xFF8A8F98),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(icon, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(width: 10),
-            Text(label),
+            SizedBox(width: 24, height: 24, child: Center(child: icon)),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: AppTextStyles.label.copyWith(
+                color: const Color(0xFF202124),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: const TextSpan(
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Arial',
+        ),
+        children: [
+          TextSpan(text: 'G', style: TextStyle(color: Color(0xFF4285F4))),
+        ],
+      ),
+    );
+  }
+}
+
+class _FacebookLogo extends StatelessWidget {
+  const _FacebookLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1877F2),
+        shape: BoxShape.circle,
+      ),
+      child: const Text(
+        'f',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          height: 1,
+          fontWeight: FontWeight.w800,
+          fontFamily: 'Arial',
         ),
       ),
     );

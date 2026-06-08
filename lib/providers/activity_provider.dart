@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/api/api_client.dart';
+import '../data/repositories/activity_repository.dart';
 import '../models/activity_event.dart';
 
 class ActivityProvider extends ChangeNotifier {
-  ActivityProvider(this._api);
+  ActivityProvider(this._repository);
 
-  final ApiClient _api;
+  final ActivityRepository _repository;
   final List<ActivityEvent> _events = [];
   final List<FocusHistorySession> _focusSessions = [];
   bool _isLoading = false;
@@ -40,22 +40,13 @@ class ActivityProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final response =
-          await _api.get('/activity-events') as Map<String, dynamic>;
+      final history = await _repository.loadHistory();
       _events
         ..clear()
-        ..addAll(
-          (response['events'] as List<dynamic>? ?? const [])
-              .cast<Map<String, dynamic>>()
-              .map(ActivityEvent.fromJson),
-        );
+        ..addAll(history.events);
       _focusSessions
         ..clear()
-        ..addAll(
-          (response['focusSessions'] as List<dynamic>? ?? const [])
-              .cast<Map<String, dynamic>>()
-              .map(FocusHistorySession.fromJson),
-        );
+        ..addAll(history.focusSessions);
     } catch (error) {
       _error = error.toString();
     } finally {

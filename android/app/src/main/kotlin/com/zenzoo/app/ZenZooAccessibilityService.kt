@@ -1,4 +1,4 @@
-package com.example.rune
+package com.zenzoo.app
 
 import android.accessibilityservice.AccessibilityService
 import android.app.ActivityOptions
@@ -89,3 +89,4 @@ class ZenZooAccessibilityService : AccessibilityService() {
         private const val RELAUNCH_THROTTLE_MS = 1000L
     }
 }
+

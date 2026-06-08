@@ -1,4 +1,4 @@
-package com.example.rune
+package com.zenzoo.app
 
 import android.content.Context
 
@@ -62,3 +62,4 @@ object AppBlockState {
         return packageName == homePackage || packageName.contains("launcher", ignoreCase = true)
     }
 }
+

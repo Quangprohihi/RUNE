@@ -30,16 +30,34 @@ model User {
   notifications      Notification[]
   settings           UserSettings?
   subscription       Subscription?
+  refreshTokens      RefreshToken[]
+  paymentOrders      PaymentOrder[]
 
   @@map("users")
 }
 
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
 model UserSettings {
-  userId           String   @id @map("user_id") @db.Uuid
-  soundEnabled     Boolean  @default(true) @map("sound_enabled")
-  vibrationEnabled Boolean  @default(true) @map("vibration_enabled")
-  focusReminders   Boolean  @default(true) @map("focus_reminders")
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userId                          String   @id @map("user_id") @db.Uuid
+  soundEnabled                    Boolean  @default(true) @map("sound_enabled")
+  vibrationEnabled                Boolean  @default(true) @map("vibration_enabled")
+  focusReminders                  Boolean  @default(true) @map("focus_reminders")
+  silenceNotificationsDuringFocus Boolean  @default(false) @map("silence_notifications_during_focus")
+  updatedAt                       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -56,6 +74,35 @@ model Subscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
+}
+
+model PaymentOrder {
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  provider             String    @default("vnpay")
+  productType          String    @map("product_type")
+  productCode          String    @map("product_code")
+  amountVnd            Int       @map("amount_vnd")
+  currency             String    @default("VND")
+  status               String    @default("pending")
+  vnpTxnRef            String    @unique @map("vnp_txn_ref")
+  vnpTransactionNo     String?   @map("vnp_transaction_no")
+  vnpResponseCode      String?   @map("vnp_response_code")
+  vnpTransactionStatus String?   @map("vnp_transaction_status")
+  bankCode             String?   @map("bank_code")
+  payDate              String?   @map("pay_date")
+  rawReturnJson        Json?     @map("raw_return_json")
+  rawIpnJson           Json?     @map("raw_ipn_json")
+  paidAt               DateTime? @map("paid_at") @db.Timestamptz(6)
+  failedAt             DateTime? @map("failed_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("payment_orders")
 }
 
 model Pet {

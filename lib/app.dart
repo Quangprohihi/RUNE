@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
+import 'presentation/home/home_screen.dart';
+import 'presentation/login/login_screen.dart';
 import 'providers/user_provider.dart';
 import 'routes/app_routes.dart';
 
@@ -10,14 +12,23 @@ class ZenZooApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasLoggedIn = context.watch<UserProvider>().hasLoggedIn;
+    final user = context.watch<UserProvider>();
+
+    if (user.isRestoringSession) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ZenZoo',
       theme: AppTheme.light,
-      initialRoute: hasLoggedIn ? AppRoutes.home : AppRoutes.login,
+      home: user.hasLoggedIn ? const HomeScreen() : const LoginScreen(),
       routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }
