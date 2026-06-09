@@ -28,6 +28,7 @@ class AppBlockProvider extends ChangeNotifier {
   bool _hasAccessibilityPermission = false;
   bool _isBlockingActive = false;
   bool _isLoading = false;
+  int _blockedAttempts = 0;
   String? _error;
 
   Set<String> get blockedPackages => Set.unmodifiable(_blockedPackages);
@@ -42,6 +43,7 @@ class AppBlockProvider extends ChangeNotifier {
   bool get canStartBlocking => _blockingEnabled && hasRequiredPermissions;
   bool get isBlockingActive => _isBlockingActive;
   bool get isLoading => _isLoading;
+  int get blockedAttempts => _blockedAttempts;
   String? get error => _error;
 
   bool isBlocked(String packageName) => _blockedPackages.contains(packageName);
@@ -143,6 +145,20 @@ class AppBlockProvider extends ChangeNotifier {
     } finally {
       _isBlockingActive = false;
       notifyListeners();
+    }
+  }
+
+  /// Poll how many times the Focus Guard caught the user opening a blocked app
+  /// during the running session, so the focus screen can surface it live.
+  Future<void> refreshBlockedAttempts() async {
+    try {
+      final count = await _channel.getBlockCount();
+      if (count != _blockedAttempts) {
+        _blockedAttempts = count;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Best-effort: counter stays at its last value if the channel fails.
     }
   }
 }

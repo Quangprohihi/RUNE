@@ -51,4 +51,16 @@ class AppBlockChannel {
     if (!_isAndroid) return;
     await _channel.invokeMethod<void>('stopBlocking');
   }
+
+  /// Number of times the Focus Guard caught the user opening a blocked app
+  /// during the current session. Reset when a new session starts.
+  Future<int> getBlockCount() async {
+    if (!_isAndroid) return 0;
+    return await _channel.invokeMethod<int>('getBlockCount') ?? 0;
+  }
+
+  Future<void> resetBlockCount() async {
+    if (!_isAndroid) return;
+    await _channel.invokeMethod<void>('resetBlockCount');
+  }
 }

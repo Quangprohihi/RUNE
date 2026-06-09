@@ -15,3 +15,12 @@ export const focusPlanAnalyzeSchema = z.object({
   selectedMinutes: z.number().int().positive().optional(),
   selectedTask: z.string().optional(),
 });
+
+export const focusRecapSchema = z.object({
+  label: z.string().trim().default('Focus'),
+  minutes: z.number().int().nonnegative().default(0),
+  currentStreak: z.number().int().nonnegative().default(0),
+  todayFocusMinutes: z.number().int().nonnegative().default(0),
+  dailyGoalMinutes: z.number().int().positive().default(60),
+  dailyGoalCompleted: z.boolean().default(false),
+});

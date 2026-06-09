@@ -111,7 +111,25 @@ class FocusBlockService : Service() {
         if (foregroundPackage == packageName || !blockedPackages.contains(foregroundPackage)) {
             return
         }
+        recordBlockedAttempt(foregroundPackage)
         relaunchZenZooBurst(foregroundPackage)
+    }
+
+    /** Count a distinct "user tried to open a blocked app" event so the UI can
+     *  show "ZenZoo blocked N distractions" during the session. We dedupe by the
+     *  same throttle window used for relaunch so a single attempt isn't counted
+     *  many times by the 0.5s poll. */
+    private fun recordBlockedAttempt(blockedPackage: String) {
+        val now = System.currentTimeMillis()
+        if (
+            blockedPackage == lastRelaunchedPackage &&
+            now - lastRelaunchAt < RELAUNCH_THROTTLE_MS
+        ) {
+            return
+        }
+        val prefs = getSharedPreferences(BLOCK_STATS_PREFS, Context.MODE_PRIVATE)
+        val count = prefs.getInt(KEY_BLOCK_COUNT, 0) + 1
+        prefs.edit().putInt(KEY_BLOCK_COUNT, count).apply()
     }
 
     private fun scheduleUserLeftCheck() {
@@ -285,6 +303,9 @@ class FocusBlockService : Service() {
         const val ACTION_USER_LEFT = "com.zenzoo.app.action.USER_LEFT_FOCUS_APP"
         const val EXTRA_BLOCKED_PACKAGES = "blocked_packages"
         const val EXTRA_BLOCKED_PACKAGE = "blocked_package"
+
+        const val BLOCK_STATS_PREFS = "zenzoo_block_stats"
+        const val KEY_BLOCK_COUNT = "block_count"
 
         private const val CHANNEL_ID = "zenzoo_focus_guard"
         private const val NOTIFICATION_ID = 2108

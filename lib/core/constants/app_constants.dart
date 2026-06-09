@@ -10,7 +10,10 @@ class AppConstants {
   static const int streakSoftDrop = 2;
   static const int dailyGoalMinutes = 60;
 
-  static const bool useTestFocusDuration = true;
+  // Set to true ONLY for local testing — makes every focus/break run for
+  // `testFocusSeconds` (10s) instead of the real minutes. Must stay false for
+  // real users / demos.
+  static const bool useTestFocusDuration = false;
 
   static int get focusDurationSeconds {
     return useTestFocusDuration ? testFocusSeconds : focusMinutes * 60;

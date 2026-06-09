@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../data/api/api_client.dart';
 import '../../models/focus_summary.dart';
 import '../../routes/app_routes.dart';
 
@@ -42,6 +44,8 @@ class FocusSummaryScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _HeroCard(summary: summary),
+                const SizedBox(height: 16),
+                _KikiRecapCard(summary: summary),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -299,6 +303,162 @@ class _DailyProgressCard extends StatelessWidget {
           Text(
             '${summary.todayFocusMinutes} / ${summary.dailyGoalMinutes} min focused · $subtitle',
             style: AppTextStyles.muted,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Kiki says" — an AI-generated recap (praise + next-session suggestion)
+/// fetched from the backend after a session. Falls back to a friendly static
+/// message if the request fails, so the card always feels alive and never
+/// shows a raw error.
+class _KikiRecapCard extends StatefulWidget {
+  const _KikiRecapCard({required this.summary});
+
+  final FocusSummary summary;
+
+  @override
+  State<_KikiRecapCard> createState() => _KikiRecapCardState();
+}
+
+class _KikiRecapCardState extends State<_KikiRecapCard> {
+  bool _loading = true;
+  String _praise = '';
+  String _suggestion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadRecap());
+  }
+
+  Future<void> _loadRecap() async {
+    final s = widget.summary;
+    try {
+      final response =
+          await context.read<ApiClient>().post(
+                '/focus-plans/recap',
+                body: {
+                  'label': s.label,
+                  'minutes': s.plannedMinutes,
+                  'currentStreak': s.currentStreak,
+                  'todayFocusMinutes': s.todayFocusMinutes,
+                  'dailyGoalMinutes': s.dailyGoalMinutes,
+                  'dailyGoalCompleted': s.dailyGoalCompleted,
+                },
+              )
+              as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _praise = (response['praise'] as String?)?.trim() ?? '';
+        _suggestion = (response['suggestion'] as String?)?.trim() ?? '';
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _praise = 'Great focus session! Kiki is proud of you. 🎉';
+        _suggestion =
+            'Next time, pick one clear topic before the timer starts.';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEAF7FF), Color(0xFFF3FBFF)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFB9E2F2)),
+        boxShadow: AppShadows.card,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.white,
+            backgroundImage: AssetImage(widget.summary.pet.skinAssetPath),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Kiki says',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.primaryBlue,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.auto_awesome,
+                      size: 15,
+                      color: AppColors.accentSky,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_loading)
+                  Row(
+                    children: [
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Kiki is thinking…',
+                        style: AppTextStyles.muted.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  Text(
+                    _praise,
+                    style: AppTextStyles.body.copyWith(
+                      color: const Color(0xFF1D293D),
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (_suggestion.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.tips_and_updates_outlined,
+                          size: 15,
+                          color: AppColors.success,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _suggestion,
+                            style: AppTextStyles.muted.copyWith(height: 1.35),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ],
+            ),
           ),
         ],
       ),

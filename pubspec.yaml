@@ -42,6 +42,7 @@ dependencies:
   google_sign_in: ^6.3.0
   flutter_secure_storage: ^9.2.4
   url_launcher: ^6.3.2
+  screen_brightness: ^2.1.9
 
 dev_dependencies:
   flutter_test:

@@ -58,17 +58,39 @@ class FocusClaimPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text(
-                    '+$rewardTokens ?',
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primaryBlue,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.emoji_events,
+                        color: AppColors.warning,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '+$rewardTokens',
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '$rewardExp EXP',
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primaryBlue,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: AppColors.success,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$rewardExp EXP',
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -87,7 +109,7 @@ class FocusClaimPanel extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: canClaim ? onClaim : null,
                   child: Text(
-                    canClaim ? 'Claim reward ??' : 'Finish focus to claim',
+                    canClaim ? 'Claim reward' : 'Finish focus to claim',
                   ),
                 ),
               ),

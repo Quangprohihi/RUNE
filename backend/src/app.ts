@@ -20,8 +20,14 @@ import {
 import {
   completeFocusSchema,
   focusPlanAnalyzeSchema,
+  focusRecapSchema,
   startFocusSchema,
 } from './modules/focus/focus.schemas';
+import {
+  buildFocusPlanWithAI,
+  buildFocusRecapWithAI,
+  isAiPlanEnabled,
+} from './modules/focus/focus.ai';
 import { petActionSchema, selectPetSkinSchema } from './modules/pet/pet.schemas';
 import { settingsSchema } from './modules/settings/settings.schemas';
 import { registerActivityRoutes } from './routes/activity.routes';
@@ -380,6 +386,21 @@ function buildFocusPlan(goal: string, selectedMinutes?: number, selectedTask?: s
     steps,
     warnings,
   };
+}
+
+function buildFocusRecapFallback(input: {
+  label: string;
+  minutes: number;
+  currentStreak: number;
+  dailyGoalCompleted: boolean;
+}) {
+  const praise = input.dailyGoalCompleted
+    ? `Daily goal complete after ${input.minutes} min on ${input.label}! Kiki is so proud. 🎉`
+    : `Nice ${input.minutes}-min session on ${input.label}! Kiki cheered the whole time. 🦊`;
+  const suggestion = input.currentStreak >= 2
+    ? `Keep your ${input.currentStreak}-day streak alive — line up one clear task for tomorrow.`
+    : 'Next time, pick one specific topic before the timer starts to stay laser-focused.';
+  return { praise, suggestion };
 }
 
 async function createDefaultsForUser(userId: string) {
@@ -1003,7 +1024,47 @@ app.post('/focus-plans/analyze', async (req, res, next) => {
   try {
     requireUser(req);
     const body = focusPlanAnalyzeSchema.parse(req.body);
+
+    // Prefer the AI plan when an API key is configured; on any failure
+    // (no key, timeout, bad JSON, rate limit) fall back to the rule-based
+    // plan so the feature always returns something usable.
+    if (isAiPlanEnabled()) {
+      try {
+        const aiPlan = await buildFocusPlanWithAI(
+          body.goal,
+          body.selectedMinutes,
+          body.selectedTask,
+        );
+        res.json(aiPlan);
+        return;
+      } catch (aiError) {
+        console.warn('[focus-plans/analyze] AI plan failed, using rule-based fallback:', aiError);
+      }
+    }
+
     res.json(buildFocusPlan(body.goal, body.selectedMinutes, body.selectedTask));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/focus-plans/recap', async (req, res, next) => {
+  try {
+    requireUser(req);
+    const body = focusRecapSchema.parse(req.body);
+
+    if (isAiPlanEnabled()) {
+      try {
+        const recap = await buildFocusRecapWithAI(body);
+        res.json(recap);
+        return;
+      } catch (aiError) {
+        console.warn('[focus-plans/recap] AI recap failed, using static fallback:', aiError);
+      }
+    }
+
+    // Static fallback keeps the screen populated when AI is off/unavailable.
+    res.json(buildFocusRecapFallback(body));
   } catch (error) {
     next(error);
   }

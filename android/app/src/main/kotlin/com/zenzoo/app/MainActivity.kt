@@ -39,6 +39,7 @@ class MainActivity : FlutterActivity() {
                 }
                 "startBlocking" -> {
                     val packages = call.argument<List<String>>("packages").orEmpty()
+                    resetBlockCount()
                     AppBlockState.start(this, packages)
                     startBlocking(packages)
                     result.success(null)
@@ -46,6 +47,11 @@ class MainActivity : FlutterActivity() {
                 "stopBlocking" -> {
                     AppBlockState.stop(this)
                     stopService(Intent(this, FocusBlockService::class.java))
+                    result.success(null)
+                }
+                "getBlockCount" -> result.success(getBlockCount())
+                "resetBlockCount" -> {
+                    resetBlockCount()
                     result.success(null)
                 }
                 else -> result.notImplemented()
@@ -134,6 +140,20 @@ class MainActivity : FlutterActivity() {
             arrayOf(Manifest.permission.POST_NOTIFICATIONS),
             NOTIFICATION_PERMISSION_REQUEST
         )
+    }
+
+    private fun getBlockCount(): Int {
+        return getSharedPreferences(
+            FocusBlockService.BLOCK_STATS_PREFS,
+            Context.MODE_PRIVATE
+        ).getInt(FocusBlockService.KEY_BLOCK_COUNT, 0)
+    }
+
+    private fun resetBlockCount() {
+        getSharedPreferences(FocusBlockService.BLOCK_STATS_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(FocusBlockService.KEY_BLOCK_COUNT, 0)
+            .apply()
     }
 
     private fun startBlocking(packages: List<String>) {
