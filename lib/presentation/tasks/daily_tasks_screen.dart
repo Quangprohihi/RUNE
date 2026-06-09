@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/reward_celebration.dart';
 import '../../models/daily_task.dart';
 import '../../providers/daily_task_provider.dart';
 import '../../providers/streak_provider.dart';
@@ -28,15 +30,26 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
   Future<void> _claimTask(DailyTask task) async {
     if (!task.canClaim) return;
     final provider = context.read<DailyTaskProvider>();
-    await provider.claim(task.id);
+    try {
+      await provider.claim(task.id);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not claim reward. Try again.')),
+      );
+      return;
+    }
     final wallet = provider.latestWallet;
     if (wallet != null && mounted) {
       context.read<TokenProvider>().syncWallet(wallet);
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(
+    RewardCelebration.show(
       context,
-    ).showSnackBar(SnackBar(content: Text('${task.template.title} claimed!')));
+      title: task.template.title,
+      tokens: task.template.rewardTokens,
+      diamonds: task.template.rewardDiamonds,
+    );
   }
 
   Future<void> _claimMilestone(DailyMilestone milestone) async {
@@ -44,21 +57,34 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
       return;
     }
     final provider = context.read<DailyTaskProvider>();
-    await provider.claimMilestone(milestone.id);
+    try {
+      await provider.claimMilestone(milestone.id);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not claim reward. Try again.')),
+      );
+      return;
+    }
     final wallet = provider.latestWallet;
     if (wallet != null && mounted) {
       context.read<TokenProvider>().syncWallet(wallet);
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${milestone.pointsRequired} pts reward claimed!'),
-      ),
+    RewardCelebration.show(
+      context,
+      title: '${milestone.pointsRequired} points milestone',
+      tokens: milestone.rewardTokens,
+      diamonds: milestone.rewardDiamonds,
     );
   }
 
   void _goToFocusTimer() {
     Navigator.of(context).pushNamed(AppRoutes.setFocusTimer);
+  }
+
+  void _goToAchievements() {
+    Navigator.of(context).pushNamed(AppRoutes.achievements);
   }
 
   @override
@@ -154,6 +180,8 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                         ),
                       const SizedBox(height: 18),
                       _StreakPanel(streak: streak),
+                      const SizedBox(height: 16),
+                      _AchievementLinkCard(onTap: _goToAchievements),
                     ],
                   ],
                 ),
@@ -170,6 +198,60 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
       if (task.template.code == code) return task;
     }
     return null;
+  }
+}
+
+class _AchievementLinkCard extends StatelessWidget {
+  const _AchievementLinkCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.94),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Color(0xFFFFF4CE),
+                child: Icon(Icons.emoji_events, color: AppColors.warning),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Achievement Progress',
+                      style: AppTextStyles.label.copyWith(
+                        color: AppColors.primaryBlue,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'See which focus missions unlock your next badge.',
+                      style: AppTextStyles.muted.copyWith(
+                        color: const Color(0xFF607094),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.primaryBlue),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -534,13 +616,7 @@ class _StreakPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,13 +721,7 @@ class _TaskSurface extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: child,
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/activity_event.dart';
 import '../../models/analytics_summary.dart';
@@ -678,9 +679,7 @@ class _ActivityCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _eventColor(item.eventType),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [

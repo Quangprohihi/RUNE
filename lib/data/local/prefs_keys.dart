@@ -14,4 +14,5 @@ class PrefsKeys {
   static const String inventoryQuantities = 'inventory_quantities';
   static const String appBlockingEnabled = 'app_blocking_enabled';
   static const String blockedAppPackages = 'blocked_app_packages';
+  static const String onboardingSeen = 'onboarding_seen';
 }

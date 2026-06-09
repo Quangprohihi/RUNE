@@ -14,6 +14,13 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.backgroundTop,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _SmoothPageTransitionsBuilder(),
+          TargetPlatform.iOS: _SmoothPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _SmoothPageTransitionsBuilder(),
+        },
+      ),
       textTheme: GoogleFonts.montserratAlternatesTextTheme(base.textTheme),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -41,6 +48,43 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.primaryBlue),
+        ),
+      ),
+    );
+  }
+}
+
+/// App-wide page transition: a soft fade-through with a small upward slide and
+/// the faintest scale-in. Replaces the platform default (a flat bottom-up slide
+/// on Android) with something gentler and more "premium" that feels consistent
+/// on every screen. Applied via [ThemeData.pageTransitionsTheme], so every
+/// navigation picks it up automatically.
+class _SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SmoothPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(curved),
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
+          child: child,
         ),
       ),
     );

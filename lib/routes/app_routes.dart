@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../presentation/achievements/achievements_screen.dart';
 import '../presentation/analytics/analytics_screen.dart';
 import '../presentation/blocking/app_blocking_screen.dart';
 import '../presentation/focus/focus_screen.dart';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String premium = '/premium';
   static const String paymentResult = '/payment-result';
   static const String appBlocking = '/app-blocking';
+  static const String achievements = '/achievements';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (_) => const LoginScreen(),
@@ -51,6 +53,7 @@ class AppRoutes {
     premium: (_) => const PremiumScreen(),
     paymentResult: (_) => const PaymentResultScreen(),
     appBlocking: (_) => const AppBlockingScreen(),
+    achievements: (_) => const AchievementsScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

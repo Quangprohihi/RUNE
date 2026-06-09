@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/app_notification.dart';
 import '../../providers/notification_provider.dart';
@@ -202,13 +203,7 @@ class _NotificationCard extends StatelessWidget {
               : AppColors.accentTeal.withValues(alpha: 0.5),
           width: notif.isRead ? 1 : 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: notif.isRead ? 0.04 : 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -42,13 +42,7 @@ class _SkillCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(11),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,13 +298,7 @@ class _CareItemTile extends StatelessWidget {
         color: Colors.white,
         border: Border.all(color: const Color(0xFFE2F1EE)),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
@@ -473,13 +461,7 @@ class _EvolutionCard extends StatelessWidget {
           colors: [Colors.white, Color(0xFFD1EBC1)],
         ),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 14,
-            offset: Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppShadows.raised,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
@@ -726,6 +708,7 @@ class _AchievementsCard extends StatelessWidget {
     required this.isClaiming,
     required this.onTap,
     required this.onClaim,
+    required this.onViewAll,
   });
 
   final AchievementProgress achievement;
@@ -733,6 +716,7 @@ class _AchievementsCard extends StatelessWidget {
   final bool isClaiming;
   final VoidCallback onTap;
   final VoidCallback onClaim;
+  final VoidCallback onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -768,6 +752,11 @@ class _AchievementsCard extends StatelessWidget {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  TextButton(
+                    onPressed: onViewAll,
+                    child: const Text('View all'),
                   ),
               ],
             ),
@@ -1010,9 +999,7 @@ class _FigmaCard extends StatelessWidget {
         color: Colors.white,
         border: Border.all(color: borderColor, width: 2),
         borderRadius: BorderRadius.circular(17),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 7, offset: Offset(0, 4)),
-        ],
+        boxShadow: AppShadows.card,
       ),
       child: child,
     );

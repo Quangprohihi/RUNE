@@ -10,14 +10,21 @@ class AchievementProvider extends ChangeNotifier {
 
   final ApiClient _api;
 
-  AchievementProgress _productivePartner = AchievementProgress.empty();
+  List<AchievementProgress> _achievements = const [];
   Wallet? _latestWallet;
   Pet? _latestPet;
   bool _isLoading = false;
   bool _isClaiming = false;
   String? _error;
 
-  AchievementProgress get productivePartner => _productivePartner;
+  List<AchievementProgress> get achievements => _achievements;
+  AchievementProgress get productivePartner {
+    for (final achievement in _achievements) {
+      if (achievement.code == 'productive_partner_i') return achievement;
+    }
+    return AchievementProgress.empty();
+  }
+
   Wallet? get latestWallet => _latestWallet;
   Pet? get latestPet => _latestPet;
   bool get isLoading => _isLoading;
@@ -30,15 +37,10 @@ class AchievementProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await _api.get('/achievements') as Map<String, dynamic>;
-      final achievements =
-          (response['achievements'] as List<dynamic>? ?? const [])
-              .cast<Map<String, dynamic>>();
-      final matches = achievements.where(
-        (achievement) => achievement['code'] == 'productive_partner_i',
-      );
-      _productivePartner = matches.isEmpty
-          ? AchievementProgress.empty()
-          : AchievementProgress.fromJson(matches.first);
+      _achievements = (response['achievements'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(AchievementProgress.fromJson)
+          .toList();
     } catch (error) {
       _error = error.toString();
     } finally {
@@ -48,17 +50,24 @@ class AchievementProvider extends ChangeNotifier {
   }
 
   Future<bool> claimProductivePartner() async {
-    if (!_productivePartner.canClaim || _isClaiming) return false;
+    return claim('productive_partner_i');
+  }
+
+  Future<bool> claim(String code) async {
+    final achievement = _achievementByCode(code);
+    if (achievement == null || !achievement.canClaim || _isClaiming) {
+      return false;
+    }
     _isClaiming = true;
     _error = null;
     notifyListeners();
     try {
       final response =
-          await _api.post('/achievements/${_productivePartner.code}/claim')
-              as Map<String, dynamic>;
-      _productivePartner = AchievementProgress.fromJson(
+          await _api.post('/achievements/$code/claim') as Map<String, dynamic>;
+      final updatedAchievement = AchievementProgress.fromJson(
         response['achievement'] as Map<String, dynamic>? ?? const {},
       );
+      _upsertAchievement(updatedAchievement);
       _latestWallet = Wallet.fromJson(
         response['wallet'] as Map<String, dynamic>? ?? const {},
       );
@@ -73,5 +82,27 @@ class AchievementProvider extends ChangeNotifier {
       _isClaiming = false;
       notifyListeners();
     }
+  }
+
+  AchievementProgress? _achievementByCode(String code) {
+    for (final achievement in _achievements) {
+      if (achievement.code == code) return achievement;
+    }
+    return null;
+  }
+
+  void _upsertAchievement(AchievementProgress achievement) {
+    final index = _achievements.indexWhere(
+      (item) => item.code == achievement.code,
+    );
+    if (index == -1) {
+      _achievements = [..._achievements, achievement];
+      return;
+    }
+    _achievements = [
+      ..._achievements.take(index),
+      achievement,
+      ..._achievements.skip(index + 1),
+    ];
   }
 }
