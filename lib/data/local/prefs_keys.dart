@@ -4,6 +4,7 @@ class PrefsKeys {
   static const String userProfile = 'user_profile';
   static const String currentUserId = 'current_user_id';
   static const String pet = 'pet';
+  static const String petRoster = 'pet_roster';
   static const String tokens = 'tokens';
   static const String streak = 'streak';
   static const String lastFocusDate = 'last_focus_date';

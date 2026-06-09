@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +17,7 @@ import '../../providers/token_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../routes/app_routes.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../pet/pet_profile_screen.dart';
 
 part 'widgets/home_widgets.dart';
 
@@ -73,9 +72,9 @@ class _HomeScreenState extends State<HomeScreen>
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(PrefsKeys.onboardingSeen) ?? false) return;
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const OnboardingScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const OnboardingScreen()));
   }
 
   @override
@@ -115,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Slide-only reveal (no `Opacity`). The habitat hero wraps a large image and
+  /// Slide-only reveal (no `Opacity`). The island hero wraps large images and
   /// several `Transform` layers; pushing it through an `Opacity` saveLayer
   /// triggers a red compositing artifact under the Impeller engine, so we
   /// animate position only and let it fade via the slide.
@@ -130,161 +129,134 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  void _openPet(BuildContext context, String petId) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => PetProfileScreen(petId: petId)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>();
     final wallet = context.watch<TokenProvider>();
     final streak = context.watch<StreakProvider>().streak;
     final focus = context.watch<FocusProvider>();
-    final pet = context.watch<PetProvider>().pet;
-    final owned = context.watch<ShopProvider>().ownedCompanionCodes;
+    final petProvider = context.watch<PetProvider>();
+    final pets = petProvider.pets;
+    final activePet = petProvider.pet;
 
     final firstName = _firstName(user.profile.displayName);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFDDF7F4), Color(0xFFEAFFD9)],
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Cap the habitat hero to a fraction of the viewport so the
-              // "Today's Goal" card stays visible above the bottom nav instead
-              // of being pushed off-screen by a fixed-height island.
-              final heroHeight = (constraints.maxHeight * 0.42).clamp(
-                300.0,
-                430.0,
-              );
+      body: Stack(
+        children: [
+          // Sky + drifting clouds fill the whole screen behind everything.
+          const Positioned.fill(child: _CloudBackground()),
+          SafeArea(
+            child: Column(
+              children: [
+                // --- Top HUD: greeting + resource pills ---
+                _reveal(
+                  _revealHeader,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      AppSpacing.sm,
+                      AppSpacing.pageGutter,
+                      0,
+                    ),
+                    child: _GreetingHeader(
+                      greeting: _timeGreeting(),
+                      name: firstName,
+                      streak: streak,
+                      onStreak: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.history),
+                      onMail: () => Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.notifications),
+                      onSettings: () => _showSettingsMenu(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _reveal(
+                  _revealResources,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.pageGutter,
+                    ),
+                    child: _ResourceBar(
+                      energy: wallet.energy,
+                      coins: wallet.tokens,
+                      diamonds: wallet.diamonds,
+                    ),
+                  ),
+                ),
 
-              return Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: AppSpacing.sm),
-                          _reveal(
-                            _revealHeader,
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.pageGutter,
-                              ),
-                              child: _GreetingHeader(
-                                greeting: _timeGreeting(),
-                                name: firstName,
-                                streak: streak,
-                                onStreak: () => Navigator.of(
-                                  context,
-                                ).pushNamed(AppRoutes.history),
-                                onMail: () => Navigator.of(
-                                  context,
-                                ).pushNamed(AppRoutes.notifications),
-                                onSettings: () => _showSettingsMenu(context),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          _reveal(
-                            _revealResources,
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.pageGutter,
-                              ),
-                              child: _ResourceBar(
-                                energy: wallet.energy,
-                                coins: wallet.tokens,
-                                diamonds: wallet.diamonds,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _slideReveal(
-                            _revealHero,
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () =>
-                                  Navigator.of(context).pushNamed(AppRoutes.pet),
-                              child: SizedBox(
-                                height: heroHeight,
-                                child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: SizedBox(
-                                    width: 402,
-                                    height: 455,
-                                    child: _HabitatHero(
-                                      scale: 1,
-                                      kikiAssetPath: pet.skinAssetPath,
-                                      ownedCompanions: owned,
-                                      message: _kikiMessage(pet, streak, focus),
-                                      petName: pet.name,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          _reveal(
-                            _revealCta,
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.pageGutter,
-                              ),
-                              child: _PrimaryFocusButton(
-                                focus: focus,
-                                onTap: () => _openTimerFlow(context, focus),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _reveal(
-                            _revealCta,
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.pageGutter,
-                              ),
-                              child: _DailyGoalCard(focus: focus),
-                            ),
-                          ),
-                        ],
-                      ),
+                // --- Island map: 4 pet slots + floating shop island ---
+                Expanded(
+                  child: _slideReveal(
+                    _revealHero,
+                    _IslandScene(
+                      pets: pets,
+                      activePetId: activePet.id,
+                      message: _kikiMessage(activePet, streak, focus),
+                      onPetTap: (id) => _openPet(context, id),
+                      onShopTap: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.shop),
                     ),
                   ),
-                  _reveal(
-                    _revealNav,
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.pageGutter,
-                        AppSpacing.sm,
-                        AppSpacing.pageGutter,
-                        AppSpacing.md,
-                      ),
-                      child: _BottomNav(
-                        onFocus: () => Navigator.of(
-                          context,
-                        ).pushNamed(AppRoutes.setFocusTimer),
-                        onShop: () =>
-                            Navigator.of(context).pushNamed(AppRoutes.shop),
-                        onTasks: () =>
-                            Navigator.of(context).pushNamed(AppRoutes.tasks),
-                        onPro: () =>
-                            Navigator.of(context).pushNamed(AppRoutes.premium),
-                      ),
+                ),
+
+                // --- Bottom HUD: focus CTA + daily goal + nav ---
+                _reveal(
+                  _revealCta,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      0,
+                      AppSpacing.pageGutter,
+                      AppSpacing.sm,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _PrimaryFocusButton(
+                          focus: focus,
+                          onTap: () => _openTimerFlow(context, focus),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        _DailyGoalStrip(focus: focus),
+                      ],
                     ),
                   ),
-                ],
-              );
-            },
+                ),
+                _reveal(
+                  _revealNav,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.pageGutter,
+                      0,
+                      AppSpacing.pageGutter,
+                      AppSpacing.md,
+                    ),
+                    child: _BottomNav(
+                      onFocus: () => Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.setFocusTimer),
+                      onShop: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.shop),
+                      onTasks: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.tasks),
+                      onPro: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.premium),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

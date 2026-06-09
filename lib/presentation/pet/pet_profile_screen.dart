@@ -20,7 +20,10 @@ import '../widgets/pet_animated_widget.dart';
 part 'widgets/pet_profile_widgets.dart';
 
 class PetProfileScreen extends StatefulWidget {
-  const PetProfileScreen({super.key});
+  const PetProfileScreen({super.key, this.petId});
+
+  /// Which pet to show. When null, defaults to the active pet (Kiki).
+  final String? petId;
 
   @override
   State<PetProfileScreen> createState() => _PetProfileScreenState();
@@ -84,8 +87,9 @@ class _PetProfileScreenState extends State<PetProfileScreen>
     );
 
     // Determine initial pet state
-    final pet = context.read<PetProvider>().pet;
-    _petState = _stateFromMood(pet.mood);
+    final petProvider = context.read<PetProvider>();
+    final targetId = widget.petId ?? petProvider.pet.id;
+    _petState = _stateFromMood(petProvider.petById(targetId).mood);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _entranceController.forward();
@@ -100,6 +104,9 @@ class _PetProfileScreenState extends State<PetProfileScreen>
     super.dispose();
   }
 
+  /// Id of the pet being shown (defaults to the active pet when none passed).
+  String get _resolvedId => widget.petId ?? context.read<PetProvider>().pet.id;
+
   PetAnimationState _stateFromMood(int mood) {
     if (mood < 30) return PetAnimationState.sad;
     if (mood >= 70) return PetAnimationState.idle;
@@ -111,10 +118,29 @@ class _PetProfileScreenState extends State<PetProfileScreen>
     Future.delayed(const Duration(milliseconds: 900), () {
       if (mounted) {
         setState(() {
-          _petState = _stateFromMood(context.read<PetProvider>().pet.mood);
+          _petState = _stateFromMood(
+            context.read<PetProvider>().petById(_resolvedId).mood,
+          );
         });
       }
     });
+  }
+
+  /// Companion pets aren't backed by the shop/inventory flow, so caring for
+  /// them applies the effect directly and locally.
+  Future<void> _careForCompanion(
+    PetEffectType effectType,
+    int value,
+    void Function() onParticle,
+  ) async {
+    await context.read<PetProvider>().applyEffectTo(
+      _resolvedId,
+      effectType,
+      value,
+    );
+    if (!mounted) return;
+    onParticle();
+    _triggerHappy();
   }
 
   void _showCareSheet(
@@ -265,7 +291,10 @@ class _PetProfileScreenState extends State<PetProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final pet = context.watch<PetProvider>().pet;
+    final petProvider = context.watch<PetProvider>();
+    final targetId = widget.petId ?? petProvider.pet.id;
+    final pet = petProvider.petById(targetId);
+    final isActive = petProvider.isActivePet(targetId);
     final achievementState = context.watch<AchievementProvider>();
     final achievement = achievementState.productivePartner;
 
@@ -438,31 +467,33 @@ class _PetProfileScreenState extends State<PetProfileScreen>
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            GestureDetector(
-                              onTap: () => _showEvolutionSheet(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: AppColors.accentTeal,
+                            if (pet.canEvolve) ...[
+                              const SizedBox(height: 6),
+                              GestureDetector(
+                                onTap: () => _showEvolutionSheet(context),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
-                                ),
-                                child: Text(
-                                  'Evolution',
-                                  style: AppTextStyles.muted.copyWith(
-                                    color: AppColors.primaryBlue,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 10,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: AppColors.accentTeal,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Evolution',
+                                    style: AppTextStyles.muted.copyWith(
+                                      color: AppColors.primaryBlue,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -491,13 +522,19 @@ class _PetProfileScreenState extends State<PetProfileScreen>
                               child: _ActionButton(
                                 icon: Icons.local_dining,
                                 label: 'Feed',
-                                onTap: () => _showCareSheet(
-                                  context,
-                                  title: 'Feed Kiki',
-                                  effects: {PetEffectType.hunger},
-                                  onParticle: () =>
-                                      setState(() => _feedParticles++),
-                                ),
+                                onTap: isActive
+                                    ? () => _showCareSheet(
+                                        context,
+                                        title: 'Feed ${pet.name}',
+                                        effects: {PetEffectType.hunger},
+                                        onParticle: () =>
+                                            setState(() => _feedParticles++),
+                                      )
+                                    : () => _careForCompanion(
+                                        PetEffectType.hunger,
+                                        18,
+                                        () => setState(() => _feedParticles++),
+                                      ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -505,16 +542,22 @@ class _PetProfileScreenState extends State<PetProfileScreen>
                               child: _ActionButton(
                                 icon: Icons.sports_soccer,
                                 label: 'Play',
-                                onTap: () => _showCareSheet(
-                                  context,
-                                  title: 'Play / Rest with Kiki',
-                                  effects: {
-                                    PetEffectType.mood,
-                                    PetEffectType.energy,
-                                  },
-                                  onParticle: () =>
-                                      setState(() => _playParticles++),
-                                ),
+                                onTap: isActive
+                                    ? () => _showCareSheet(
+                                        context,
+                                        title: 'Play / Rest with ${pet.name}',
+                                        effects: {
+                                          PetEffectType.mood,
+                                          PetEffectType.energy,
+                                        },
+                                        onParticle: () =>
+                                            setState(() => _playParticles++),
+                                      )
+                                    : () => _careForCompanion(
+                                        PetEffectType.mood,
+                                        16,
+                                        () => setState(() => _playParticles++),
+                                      ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -522,13 +565,19 @@ class _PetProfileScreenState extends State<PetProfileScreen>
                               child: _ActionButton(
                                 icon: Icons.pets,
                                 label: 'Pet',
-                                onTap: () => _showCareSheet(
-                                  context,
-                                  title: 'Care for Kiki',
-                                  effects: {PetEffectType.love},
-                                  onParticle: () =>
-                                      setState(() => _petParticles++),
-                                ),
+                                onTap: isActive
+                                    ? () => _showCareSheet(
+                                        context,
+                                        title: 'Care for ${pet.name}',
+                                        effects: {PetEffectType.love},
+                                        onParticle: () =>
+                                            setState(() => _petParticles++),
+                                      )
+                                    : () => _careForCompanion(
+                                        PetEffectType.love,
+                                        16,
+                                        () => setState(() => _petParticles++),
+                                      ),
                               ),
                             ),
                           ],
@@ -555,28 +604,31 @@ class _PetProfileScreenState extends State<PetProfileScreen>
                       ),
 
                       // --- Achievements card (slide from below) ---
-                      Positioned(
-                        left: 32 * scale,
-                        right: 32 * scale,
-                        top: 720,
-                        child: FadeTransition(
-                          opacity: _cardFade,
-                          child: SlideTransition(
-                            position: _achSlide,
-                            child: _AchievementsCard(
-                              achievement: achievement,
-                              isLoading: achievementState.isLoading,
-                              isClaiming: achievementState.isClaiming,
-                              onTap: () =>
-                                  _showAchievementSheet(context, achievement),
-                              onClaim: () => _claimAchievement(context),
-                              onViewAll: () => Navigator.of(
-                                context,
-                              ).pushNamed(AppRoutes.achievements),
+                      // Achievements track the active pet's productivity, so
+                      // companions don't show this card.
+                      if (isActive)
+                        Positioned(
+                          left: 32 * scale,
+                          right: 32 * scale,
+                          top: 720,
+                          child: FadeTransition(
+                            opacity: _cardFade,
+                            child: SlideTransition(
+                              position: _achSlide,
+                              child: _AchievementsCard(
+                                achievement: achievement,
+                                isLoading: achievementState.isLoading,
+                                isClaiming: achievementState.isClaiming,
+                                onTap: () =>
+                                    _showAchievementSheet(context, achievement),
+                                onClaim: () => _claimAchievement(context),
+                                onViewAll: () => Navigator.of(
+                                  context,
+                                ).pushNamed(AppRoutes.achievements),
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

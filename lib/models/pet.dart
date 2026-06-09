@@ -12,6 +12,8 @@ class Pet {
     required this.love,
     required this.selectedSkinCode,
     required this.lastUpdatedAt,
+    this.assetPath,
+    this.canEvolve = true,
   });
 
   factory Pet.initial() {
@@ -47,6 +49,8 @@ class Pet {
       lastUpdatedAt:
           DateTime.tryParse(json['lastUpdatedAt'] as String? ?? '') ??
           DateTime.now(),
+      assetPath: json['assetPath'] as String?,
+      canEvolve: json['canEvolve'] as bool? ?? true,
     );
   }
 
@@ -63,6 +67,13 @@ class Pet {
   final String selectedSkinCode;
   final DateTime lastUpdatedAt;
 
+  /// Explicit sprite for non-fox roster pets (companions). When null the pet
+  /// falls back to the fox evolution skins keyed by [selectedSkinCode].
+  final String? assetPath;
+
+  /// Whether this pet supports the fox evolution-skin flow. Companions don't.
+  final bool canEvolve;
+
   String get moodLabel {
     if (mood < 30) return 'Needs care';
     if (mood < 70) return 'Calm';
@@ -72,6 +83,7 @@ class Pet {
   double get expProgress => (exp / expToNext).clamp(0, 1).toDouble();
 
   String get skinAssetPath {
+    if (assetPath != null) return assetPath!;
     return switch (selectedSkinCode) {
       'spirit' => 'assets/images/fox_spirit.png',
       'celestial' => 'assets/images/fox_celestial.png',
@@ -92,6 +104,8 @@ class Pet {
     int? love,
     String? selectedSkinCode,
     DateTime? lastUpdatedAt,
+    String? assetPath,
+    bool? canEvolve,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -106,6 +120,8 @@ class Pet {
       love: love ?? this.love,
       selectedSkinCode: selectedSkinCode ?? this.selectedSkinCode,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      assetPath: assetPath ?? this.assetPath,
+      canEvolve: canEvolve ?? this.canEvolve,
     );
   }
 
@@ -123,6 +139,8 @@ class Pet {
       'love': love,
       'selectedSkinCode': selectedSkinCode,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
+      if (assetPath != null) 'assetPath': assetPath,
+      'canEvolve': canEvolve,
     };
   }
 }
