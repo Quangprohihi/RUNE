@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/repositories/payment_repository.dart';
 
 class PaymentProvider extends ChangeNotifier {
@@ -16,6 +17,14 @@ class PaymentProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Drops any in-flight checkout state from the previous account.
+  void resetForAccountSwitch() {
+    _checkout = null;
+    _status = null;
+    _error = null;
+    notifyListeners();
+  }
+
   Future<PaymentCheckout> createVnpayPayment(String productCode) async {
     _isLoading = true;
     _error = null;
@@ -26,7 +35,7 @@ class PaymentProvider extends ChangeNotifier {
       _status = null;
       return checkout;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       _isLoading = false;
@@ -43,7 +52,7 @@ class PaymentProvider extends ChangeNotifier {
       _status = status;
       return status;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       _isLoading = false;

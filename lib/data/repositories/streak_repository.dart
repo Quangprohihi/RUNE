@@ -7,7 +7,9 @@ class StreakRepository {
 
   final SharedPreferences _prefs;
 
-  int loadStreak() => _prefs.getInt(PrefsKeys.streak) ?? 30;
+  // Default to 0: a fresh account has no streak yet. The server value
+  // arrives right after login via StreakProvider.syncFromJson.
+  int loadStreak() => _prefs.getInt(PrefsKeys.streak) ?? 0;
 
   String? loadLastFocusDate() => _prefs.getString(PrefsKeys.lastFocusDate);
 

@@ -75,6 +75,23 @@ class FocusProvider extends ChangeNotifier {
         : _plannedFocusDurationSeconds;
   }
 
+  /// Clears any running timer and reloads daily/total focus stats from local
+  /// storage (wiped on account switch) so a new account starts at zero.
+  void resetForAccountSwitch() {
+    _timer?.cancel();
+    _phase = FocusPhase.idle;
+    _rewardClaimed = false;
+    _remoteSessionId = null;
+    _breakReturnsToDone = false;
+    _breakTakenForSession = false;
+    _sessionsToday = _repository.loadSessionsToday();
+    _todayFocusMinutes = _repository.loadTodayFocusMinutes();
+    _totalFocusMinutes = _repository.loadTotalFocusMinutes();
+    _plannedFocusDurationSeconds = AppConstants.focusMinutes * 60;
+    _remainingSeconds = _idleFocusDurationSeconds;
+    notifyListeners();
+  }
+
   void start({
     String label = 'Study',
     int? durationSeconds,

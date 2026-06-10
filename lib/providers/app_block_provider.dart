@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/local/prefs_keys.dart';
 import '../data/native/app_block_channel.dart';
 
@@ -56,6 +57,16 @@ class AppBlockProvider extends ChangeNotifier {
     await refreshPermissions();
   }
 
+  /// Reloads blocking config from local storage (wiped on account switch) so
+  /// a new account starts with blocking off and an empty app list. Stops the
+  /// native blocker unconditionally: its state lives in Android prefs and
+  /// survives process death, so the in-memory flag can't be trusted here.
+  Future<void> resetForAccountSwitch() async {
+    _blockedAttempts = 0;
+    await stopBlocking();
+    await _load();
+  }
+
   Future<void> refreshPermissions() async {
     _isLoading = true;
     _error = null;
@@ -69,7 +80,7 @@ class AppBlockProvider extends ChangeNotifier {
       _hasNotificationPermission = notificationPermission;
       _hasAccessibilityPermission = accessibilityPermission;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -89,7 +100,7 @@ class AppBlockProvider extends ChangeNotifier {
       _hasNotificationPermission = await _channel
           .requestNotificationPermission();
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       notifyListeners();
     }
@@ -130,7 +141,7 @@ class AppBlockProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       _isBlockingActive = false;
       notifyListeners();
       return false;
@@ -141,7 +152,7 @@ class AppBlockProvider extends ChangeNotifier {
     try {
       await _channel.stopBlocking();
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isBlockingActive = false;
       notifyListeners();

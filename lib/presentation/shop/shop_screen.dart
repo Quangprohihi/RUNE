@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/errors/friendly_error.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/error_state.dart';
 import '../../models/shop_item.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/shop_provider.dart';
@@ -85,26 +87,46 @@ class _ShopScreenState extends State<ShopScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: GridView.builder(
-                    itemCount: items.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.68,
-                        ),
-                    itemBuilder: (context, index) {
-                      return _ShopItemCard(item: items[index]);
-                    },
-                  ),
-                ),
+                Expanded(child: _buildBody(shop, items)),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(ShopProvider shop, List<ShopItem> items) {
+    // First load in progress and nothing to show yet.
+    if (shop.isLoading && !shop.hasLoadedRemote) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    // Load failed and we have no catalog to fall back on.
+    if (shop.error != null && !shop.hasLoadedRemote) {
+      return ErrorState(
+        error: shop.error,
+        title: 'Could not load the shop',
+        onRetry: () => context.read<ShopProvider>().loadCatalog(),
+      );
+    }
+    if (items.isEmpty) {
+      return const ErrorState(
+        icon: Icons.inventory_2_outlined,
+        title: 'Nothing here yet',
+        error: 'No items in this category right now. Check back soon!',
+      );
+    }
+    return GridView.builder(
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+        childAspectRatio: 0.68,
+      ),
+      itemBuilder: (context, index) {
+        return _ShopItemCard(item: items[index]);
+      },
     );
   }
 }
@@ -205,7 +227,11 @@ class _ShopItemCard extends StatelessWidget {
     final shop = context.watch<ShopProvider>();
     final owned = shop.isOwned(item.id);
     final quantity = shop.quantityFor(item.id);
-    final canBuy = !item.isCompanion || !owned;
+    final isPurchasing = shop.isPurchasing(item.id);
+    // Disable buying this item while it (or any item) is mid-purchase, so a
+    // double-tap can't fire two charges.
+    final canBuy =
+        (!item.isCompanion || !owned) && shop.purchasingItemId == null;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -268,7 +294,16 @@ class _ShopItemCard extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: canBuy ? () => _buy(context, item) : null,
-                  child: Text(item.isCompanion && owned ? 'Owned' : 'Buy'),
+                  child: isPurchasing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(item.isCompanion && owned ? 'Owned' : 'Buy'),
                 ),
               ),
             ],
@@ -301,7 +336,7 @@ class _ShopItemCard extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(friendlyError(error))));
     }
   }
 }

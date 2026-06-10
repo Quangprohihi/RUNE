@@ -27,6 +27,15 @@ class ApiClient {
   final AuthTokenRepository? _tokenRepository;
   String? accessToken;
   String? userId;
+  int _sessionEpoch = 0;
+
+  /// Marks the current auth session as ended so an in-flight token refresh
+  /// that resolves after logout cannot re-save the previous user's tokens.
+  void invalidateSession() {
+    _sessionEpoch++;
+    accessToken = null;
+    userId = null;
+  }
 
   Map<String, String> _headers({bool includeAuth = true}) {
     final headers = <String, String>{'content-type': 'application/json'};
@@ -84,6 +93,7 @@ class ApiClient {
     final repository = _tokenRepository;
     if (repository == null) return false;
 
+    final epochAtStart = _sessionEpoch;
     final refreshToken = await repository.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return false;
 
@@ -106,6 +116,11 @@ class ApiClient {
           nextRefresh.isEmpty) {
         return false;
       }
+
+      // The user logged out (or switched accounts) while this refresh was in
+      // flight — discard the minted tokens instead of resurrecting the old
+      // session.
+      if (epochAtStart != _sessionEpoch) return false;
 
       accessToken = nextAccess;
       await repository.saveTokens(

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../models/analytics_summary.dart';
 
@@ -15,6 +16,14 @@ class AnalyticsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Clears the previous account's cached summary after an account switch;
+  /// the analytics screen refetches on open.
+  void resetForAccountSwitch() {
+    _summary = AnalyticsSummary.empty();
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -24,7 +33,7 @@ class AnalyticsProvider extends ChangeNotifier {
           await _api.get('/analytics/summary') as Map<String, dynamic>;
       _summary = AnalyticsSummary.fromJson(response);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();

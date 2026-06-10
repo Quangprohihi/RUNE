@@ -8,15 +8,20 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/local/prefs_keys.dart';
 
-/// First-run welcome carousel.
+/// First-visit welcome carousel, shown once per account.
 ///
-/// Shown exactly once (the seen-flag is written the moment it appears, so any
-/// exit — finish, skip, or back — counts). It turns the "all zeros" first Home
+/// The seen-flag is written under [userId] the moment it appears, so any
+/// exit — finish, skip, or back — counts. It turns the "all zeros" first Home
 /// into a warm, guided start: meet Kiki, learn the loop, then jump into the
 /// first focus session. Pushed over Home by [HomeScreen] so it can never
 /// interfere with the Login/Home root routing.
+///
+/// [userId] is passed in (rather than read from the provider) so the flag is
+/// keyed correctly even if the session gets cleared while the carousel is up.
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, required this.userId});
+
+  final String userId;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -62,8 +67,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _markSeen() async {
+    // Keyed per account so other (new) accounts on this device still get
+    // their own onboarding.
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(PrefsKeys.onboardingSeen, true);
+    await prefs.setBool(PrefsKeys.onboardingSeenFor(widget.userId), true);
   }
 
   @override

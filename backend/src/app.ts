@@ -735,7 +735,18 @@ async function bootstrap(userId: string) {
   await prisma.$transaction((tx) => applyPetDecay(tx, userId));
 
   const [user, pet, wallet, streak] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+    // Select only client-safe fields: the raw row would ship passwordHash
+    // and provider ids to the device with every auth/bootstrap response.
+    prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    }),
     prisma.pet.findUniqueOrThrow({ where: { userId } }),
     prisma.wallet.findUniqueOrThrow({ where: { userId } }),
     prisma.userStreak.findUniqueOrThrow({ where: { userId } }),

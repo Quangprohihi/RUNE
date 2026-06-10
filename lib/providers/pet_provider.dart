@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../data/api/api_client.dart';
@@ -41,6 +43,21 @@ class PetProvider extends ChangeNotifier {
 
   void syncPet(Pet pet) {
     _pet = pet;
+    // Persist server truth so the local cache belongs to the current user
+    // even if the app restarts offline.
+    unawaited(_repository.save(_pet));
+    notifyListeners();
+  }
+
+  /// Reloads Kiki and the companion roster from local storage after a
+  /// different account signs in. Storage was wiped first, so this restores
+  /// the fresh-install defaults; Kiki then syncs from the server bootstrap.
+  void resetForAccountSwitch() {
+    _pet = _repository.load();
+    _companions
+      ..clear()
+      ..addAll(_repository.loadRoster());
+    _latestWallet = null;
     notifyListeners();
   }
 

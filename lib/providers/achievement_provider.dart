@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../models/achievement_progress.dart';
 import '../models/pet.dart';
@@ -31,6 +32,16 @@ class AchievementProvider extends ChangeNotifier {
   bool get isClaiming => _isClaiming;
   String? get error => _error;
 
+  /// Clears the previous account's cached achievements after an account
+  /// switch; the achievements screen refetches on open.
+  void resetForAccountSwitch() {
+    _achievements = const [];
+    _latestWallet = null;
+    _latestPet = null;
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -42,7 +53,7 @@ class AchievementProvider extends ChangeNotifier {
           .map(AchievementProgress.fromJson)
           .toList();
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -76,7 +87,7 @@ class AchievementProvider extends ChangeNotifier {
       );
       return true;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       return false;
     } finally {
       _isClaiming = false;

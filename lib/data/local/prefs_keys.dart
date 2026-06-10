@@ -15,5 +15,31 @@ class PrefsKeys {
   static const String inventoryQuantities = 'inventory_quantities';
   static const String appBlockingEnabled = 'app_blocking_enabled';
   static const String blockedAppPackages = 'blocked_app_packages';
+
+  /// Legacy device-wide onboarding flag. Superseded by [onboardingSeenFor];
+  /// kept only to migrate existing installs and as a guest fallback.
   static const String onboardingSeen = 'onboarding_seen';
+
+  /// Per-account onboarding flag, so every new account gets the welcome
+  /// carousel exactly once while returning accounts never see it again.
+  static String onboardingSeenFor(String userId) => 'onboarding_seen_$userId';
+
+  /// Every key that stores one account's progress. Wiped when a different
+  /// user signs in on this device so a new account never inherits the
+  /// previous user's island, wallet, streak, or inventory.
+  /// (Onboarding flags are intentionally excluded: they are per-user keys.)
+  static const List<String> accountScoped = [
+    pet,
+    petRoster,
+    tokens,
+    streak,
+    lastFocusDate,
+    sessionsToday,
+    todayFocusMinutes,
+    totalFocusMinutes,
+    ownedItems,
+    inventoryQuantities,
+    appBlockingEnabled,
+    blockedAppPackages,
+  ];
 }

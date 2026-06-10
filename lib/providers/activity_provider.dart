@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/repositories/activity_repository.dart';
 import '../models/activity_event.dart';
 
@@ -35,6 +36,15 @@ class ActivityProvider extends ChangeNotifier {
     }).length;
   }
 
+  /// Clears the previous account's cached history after an account switch;
+  /// the history screen refetches on open.
+  void resetForAccountSwitch() {
+    _events.clear();
+    _focusSessions.clear();
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -48,7 +58,7 @@ class ActivityProvider extends ChangeNotifier {
         ..clear()
         ..addAll(history.focusSessions);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();

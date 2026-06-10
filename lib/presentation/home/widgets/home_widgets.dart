@@ -17,6 +17,20 @@ const String _kIslandFallbackAsset = 'assets/images/home_habitat_figma.png';
 /// Logical aspect ratio (w / h) of the island artwork (≈ 2000×1251).
 const double _kIslandAspect = 1.6;
 
+/// Warm ambient tone sampled from island_main.png's sunlight. Washed lightly
+/// over every pet sprite so they read as lit by the same sun as the island.
+const Color _kSceneAmbient = Color(0xFFFFD9A0);
+
+/// Native horizontal facing of a sprite asset, used to mirror pets so they
+/// look toward the island's centre instead of off the edge of the world.
+enum _Facing { left, right, front }
+
+_Facing _nativeFacing(String assetPath) {
+  if (assetPath.contains('giraffe')) return _Facing.left;
+  if (assetPath.contains('eagle')) return _Facing.right;
+  return _Facing.front; // fox skins and the frog are drawn facing the camera
+}
+
 // ---------------------------------------------------------------------------
 // Greeting header — brand + personalised welcome + streak + quick actions
 // ---------------------------------------------------------------------------
@@ -567,6 +581,14 @@ class _IslandScene extends StatelessWidget {
     Offset(0.57, 0.66), // front — green beside the little volcano
   ];
 
+  /// Slot indices for [count] pets sorted by ground-anchor depth, so the Stack
+  /// paints far pets first and near pets last.
+  static List<int> _drawOrder(int count) {
+    final order = [for (var i = 0; i < count && i < _slots.length; i++) i]
+      ..sort((a, b) => _slots[a].dy.compareTo(_slots[b].dy));
+    return order;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -583,39 +605,102 @@ class _IslandScene extends StatelessWidget {
           islandW = islandH * _kIslandAspect;
         }
         final islandLeft = (available.width - islandW) / 2;
-        final islandTop = (available.height - islandH) / 2;
+        // Bias the island slightly below centre: fills the lower headroom so it
+        // feels grounded rather than floating dead-centre, while leaving room
+        // above for the shop island + speech bubble (and for pinch/pan).
+        final islandTop =
+            (available.height - islandH) / 2 + available.height * 0.05;
 
-        final petW = islandW * 0.14;
+        // Pets are the emotional hero of Home, so size them large enough to
+        // read at the default (un-zoomed) view; pinch-zoom still lets the user
+        // get even closer.
+        final petW = islandW * 0.185;
         final petH = petW * 1.22;
 
-        Widget petAt(int slot, Pet pet) {
-          final anchor = _slots[slot];
-          final left = islandLeft + anchor.dx * islandW - petW / 2;
-          final top = islandTop + anchor.dy * islandH - petH;
-          return Positioned(
-            left: left,
-            top: top,
-            width: petW,
-            height: petH,
-            child: _TappablePet(
-              pet: pet,
-              isActive: pet.id == activePetId,
-              onTap: () => onPetTap(pet.id),
-            ),
+        // Depth scale: the island is painted from a ~35° three-quarter view,
+        // so pets lower on the artwork (nearer the camera) must render larger
+        // than pets higher up (farther away). Obeying the painting's own
+        // perspective is what makes sprites sit "in" the scene, not on it.
+        double depthScale(int slot) {
+          const nearDy = 0.66, farDy = 0.48;
+          final t = ((_slots[slot].dy - farDy) / (nearDy - farDy)).clamp(
+            0.0,
+            1.0,
           );
+          return 0.82 + (1.06 - 0.82) * t;
         }
 
-        final shopW = islandW * 0.30;
+        List<Widget> petAt(int slot, Pet pet) {
+          final anchor = _slots[slot];
+          final scale = depthScale(slot);
+          final w = petW * scale;
+          final h = petH * scale;
+          final groundX = islandLeft + anchor.dx * islandW;
+          final groundY = islandTop + anchor.dy * islandH;
+          final isActive = pet.id == activePetId;
+          // Turn pets toward the island's centre so nobody stares off the
+          // edge of the world.
+          final facing = _nativeFacing(pet.skinAssetPath);
+          final flipX =
+              (facing == _Facing.left && anchor.dx < 0.5) ||
+              (facing == _Facing.right && anchor.dx > 0.5);
+          // The island is painted with its sun high on the left, so every
+          // contact shadow falls slightly to the right of its pet.
+          final sunOffset = w * 0.05;
+          // Soft elliptical contact shadow at the feet — the single strongest
+          // cue that the sprite is standing on the island instead of floating
+          // in front of it.
+          final shadowW = w * 0.72;
+          final shadowH = w * 0.20;
+          return [
+            // Warm pool of light on the grass under the active pet — the
+            // ground-plane version of a hero highlight. (A halo floating
+            // behind the sprite would just re-introduce the sticker look.)
+            if (isActive)
+              Positioned(
+                left: groundX - w * 0.75,
+                top: groundY - w * 0.23,
+                width: w * 1.5,
+                height: w * 0.42,
+                child: const _GroundOval(color: Color(0x66FFE9A8)),
+              ),
+            Positioned(
+              left: groundX - shadowW / 2 + sunOffset,
+              top: groundY - shadowH * 0.62,
+              width: shadowW,
+              height: shadowH,
+              child: const _GroundOval(color: Color(0x4D000000)),
+            ),
+            Positioned(
+              left: groundX - w / 2,
+              top: groundY - h,
+              width: w,
+              height: h,
+              child: _TappablePet(
+                pet: pet,
+                isActive: isActive,
+                flipX: flipX,
+                breatheMs: 2000 + slot * 180,
+                onTap: () => onPetTap(pet.id),
+              ),
+            ),
+          ];
+        }
+
+        final shopW = islandW * 0.26;
         final shopH = shopW;
-        final shopLeft = (islandLeft + islandW * 0.74)
+        // Pin to the top-right with an 8px margin, and keep at least 12px of
+        // headroom so the bobbing (_FloatingSprite) never clips off the top.
+        final shopLeft = (available.width - shopW - 8)
             .clamp(0.0, available.width - shopW)
             .toDouble();
-        final shopTop = (islandTop - shopH * 0.28)
-            .clamp(0.0, available.height - shopH)
+        final shopTop = (islandTop - shopH * 0.10)
+            .clamp(12.0, available.height - shopH)
             .toDouble();
 
         // Speech bubble floats just above the active (front-centre) pet.
-        final activeTop = islandTop + _slots[0].dy * islandH - petH;
+        final activeTop =
+            islandTop + _slots[0].dy * islandH - petH * depthScale(0);
         final bubbleLeft = islandLeft + _slots[0].dx * islandW - 24;
         final bubbleTop = (activeTop - 62)
             .clamp(0.0, available.height)
@@ -645,16 +730,26 @@ class _IslandScene extends StatelessWidget {
                 ),
               ),
 
-              // --- Soft glow under the active pet so the eye lands on it ---
-              Positioned(
-                left: islandLeft + _slots[0].dx * islandW - petW * 0.7,
-                top: islandTop + _slots[0].dy * islandH - petH * 0.9,
-                child: _HeroGlow(size: petW * 1.5),
-              ),
+              // --- Pets, painted back-to-front (painter's algorithm) so a
+              // nearer pet correctly overlaps a farther one. The active pet's
+              // warm ground pad is emitted inside petAt. ---
+              for (final i in _drawOrder(pets.length)) ...petAt(i, pets[i]),
 
-              // --- Pets ---
-              for (var i = 0; i < pets.length && i < _slots.length; i++)
-                petAt(i, pets[i]),
+              // --- Grass occluder: repaints the island's own pixels over the
+              // frontmost pet's toes, so the environment visibly overlaps the
+              // sprite — the strongest "it lives inside the scene" cue. The
+              // patch samples the exact spot it covers, so its edges are
+              // invisible; only the overlap across the pet shows. ---
+              if (pets.isNotEmpty)
+                _grassOccluder(
+                  frontSlot: _drawOrder(pets.length).last,
+                  islandLeft: islandLeft,
+                  islandTop: islandTop,
+                  islandW: islandW,
+                  islandH: islandH,
+                  petW: petW,
+                  depthScale: depthScale,
+                ),
 
               // --- Speech bubble for the active pet ---
               Positioned(
@@ -690,6 +785,60 @@ class _IslandScene extends StatelessWidget {
           child: scene,
         );
       },
+    );
+  }
+
+  /// Repaints a thin strip of the island's own artwork over the frontmost
+  /// pet's toes. Because the strip shows exactly the pixels it sits on, its
+  /// edges are invisible — it only becomes visible where it overlaps the pet,
+  /// reading as grass growing in front of the feet.
+  Widget _grassOccluder({
+    required int frontSlot,
+    required double islandLeft,
+    required double islandTop,
+    required double islandW,
+    required double islandH,
+    required double petW,
+    required double Function(int) depthScale,
+  }) {
+    final anchor = _slots[frontSlot];
+    final w = petW * depthScale(frontSlot);
+    final patchW = w * 0.95;
+    final patchH = w * 0.12;
+    final left = islandLeft + anchor.dx * islandW - patchW / 2;
+    final top = islandTop + anchor.dy * islandH - patchH * 0.25;
+    final ax = islandW - patchW <= 0
+        ? 0.0
+        : (left - islandLeft) / (islandW - patchW);
+    final ay = islandH - patchH <= 0
+        ? 0.0
+        : (top - islandTop) / (islandH - patchH);
+    return Positioned(
+      left: left,
+      top: top,
+      width: patchW,
+      height: patchH,
+      child: IgnorePointer(
+        child: ClipRect(
+          child: Align(
+            alignment: FractionalOffset(ax, ay),
+            widthFactor: patchW / islandW,
+            heightFactor: patchH / islandH,
+            child: SizedBox(
+              width: islandW,
+              height: islandH,
+              child: Image.asset(
+                _kIslandAsset,
+                fit: BoxFit.contain,
+                // If the main art is missing, the island itself fell back to
+                // different artwork — a mismatched patch would show as a hard
+                // seam, so render nothing instead.
+                errorBuilder: (context, error, stack) => const SizedBox(),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -732,33 +881,69 @@ class _TappablePet extends StatelessWidget {
     required this.pet,
     required this.isActive,
     required this.onTap,
+    this.flipX = false,
+    this.breatheMs = 2200,
   });
 
   final Pet pet;
   final bool isActive;
   final VoidCallback onTap;
 
+  /// Mirror the sprite horizontally (to face the island's centre).
+  final bool flipX;
+
+  /// Breathing period — varied per slot so the pets don't inhale in lockstep.
+  final int breatheMs;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: _FloatingSprite(
-        duration: Duration(milliseconds: isActive ? 2600 : 3300),
-        travel: isActive ? 6 : 5,
+      child: _BreathingSprite(
+        duration: Duration(milliseconds: breatheMs),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
-              child: Image.asset(
-                pet.skinAssetPath,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.pets, color: Colors.white, size: 40),
+              child: Transform.flip(
+                flipX: flipX,
+                // Fake contact occlusion: multiply the feet zone toward a
+                // darker ground tone — real creatures are never studio-bright
+                // from head to toe, the contact area always picks up shade.
+                child: ShaderMask(
+                  blendMode: BlendMode.modulate,
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Color(0xFFCDC3B2), Colors.white],
+                    stops: [0.0, 0.32],
+                  ).createShader(rect),
+                  // Wash the sprite with the island's warm ambient light so
+                  // the flat vector colours share the painted scene's palette
+                  // (srcATop tints only the sprite's pixels, not the alpha).
+                  child: ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                      _kSceneAmbient.withValues(alpha: 0.12),
+                      BlendMode.srcATop,
+                    ),
+                    child: Image.asset(
+                      pet.skinAssetPath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stack) =>
+                          const Icon(Icons.pets, color: Colors.white, size: 40),
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 2),
-            _PetNamePlate(name: pet.name, level: pet.level),
+            // Only the active pet shows a nameplate — keeps the scene clean and
+            // avoids cramped, truncated labels stacking in the centre. Tapping
+            // any pet opens its profile (where its full name lives).
+            if (isActive) ...[
+              const SizedBox(height: 2),
+              _PetNamePlate(name: pet.name, level: pet.level),
+            ],
           ],
         ),
       ),
@@ -968,28 +1153,78 @@ class _BubbleTailPainter extends CustomPainter {
   bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) => false;
 }
 
-/// A breathing radial glow that sits behind the active pet to make it the
-/// visual hero of the scene.
-class _HeroGlow extends StatefulWidget {
-  const _HeroGlow({required this.size});
+/// Soft elliptical pool of colour lying flat on the ground plane. Used for
+/// both the contact shadows (dark) and the active pet's warm light pad. The
+/// radial falloff is painted with a gradient shader (no MaskFilter blur, which
+/// misrenders under Impeller).
+class _GroundOval extends StatelessWidget {
+  const _GroundOval({required this.color});
 
-  final double size;
+  /// Centre colour; it fades to fully transparent at the oval's edge.
+  final Color color;
 
   @override
-  State<_HeroGlow> createState() => _HeroGlowState();
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _GroundOvalPainter(color),
+        size: Size.infinite,
+      ),
+    );
+  }
 }
 
-class _HeroGlowState extends State<_HeroGlow>
+class _GroundOvalPainter extends CustomPainter {
+  const _GroundOvalPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    canvas.save();
+    // Draw a circular radial falloff, squashed into the box's flat aspect so
+    // it reads as an oval lying on the ground plane.
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.scale(1.0, size.height / size.width);
+    final radius = size.width / 2;
+    final rect = Rect.fromCircle(center: Offset.zero, radius: radius);
+    final paint = Paint()
+      ..shader = RadialGradient(
+        colors: [color, color.withValues(alpha: 0.0)],
+      ).createShader(rect);
+    canvas.drawCircle(Offset.zero, radius, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _GroundOvalPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+/// Foot-anchored "breathing" idle: a subtle squash-and-stretch scaled from the
+/// bottom-centre, so the feet stay glued to the ground. Grounded pets use this
+/// instead of the floating bob — hovering up and down is exactly what made
+/// them read as paper cutouts rather than creatures with weight.
+class _BreathingSprite extends StatefulWidget {
+  const _BreathingSprite({required this.child, required this.duration});
+
+  final Widget child;
+  final Duration duration;
+
+  @override
+  State<_BreathingSprite> createState() => _BreathingSpriteState();
+}
+
+class _BreathingSpriteState extends State<_BreathingSprite>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..repeat(reverse: true);
+    _c = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat(reverse: true);
   }
 
   @override
@@ -1000,33 +1235,22 @@ class _HeroGlowState extends State<_HeroGlow>
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
+    return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _c,
-        builder: (context, _) {
+        builder: (context, child) {
           final t = Curves.easeInOut.transform(_c.value);
-          // A blurred BoxShadow gives the soft "hero" glow without a
-          // transparent-stop gradient, which renders as artifacts under the
-          // Impeller engine on Android.
-          return Container(
-            width: widget.size * 0.7,
-            height: widget.size * 0.7,
-            margin: EdgeInsets.all(widget.size * 0.15),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFFF3C4).withValues(alpha: 0.35 + 0.15 * t),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(
-                    0xFFFFE9A8,
-                  ).withValues(alpha: 0.4 + 0.2 * t),
-                  blurRadius: 32 + 12 * t,
-                  spreadRadius: 6 + 4 * t,
-                ),
-              ],
+          return Transform(
+            alignment: Alignment.bottomCenter,
+            transform: Matrix4.diagonal3Values(
+              1 + 0.015 * t,
+              1 - 0.025 * t,
+              1,
             ),
+            child: child,
           );
         },
+        child: widget.child,
       ),
     );
   }
@@ -1324,11 +1548,7 @@ class _BottomNav extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.white, Color(0xFF9CD0C8)],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppShadows.raised,
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../models/subscription.dart';
 import '../models/user_profile.dart';
@@ -21,6 +22,16 @@ class SettingsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Drops the previous account's settings/profile/subscription after an
+  /// account switch; the settings screen refetches on open.
+  void resetForAccountSwitch() {
+    _settings = UserSettings.defaults();
+    _profile = null;
+    _subscription = Subscription.free();
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -37,7 +48,7 @@ class SettingsProvider extends ChangeNotifier {
         response['subscription'] as Map<String, dynamic>? ?? const {},
       );
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -53,7 +64,7 @@ class SettingsProvider extends ChangeNotifier {
               as Map<String, dynamic>;
       _settings = UserSettings.fromJson(response);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       notifyListeners();

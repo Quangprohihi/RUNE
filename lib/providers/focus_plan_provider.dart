@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../models/focus_plan.dart';
 
@@ -59,7 +60,7 @@ class FocusPlanProvider extends ChangeNotifier {
         selectedTask: selectedTask,
       );
       _status = FocusPlanStatus.error;
-      _error = error.toString();
+      _error = friendlyError(error);
     }
     notifyListeners();
   }

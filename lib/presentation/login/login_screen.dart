@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/errors/friendly_error.dart';
+import '../../core/session/session_reset.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/pet_provider.dart';
@@ -151,22 +153,33 @@ class _LoginScreenState extends State<LoginScreen>
           password: password,
         );
       }
-      final wallet = user.latestWallet;
-      final pet = user.latestPet;
-      if (wallet != null && mounted) {
-        context.read<TokenProvider>().syncWallet(wallet);
-      }
-      if (pet != null && mounted) context.read<PetProvider>().syncPet(pet);
-      if (mounted) {
-        context.read<StreakProvider>().syncFromJson(user.latestStreak);
-        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-      }
+      if (mounted) _finishLogin(user);
     } catch (error) {
       if (!mounted) return;
       _showAuthMessage(
-        '${_mode == _AuthMode.login ? 'Login' : 'Sign up'} failed: $error',
+        friendlyError(
+          error,
+          fallback: _mode == _AuthMode.login
+              ? 'Login failed. Please try again.'
+              : 'Sign up failed. Please try again.',
+        ),
       );
     }
+  }
+
+  /// Shared post-auth path for every sign-in method: reset all account-scoped
+  /// state when a different account signed in, then layer the new user's
+  /// server data on top and enter the app.
+  void _finishLogin(UserProvider user) {
+    if (user.consumeAccountSwitched()) {
+      SessionReset.resetAll(context);
+    }
+    final wallet = user.latestWallet;
+    final pet = user.latestPet;
+    if (wallet != null) context.read<TokenProvider>().syncWallet(wallet);
+    if (pet != null) context.read<PetProvider>().syncPet(pet);
+    context.read<StreakProvider>().syncFromJson(user.latestStreak);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 
   void _showAuthMessage(String message) {
@@ -179,20 +192,18 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _continueWithGoogle() async {
     try {
       final user = context.read<UserProvider>();
-      await user.loginWithGoogle();
-      final wallet = user.latestWallet;
-      final pet = user.latestPet;
-      if (wallet != null && mounted) {
-        context.read<TokenProvider>().syncWallet(wallet);
-      }
-      if (pet != null && mounted) context.read<PetProvider>().syncPet(pet);
-      if (mounted) {
-        context.read<StreakProvider>().syncFromJson(user.latestStreak);
-        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-      }
+      final signedIn = await user.loginWithGoogle();
+      // The user closed the account picker — not an error, stay quiet.
+      if (!signedIn) return;
+      if (mounted) _finishLogin(user);
     } catch (error) {
       if (!mounted) return;
-      _showAuthMessage('Google login failed: $error');
+      _showAuthMessage(
+        friendlyError(
+          error,
+          fallback: 'Google sign-in failed. Please try again.',
+        ),
+      );
     }
   }
 

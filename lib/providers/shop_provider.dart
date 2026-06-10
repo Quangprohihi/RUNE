@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../data/repositories/shop_repository.dart';
 import '../models/shop_item.dart';
@@ -18,8 +19,22 @@ class ShopProvider extends ChangeNotifier {
   List<ShopItem>? _remoteCatalog;
   Wallet? _latestWallet;
   Pet? _latestPet;
+  bool _isLoading = false;
+  String? _error;
+  String? _purchasingItemId;
 
   List<ShopItem> get catalog => _remoteCatalog ?? _repository.catalog;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  /// True while the remote catalog has never loaded — used to show a loading
+  /// state on first open instead of a misleading empty/local grid.
+  bool get hasLoadedRemote => _remoteCatalog != null;
+
+  /// The item currently being purchased (network in flight), so the UI can
+  /// disable just that Buy button and prevent a double-charge double-tap.
+  String? get purchasingItemId => _purchasingItemId;
+  bool isPurchasing(String itemId) => _purchasingItemId == itemId;
   List<String> get ownedItems => _inventoryQuantities.entries
       .where((entry) => entry.value > 0)
       .map((entry) => entry.key)
@@ -43,14 +58,37 @@ class ShopProvider extends ChangeNotifier {
         .toList(growable: false);
   }
 
-  Future<void> loadCatalog() async {
-    final response = await _api.get('/shop/items') as Map<String, dynamic>;
-    _remoteCatalog = (response['items'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>()
-        .map(ShopItem.fromJson)
-        .toList();
-    await _syncInventory(response['inventory'] as List<dynamic>? ?? const []);
+  /// Drops the previous account's inventory and cached catalog after a
+  /// different account signs in; the next [loadCatalog] refetches both.
+  void resetForAccountSwitch() {
+    _inventoryQuantities
+      ..clear()
+      ..addAll(_repository.loadInventoryQuantities());
+    _remoteCatalog = null;
+    _latestWallet = null;
+    _latestPet = null;
+    _purchasingItemId = null;
+    _error = null;
     notifyListeners();
+  }
+
+  Future<void> loadCatalog() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response = await _api.get('/shop/items') as Map<String, dynamic>;
+      _remoteCatalog = (response['items'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(ShopItem.fromJson)
+          .toList();
+      await _syncInventory(response['inventory'] as List<dynamic>? ?? const []);
+    } catch (error) {
+      _error = friendlyError(error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> buy({
@@ -58,25 +96,33 @@ class ShopProvider extends ChangeNotifier {
     required TokenProvider tokens,
     required PetProvider pet,
   }) async {
-    final response =
-        await _api.post('/shop/items/${item.id}/buy') as Map<String, dynamic>;
-    _latestWallet = Wallet.fromJson(
-      response['wallet'] as Map<String, dynamic>? ?? const {},
-    );
-    _latestPet = Pet.fromJson(
-      response['pet'] as Map<String, dynamic>? ?? const {},
-    );
-    tokens.syncWallet(_latestWallet!);
-    pet.syncPet(_latestPet!);
-    final inventory = response['inventory'] as List<dynamic>?;
-    if (inventory == null) {
-      _inventoryQuantities[item.id] = quantityFor(item.id) + 1;
-      await _saveInventory();
-    } else {
-      await _syncInventory(inventory);
-    }
+    // Guard against a double-tap firing two purchase requests (double-charge).
+    if (_purchasingItemId != null) return false;
+    _purchasingItemId = item.id;
     notifyListeners();
-    return true;
+    try {
+      final response =
+          await _api.post('/shop/items/${item.id}/buy') as Map<String, dynamic>;
+      _latestWallet = Wallet.fromJson(
+        response['wallet'] as Map<String, dynamic>? ?? const {},
+      );
+      _latestPet = Pet.fromJson(
+        response['pet'] as Map<String, dynamic>? ?? const {},
+      );
+      tokens.syncWallet(_latestWallet!);
+      pet.syncPet(_latestPet!);
+      final inventory = response['inventory'] as List<dynamic>?;
+      if (inventory == null) {
+        _inventoryQuantities[item.id] = quantityFor(item.id) + 1;
+        await _saveInventory();
+      } else {
+        await _syncInventory(inventory);
+      }
+      return true;
+    } finally {
+      _purchasingItemId = null;
+      notifyListeners();
+    }
   }
 
   Future<bool> useItem({

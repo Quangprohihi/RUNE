@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../data/api/api_client.dart';
@@ -17,10 +19,23 @@ class TokenProvider extends ChangeNotifier {
   int get energy => _energy;
   int get diamonds => _diamonds;
 
+  /// Drops the previous account's wallet counters and reloads from local
+  /// storage (already wiped on account switch, so this yields zeros until
+  /// the new user's server wallet arrives via [syncWallet]).
+  void resetForAccountSwitch() {
+    _tokens = _repository.load();
+    _energy = 0;
+    _diamonds = 0;
+    notifyListeners();
+  }
+
   void syncWallet(Wallet wallet) {
     _tokens = wallet.tokens;
     _energy = wallet.energy;
     _diamonds = wallet.diamonds;
+    // Persist server truth so the local cache belongs to the current user
+    // even if the app restarts offline.
+    unawaited(_repository.save(_tokens));
     notifyListeners();
   }
 

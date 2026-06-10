@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../data/repositories/auth_token_repository.dart';
 import '../data/repositories/user_repository.dart';
@@ -41,6 +42,7 @@ class UserProvider extends ChangeNotifier {
   Map<String, dynamic>? _latestStreak;
   bool _isLoading = false;
   bool _isRestoringSession = false;
+  bool _accountSwitched = false;
   String? _error;
 
   UserProfile get profile => _profile;
@@ -53,6 +55,15 @@ class UserProvider extends ChangeNotifier {
 
   bool get hasLoggedIn => _profile.hasLoggedIn && _profile.id.isNotEmpty;
 
+  /// True exactly once after a sign-in by a different account than the one
+  /// whose data was on this device. The login flow uses it to reset all
+  /// account-scoped providers before syncing the new user's server data.
+  bool consumeAccountSwitched() {
+    final switched = _accountSwitched;
+    _accountSwitched = false;
+    return switched;
+  }
+
   Future<void> _restoreSession() async {
     _isRestoringSession = true;
     notifyListeners();
@@ -62,6 +73,15 @@ class UserProvider extends ChangeNotifier {
         _api.accessToken = accessToken;
       }
       _api.userId = _profile.id.isNotEmpty ? _profile.id : null;
+
+      if (_profile.hasLoggedIn && _profile.id.isNotEmpty) {
+        // Adopt installs from before account-switch tracking existed: the
+        // data on this device belongs to the restored (still signed-in) user.
+        if (_repository.loadCurrentUserId() == null) {
+          await _repository.saveCurrentUserId(_profile.id);
+        }
+        await _repository.migrateLegacyOnboardingFlag(_profile.id);
+      }
 
       if (_profile.hasLoggedIn &&
           ((accessToken != null && accessToken.isNotEmpty) ||
@@ -90,7 +110,7 @@ class UserProvider extends ChangeNotifier {
       await _applyAuthResponse(response);
       await _repository.save(_profile);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       _isLoading = false;
@@ -120,7 +140,7 @@ class UserProvider extends ChangeNotifier {
       await _applyAuthResponse(response);
       await _repository.save(_profile);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       _isLoading = false;
@@ -128,7 +148,9 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loginWithGoogle() async {
+  /// Returns false when the user dismissed the Google account picker —
+  /// a deliberate action, not an error, so no message should be shown.
+  Future<bool> loginWithGoogle() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -137,9 +159,7 @@ class UserProvider extends ChangeNotifier {
       // when they return to the login screen.
       await _googleSignIn.signOut();
       final account = await _googleSignIn.signIn();
-      if (account == null) {
-        throw StateError('Google sign-in was cancelled');
-      }
+      if (account == null) return false;
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
@@ -152,8 +172,9 @@ class UserProvider extends ChangeNotifier {
               as Map<String, dynamic>;
       await _applyAuthResponse(response);
       await _repository.save(_profile);
+      return true;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
       rethrow;
     } finally {
       _isLoading = false;
@@ -169,8 +190,14 @@ class UserProvider extends ChangeNotifier {
       await _repository.save(_profile);
       notifyListeners();
     } catch (error) {
-      _error = error.toString();
-      await _clearLocalSession();
+      _error = friendlyError(error);
+      // Only end the session when the server rejected our credentials.
+      // A network blip must not log the user out (and strand their local
+      // data for whoever signs in next).
+      if (error is ApiException &&
+          (error.statusCode == 401 || error.statusCode == 403)) {
+        await _clearLocalSession();
+      }
       notifyListeners();
     }
   }
@@ -196,8 +223,7 @@ class UserProvider extends ChangeNotifier {
     _latestWallet = null;
     _latestPet = null;
     _latestStreak = null;
-    _api.accessToken = null;
-    _api.userId = null;
+    _api.invalidateSession();
     await _tokenRepository.clear();
     await _repository.clear();
   }
@@ -218,6 +244,18 @@ class UserProvider extends ChangeNotifier {
     );
     _api.accessToken = accessToken;
     _applyBootstrap(response);
+
+    // A different account than the one whose data lives on this device just
+    // signed in (covers brand-new accounts too): wipe the previous user's
+    // local progress so nothing leaks into the new session.
+    final previousUserId = _repository.loadCurrentUserId();
+    if (previousUserId != _profile.id) {
+      await _repository.clearAccountScopedData();
+      _accountSwitched = true;
+    } else {
+      await _repository.migrateLegacyOnboardingFlag(_profile.id);
+    }
+    await _repository.saveCurrentUserId(_profile.id);
   }
 
   void _applyBootstrap(Map<String, dynamic> response) {

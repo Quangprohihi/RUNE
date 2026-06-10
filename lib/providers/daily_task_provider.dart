@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/api/api_client.dart';
 import '../models/daily_task.dart';
 import '../models/wallet.dart';
@@ -21,6 +22,17 @@ class DailyTaskProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   Wallet? get latestWallet => _latestWallet;
+
+  /// Clears the previous account's cached tasks after an account switch;
+  /// the tasks screen refetches on open.
+  void resetForAccountSwitch() {
+    _tasks.clear();
+    _milestones.clear();
+    _totalPoints = 0;
+    _latestWallet = null;
+    _error = null;
+    notifyListeners();
+  }
 
   Future<void> loadToday() async {
     _isLoading = true;
@@ -45,7 +57,7 @@ class DailyTaskProvider extends ChangeNotifier {
         );
       _totalPoints = response['totalPoints'] as int? ?? 0;
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();

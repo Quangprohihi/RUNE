@@ -66,15 +66,23 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  /// On the very first run, greet the user with the onboarding carousel. Pushed
-  /// over Home (not part of root routing) so it can never disrupt Login/Home.
+  /// Greets each account's first visit with the onboarding carousel. The
+  /// seen-flag is keyed per user id so a brand-new account on a shared device
+  /// still gets it, while returning accounts never see it twice. Pushed over
+  /// Home (not part of root routing) so it can never disrupt Login/Home.
   Future<void> _maybeShowOnboarding() async {
+    // Capture the id before any await: a concurrently failing bootstrap can
+    // clear the session, and a guest id must never key the seen-flag.
+    final userId = context.read<UserProvider>().profile.id;
+    if (userId.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(PrefsKeys.onboardingSeen) ?? false) return;
+    if (prefs.getBool(PrefsKeys.onboardingSeenFor(userId)) ?? false) return;
     if (!mounted) return;
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const OnboardingScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => OnboardingScreen(userId: userId),
+      ),
+    );
   }
 
   @override
@@ -142,8 +150,17 @@ class _HomeScreenState extends State<HomeScreen>
     final streak = context.watch<StreakProvider>().streak;
     final focus = context.watch<FocusProvider>();
     final petProvider = context.watch<PetProvider>();
-    final pets = petProvider.pets;
+    final shop = context.watch<ShopProvider>();
     final activePet = petProvider.pet;
+    // Only pets the user actually owns live on the island: Kiki (active) is
+    // always here; companions appear once they're unlocked/bought in the shop.
+    final pets = petProvider.pets
+        .where(
+          (p) =>
+              p.id == activePet.id ||
+              shop.isCompanionUnlocked(_companionCodeForPet(p)),
+        )
+        .toList();
 
     final firstName = _firstName(user.profile.displayName);
 
@@ -317,6 +334,15 @@ class _HomeScreenState extends State<HomeScreen>
 // ---------------------------------------------------------------------------
 // Greeting / personalization helpers
 // ---------------------------------------------------------------------------
+
+/// Maps a roster pet to its shop companion code via its sprite asset
+/// (assets/images/companion_eagle.png → companion_eagle). Returns '' for the
+/// fox/active pet, which has no companion code and is always on the island.
+String _companionCodeForPet(Pet pet) {
+  final asset = pet.assetPath;
+  if (asset == null) return '';
+  return asset.split('/').last.replaceAll('.png', '');
+}
 
 String _firstName(String displayName) {
   final trimmed = displayName.trim();

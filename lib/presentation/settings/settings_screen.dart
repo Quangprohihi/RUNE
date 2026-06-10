@@ -7,6 +7,8 @@ import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/native/focus_silence_service.dart';
 import '../../models/user_settings.dart';
+import '../../providers/app_block_provider.dart';
+import '../../providers/focus_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../routes/app_routes.dart';
@@ -94,6 +96,16 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _logout() async {
+    // End focus side-effects before the session goes away: otherwise app
+    // blocking and Do-Not-Disturb would keep running on the login screen.
+    context.read<FocusProvider>().cancel();
+    await context.read<AppBlockProvider>().stopBlocking();
+    try {
+      await _focusSilence.disableFocusSilence();
+    } catch (_) {
+      // Best-effort: nothing to restore without notification-policy access.
+    }
+    if (!mounted) return;
     await context.read<UserProvider>().logout();
     if (!mounted) return;
     Navigator.of(

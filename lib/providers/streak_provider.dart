@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
@@ -17,11 +19,24 @@ class StreakProvider extends ChangeNotifier {
 
   int get streak => _streak;
 
+  /// Reloads streak state from local storage (wiped on account switch) so a
+  /// new account starts at zero instead of showing the previous user's run.
+  void resetForAccountSwitch() {
+    _streak = _repository.loadStreak();
+    _lastFocusDate = _repository.loadLastFocusDate();
+    notifyListeners();
+  }
+
   void syncFromJson(Map<String, dynamic>? json) {
     if (json == null) return;
     _streak = json['currentStreak'] as int? ?? _streak;
     final rawDate = json['lastFocusDate'] as String?;
     _lastFocusDate = rawDate?.split('T').first ?? _lastFocusDate;
+    // Persist server truth so the local cache belongs to the current user
+    // even if the app restarts offline.
+    unawaited(_repository.saveStreak(_streak));
+    final date = _lastFocusDate;
+    if (date != null) unawaited(_repository.saveLastFocusDate(date));
     notifyListeners();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/friendly_error.dart';
 import '../data/repositories/notification_repository.dart';
 import '../models/app_notification.dart';
 
@@ -16,6 +17,14 @@ class NotificationProvider extends ChangeNotifier {
   String? get error => _error;
   int get unreadCount => _notifications.where((item) => !item.isRead).length;
 
+  /// Clears the previous account's cached notifications after an account
+  /// switch; the notifications screen refetches on open.
+  void resetForAccountSwitch() {
+    _notifications.clear();
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _isLoading = true;
     _error = null;
@@ -26,7 +35,7 @@ class NotificationProvider extends ChangeNotifier {
         ..clear()
         ..addAll(notifications);
     } catch (error) {
-      _error = error.toString();
+      _error = friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
