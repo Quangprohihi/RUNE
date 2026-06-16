@@ -120,6 +120,29 @@ export function registerAdminRoutes(app: any, deps: any) {
     }
   });
 
+  // ---- service health (for the overview "Tình trạng hệ thống" card) ----
+  app.get('/admin/api/health', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const t0 = Date.now();
+      let db: 'ok' | 'down' = 'ok';
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+      } catch {
+        db = 'down';
+      }
+      const apiLatencyMs = Date.now() - t0;
+      res.json({
+        db,
+        vnpay: Boolean(process.env.VNPAY_TMN_CODE || process.env.VNP_TMN_CODE),
+        gemini: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
+        apiLatencyMs,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // ---- users list ----
   app.get('/admin/api/users', async (req: any, res: any, next: any) => {
     try {
