@@ -1653,6 +1653,9 @@ app.post('/pet/evolution/select', async (req, res, next) => {
   // Admin operations console: API under /admin/api/* + static UI at /console
   registerAdminRoutes(app, { prisma });
   const adminWebCandidates = [
+    path.join(__dirname, '../../admin-web/dist'),
+    path.join(process.cwd(), '../admin-web/dist'),
+    path.join(process.cwd(), 'admin-web/dist'),
     path.join(__dirname, '../../admin-web'),
     path.join(process.cwd(), '../admin-web'),
     path.join(process.cwd(), 'admin-web'),
