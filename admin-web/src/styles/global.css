@@ -4,6 +4,7 @@
 @import './manlab/spacing.css';
 @import './manlab/elevation.css';
 @import './manlab/base.css';
+@import '../ds/ds.css';
 
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; }
