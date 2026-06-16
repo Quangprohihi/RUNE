@@ -78,3 +78,4 @@
 .zz-rail::-webkit-scrollbar { width: 9px; }
 .zz-rail::-webkit-scrollbar-thumb { background: var(--rail-border, rgba(255,255,255,.12)); border-radius: 8px; }
 .zz-rail::-webkit-scrollbar-track { background: transparent; }
+@keyframes zzshimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
