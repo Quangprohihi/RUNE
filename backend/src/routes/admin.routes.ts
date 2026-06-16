@@ -143,21 +143,37 @@ export function registerAdminRoutes(app: any, deps: any) {
     }
   });
 
-  // ---- users list ----
+  // ---- users list (search + plan/status filters) ----
   app.get('/admin/api/users', async (req: any, res: any, next: any) => {
     try {
       requireAdmin(req);
       const q = String(req.query.q ?? '').trim();
+      const plan = String(req.query.plan ?? '').trim();     // 'free' | 'premium'
+      const status = String(req.query.status ?? '').trim();  // 'active' | 'suspended' | 'review'
       const page = Math.max(1, Number(req.query.page ?? 1));
       const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 25)));
-      const where: any = q
-        ? {
-            OR: [
-              { email: { contains: q, mode: 'insensitive' } },
-              { displayName: { contains: q, mode: 'insensitive' } },
-            ],
-          }
-        : {};
+
+      // Compose filters with AND so search (q) and the plan OR-filter don't collide.
+      const and: any[] = [];
+      if (q) {
+        and.push({
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { displayName: { contains: q, mode: 'insensitive' } },
+          ],
+        });
+      }
+      if (status === 'active' || status === 'suspended' || status === 'review') {
+        and.push({ status });
+      }
+      if (plan === 'premium') {
+        // Has a paid subscription.
+        and.push({ subscription: { plan: { not: 'free' } } });
+      } else if (plan === 'free') {
+        // No subscription, or an explicit free subscription.
+        and.push({ OR: [{ subscription: { is: null } }, { subscription: { plan: 'free' } }] });
+      }
+      const where: any = and.length ? { AND: and } : {};
 
       const [total, users] = await Promise.all([
         prisma.user.count({ where }),
@@ -184,10 +200,11 @@ export function registerAdminRoutes(app: any, deps: any) {
           displayName: u.displayName,
           provider: u.provider,
           createdAt: u.createdAt,
-          plan: u.subscription?.plan ?? 'free',
-          status: u.subscription?.status ?? 'active',
+          plan: u.subscription && u.subscription.plan !== 'free' ? u.subscription.plan : 'free',
+          status: u.status ?? 'active',
           level: u.pet?.level ?? 1,
           streak: u.streak?.currentStreak ?? 0,
+          lastLoginAt: u.lastLoginAt ?? null,
         })),
       });
     } catch (error) {
