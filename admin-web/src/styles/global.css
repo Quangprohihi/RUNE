@@ -1,0 +1,6 @@
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
+body { background: var(--slate-50); }
+::selection { background: var(--blue-100); }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
