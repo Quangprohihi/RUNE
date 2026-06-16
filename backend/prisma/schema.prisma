@@ -16,6 +16,8 @@ model User {
   providerId   String?  @map("provider_id")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status       String   @default("active") @map("status")            // active | suspended | review
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
 
   pet                Pet?
   wallet             Wallet?
