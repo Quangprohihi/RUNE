@@ -133,6 +133,11 @@ async function main() {
       update: item,
     });
   }
+
+  // Demo moderation states so the admin console Users filter (Tạm khóa / Đang xem xét) has data.
+  const someUsers = await prisma.user.findMany({ take: 3, orderBy: { createdAt: 'asc' } });
+  if (someUsers[0]) await prisma.user.update({ where: { id: someUsers[0].id }, data: { status: 'review' } });
+  if (someUsers[1]) await prisma.user.update({ where: { id: someUsers[1].id }, data: { status: 'suspended' } });
 }
 
 main()
