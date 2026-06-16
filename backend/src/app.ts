@@ -1,6 +1,8 @@
 import cors from 'cors';
 import crypto from 'crypto';
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
 import { Prisma } from '@prisma/client';
 import {
   revokeRefreshToken,
@@ -34,6 +36,7 @@ import { registerActivityRoutes } from './routes/activity.routes';
 import { registerAuthRoutes } from './routes/auth.routes';
 import { registerHealthRoutes } from './routes/health.routes';
 import { registerNotificationRoutes } from './routes/notifications.routes';
+import { registerAdminRoutes } from './routes/admin.routes';
 import { registerPaymentRoutes } from './routes/payments.routes';
 import { issueAuthResponse as issueAuthServiceResponse } from './services/auth.service';
 
@@ -756,6 +759,10 @@ async function bootstrap(userId: string) {
 }
 
 async function issueAuthResponse(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { lastLoginAt: new Date() },
+  });
   return issueAuthServiceResponse(userId, bootstrap);
 }
 
@@ -1642,6 +1649,31 @@ app.post('/pet/evolution/select', async (req, res, next) => {
     next(error);
   }
 });
+
+  // Admin operations console: API under /admin/api/* + static UI at /console
+  registerAdminRoutes(app, { prisma });
+  const adminWebCandidates = [
+    path.join(__dirname, '../../admin-web'),
+    path.join(process.cwd(), '../admin-web'),
+    path.join(process.cwd(), 'admin-web'),
+  ];
+  const adminWebDir =
+    adminWebCandidates.find((p) => fs.existsSync(path.join(p, 'index.html'))) ??
+    adminWebCandidates[0];
+  const adminWebRoot = path.normalize(adminWebDir);
+  console.log('[admin] console served from', adminWebRoot);
+  // Express 5: prefix-mount static is unreliable; use explicit routes.
+  // Note: req.path under a regex route in Express 5 is the full path,
+  // so strip /console prefix manually instead of relying on req.params[0].
+  app.get(/^\/console(\/.*)?$/, (req: any, res: any) => {
+    const full: string = req.path || '';
+    const sub = full.replace(/^\/console\/?/, '');
+    const rel = sub ? sub : 'index.html';
+    const file = path.normalize(path.join(adminWebRoot, rel));
+    if (!file.startsWith(adminWebRoot)) return res.status(403).end();
+    if (fs.existsSync(file) && fs.statSync(file).isFile()) return res.sendFile(file);
+    return res.sendFile(path.join(adminWebRoot, 'index.html'));
+  });
 
 app.use(errorHandler);
 
