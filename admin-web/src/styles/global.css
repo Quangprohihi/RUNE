@@ -1,3 +1,10 @@
+@import './manlab/fonts.css';
+@import './manlab/colors.css';
+@import './manlab/typography.css';
+@import './manlab/spacing.css';
+@import './manlab/elevation.css';
+@import './manlab/base.css';
+
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; }
 body { background: var(--slate-50); }
