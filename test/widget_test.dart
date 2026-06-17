@@ -31,7 +31,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final api = ApiClient(baseUrl: 'http://localhost:3000');
     final tokenRepository = _MemoryAuthTokenRepository();
-
+    
     await tester.pumpWidget(
       MultiProvider(
         providers: [

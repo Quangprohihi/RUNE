@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RUNE · Bảng điều hành (Admin Console)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RUNE ADMIN — "Zen Editorial"
+   Warm paper · ink · hairlines · oversized Fraunces numerals
+   terracotta / moss / clay / diamond-blue · quiet rune motifs
+   ============================================================ */
+:root{
+  --paper:#F4EDE1; --paper-raised:#FBF6EC; --paper-sunk:#EDE4D5;
+  --ink:#2A2622; --ink-soft:#6E6459; --ink-faint:#9A8E7F;
+  --rule:#D9CDBA; --rule-strong:#C8B9A2;
+  --terracotta:#B5573A; --terracotta-soft:#E3B7A6; --terracotta-tint:#F0DACE;
+  --moss:#5A6B49; --moss-soft:#C2CBB3; --moss-tint:#E2E7D6;
+  --clay:#C8893B; --clay-tint:#F2E2C9;
+  --rust:#97362A; --rust-tint:#F0D7D1;
+  --diamond:#4E6E80; --diamond-tint:#D7E1E5;
+  --shadow: 0 1px 0 rgba(42,38,34,.04);
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Be Vietnam Pro","Inter",system-ui,-apple-system,Segoe UI,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --rail:248px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--sans); color:var(--ink); background:var(--paper);
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  font-feature-settings:"cv05","ss01";
+}
+/* faint paper grain */
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.05;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode:multiply;
+}
+::selection{background:var(--terracotta-soft)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.tnum{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+
+/* ---------- App shell ---------- */
+.app{position:relative; z-index:1; display:grid; grid-template-columns:var(--rail) 1fr; min-height:100vh}
+
+/* ---------- Sidebar rail ---------- */
+.rail{
+  background:var(--paper-raised); border-right:1px solid var(--rule);
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.rail::-webkit-scrollbar{width:8px}
+.rail::-webkit-scrollbar-thumb{background:var(--rule);border-radius:8px}
+.brand{padding:18px 18px 16px; border-bottom:1px solid var(--rule); text-align:center}
+.logo-plaque{background:#FBF7EE; border:1px solid var(--rule-strong); border-radius:13px; padding:14px 16px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(42,38,34,.08)}
+.logo-plaque img.zz-img{width:100%; max-width:150px; height:auto; display:block}
+.zz{display:flex; flex-direction:column; align-items:center; gap:7px}
+.zz-mark{width:50px; height:50px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.07))}
+.zz-word{font-family:"Fredoka",var(--sans); font-weight:600; font-size:27px; line-height:1; letter-spacing:.3px}
+.zz-word .zen{color:#56B9AF} .zz-word .zoo{color:#1C6CA4}
+.sub-admin{font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--ink-faint); margin-top:11px; display:flex; align-items:center; justify-content:center; gap:7px}
+.sub-admin .g{font-family:var(--serif); color:var(--terracotta); opacity:.75; font-size:13px}
+.nav{padding:14px 12px 30px; flex:1}
+.nav .group{margin-top:16px}
+.nav .group:first-child{margin-top:2px}
+.nav .group-label{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-faint); padding:8px 12px 6px}
+.nav a{
+  display:flex; align-items:center; gap:11px; padding:8px 12px; border-radius:7px;
+  color:var(--ink-soft); font-weight:500; font-size:13.5px; position:relative; margin:1px 0;
+  transition:background .12s,color .12s;
+}
+.nav a .g{font-family:var(--serif); width:18px; text-align:center; color:var(--ink-faint); font-size:15px}
+.nav a:hover{background:var(--terracotta-tint); color:var(--ink)}
+.nav a.active{background:var(--terracotta-soft); color:var(--ink); font-weight:600}
+.nav a.active::before{content:""; position:absolute; left:0; top:6px; bottom:6px; width:2px; background:var(--terracotta); border-radius:2px}
+.nav a.active .g{color:var(--terracotta)}
+.nav a .pill{margin-left:auto; font-size:9.5px; letter-spacing:.06em; padding:1px 6px; border-radius:20px; border:1px solid var(--clay); color:var(--clay); text-transform:uppercase}
+.railfoot{padding:14px 18px; border-top:1px solid var(--rule); font-size:11px; color:var(--ink-faint)}
+
+/* ---------- Main ---------- */
+.main{display:flex; flex-direction:column; min-width:0}
+.topbar{
+  position:sticky; top:0; z-index:20; background:rgba(244,237,225,.86); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rule); padding:16px 40px 14px;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+}
+.topbar .crumb{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint)}
+.topbar h1{font-family:var(--serif); font-weight:600; font-size:30px; line-height:1; margin:6px 0 0; letter-spacing:-.01em}
+.topbar .right{display:flex; align-items:center; gap:14px}
+
+/* segmented date range */
+.seg{display:inline-flex; border:1px solid var(--rule-strong); border-radius:8px; overflow:hidden; background:var(--paper-raised)}
+.seg button{border:0;background:transparent;padding:7px 12px;font-size:12.5px;color:var(--ink-soft);border-right:1px solid var(--rule)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--paper-raised);font-weight:600}
+.cmp{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft)}
+.cmp input{accent-color:var(--terracotta)}
+.who{display:flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid var(--rule)}
+.who .av{width:34px;height:34px;border-radius:50%;background:var(--moss);color:var(--paper-raised);display:grid;place-items:center;font-family:var(--serif);font-weight:600}
+.who .nm{font-size:12.5px;font-weight:600}.who .ro{font-size:11px;color:var(--ink-faint)}
+
+.scroll{flex:1; overflow-y:auto; padding:30px 40px 80px}
+.view{display:none; animation:fade .35s ease both}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- Section primitives ---------- */
+.eyebrow{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.divider{display:flex;align-items:center;gap:16px;margin:34px 0 22px}
+.divider::before,.divider::after{content:"";height:1px;background:var(--rule);flex:1}
+.divider .d{font-family:var(--serif);color:var(--terracotta);font-size:15px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 16px}
+.sec-h h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0;letter-spacing:-.01em}
+.sec-h .note{font-size:12px;color:var(--ink-soft)}
+.tag-new{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--clay);border:1px solid var(--clay);border-radius:20px;padding:2px 8px;white-space:nowrap}
+.tag-real{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--moss);border:1px solid var(--moss);border-radius:20px;padding:2px 8px}
+
+/* banners */
+.banner{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:9px;font-size:13px;margin:0 0 22px;border:1px solid}
+.banner .bi{font-family:var(--serif);font-size:17px;line-height:1.2}
+.banner.amber{background:var(--clay-tint);border-color:var(--clay);color:#6e4a17}
+.banner.rust{background:var(--rust-tint);border-color:var(--rust);color:var(--rust)}
+.banner.moss{background:var(--moss-tint);border-color:var(--moss);color:#384227}
+.banner b{font-weight:700}
+
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.kpi{background:var(--paper-raised);padding:18px 18px 14px;position:relative;display:flex;flex-direction:column;min-height:148px}
+.kpi .lab{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.kpi .lab span{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.kpi .val{font-family:var(--serif);font-weight:600;font-size:42px;line-height:1;margin-top:14px;letter-spacing:-.02em}
+.kpi .val small{font-size:18px;color:var(--ink-soft);font-weight:500}
+.kpi .delta{font-size:12px;margin-top:7px;display:flex;align-items:center;gap:5px}
+.kpi .delta.up{color:var(--moss)} .kpi .delta.down{color:var(--rust)}
+.kpi .delta .vs{color:var(--ink-faint)}
+.kpi .spark{margin-top:auto;height:34px}
+.kpi .spark svg{width:100%;height:34px;display:block}
+
+/* two-col layouts */
+.cols{display:grid;gap:22px}
+.cols.t23{grid-template-columns:2fr 1fr}
+.cols.t11{grid-template-columns:1fr 1fr}
+.cols.t31{grid-template-columns:3fr 1fr}
+
+/* card */
+.card{background:var(--paper-raised);border:1px solid var(--rule);border-radius:12px}
+.card .hd{padding:14px 18px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card .hd h3{font-family:var(--serif);font-weight:600;font-size:16px;margin:0}
+.card .bd{padding:6px 18px 14px}
+.card.pad .bd{padding:18px}
+
+/* activity feed */
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.feed li:last-child{border-bottom:0}
+.feed .ic{font-family:var(--serif);color:var(--terracotta);width:20px;text-align:center;flex:none;font-size:15px;margin-top:1px}
+.feed .tx{flex:1;font-size:13px}.feed .tx b{font-weight:600}
+.feed .tm{font-family:var(--mono);font-size:11px;color:var(--ink-faint);white-space:nowrap}
+
+/* status strip rows */
+.srow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.srow:last-child{border-bottom:0}
+.srow .nm{display:flex;gap:9px;align-items:center}
+.srow .nm .g{font-family:var(--serif);color:var(--ink-faint)}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:20px;border:1px solid;line-height:1.6;white-space:nowrap}
+.chip.moss{color:var(--moss);border-color:var(--moss);background:var(--moss-tint)}
+.chip.terra{color:var(--terracotta);border-color:var(--terracotta);background:var(--terracotta-tint)}
+.chip.clay{color:#8a5e1f;border-color:var(--clay);background:var(--clay-tint)}
+.chip.rust{color:var(--rust);border-color:var(--rust);background:var(--rust-tint)}
+.chip.soft{color:var(--ink-soft);border-color:var(--rule-strong);background:transparent}
+.chip.diamond{color:var(--diamond);border-color:var(--diamond);background:var(--diamond-tint)}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* tables */
+.tablewrap{background:var(--paper-raised);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  position:sticky;top:0;background:var(--paper-sunk);text-align:left;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);font-weight:600;padding:11px 16px;border-bottom:1px solid var(--rule-strong);white-space:nowrap
+}
+thead th.r{text-align:right}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--terracotta-tint)}
+tbody tr.clk{cursor:pointer}
+td.r{text-align:right}
+.u-id{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.u-2{display:flex;flex-direction:column;line-height:1.35}
+.u-2 .a{font-weight:600}.u-2 .b{font-size:11.5px;color:var(--ink-soft)}
+.sort::after{content:" ⌄";color:var(--ink-faint)}
+.mini{width:64px;height:18px;display:inline-block;vertical-align:middle}
+
+/* toolbar over table */
+.tbar{display:flex;align-items:center;gap:12px;margin:0 0 16px;flex-wrap:wrap}
+.search{flex:1;min-width:240px;display:flex;align-items:center;gap:9px;background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:9px;padding:9px 13px}
+.search input{border:0;background:transparent;flex:1;font-size:13.5px;color:var(--ink);outline:none}
+.search .g{color:var(--ink-faint)}
+.btn{border:1px solid var(--rule-strong);background:var(--paper-raised);color:var(--ink);padding:9px 14px;border-radius:9px;font-size:13px;font-weight:500;display:inline-flex;gap:7px;align-items:center}
+.btn:hover{border-color:var(--ink-soft)}
+.btn.primary{background:var(--terracotta);border-color:var(--terracotta);color:#fff}
+.btn.primary:hover{background:#a04c31}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--rust);border-color:var(--rust)}
+.foot{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-soft)}
+.pgr{display:flex;gap:4px}.pgr b{padding:4px 9px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--paper-raised);font-weight:500}
+.pgr b.on{background:var(--ink);color:var(--paper-raised);border-color:var(--ink)}
+
+/* bars / charts */
+.barlist{list-style:none;margin:0;padding:0}
+.barlist li{padding:10px 0;border-bottom:1px solid var(--rule)}
+.barlist li:last-child{border-bottom:0}
+.barlist .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.barlist .top b{font-weight:600}
+.track{height:7px;background:var(--paper-sunk);border-radius:6px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--terracotta);border-radius:6px}
+.track i.moss{background:var(--moss)}
+.track i.diamond{background:var(--diamond)}
+
+/* cohort heatmap */
+.cohort{width:100%;border-collapse:separate;border-spacing:4px;font-size:12px}
+.cohort th{background:transparent;border:0;padding:4px;color:var(--ink-soft);text-transform:none;letter-spacing:0;font-weight:600;position:static}
+.cohort td{padding:0;border:0}
+.cohort .cell{border-radius:6px;padding:10px 6px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600;color:#fff}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:8px}
+.fstep{display:flex;align-items:center;gap:14px}
+.fstep .fbar{height:38px;background:var(--terracotta);border-radius:7px;display:flex;align-items:center;padding:0 14px;color:#fff;font-weight:600;font-size:13px;min-width:60px}
+.fstep .flab{font-size:13px;width:170px;flex:none}
+.fstep .fdrop{font-size:12px;color:var(--rust)}
+
+/* def lists / formula blocks */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:9px 18px;font-size:13px}
+.kv dt{color:var(--ink-soft)} .kv dd{margin:0;font-weight:500}
+.formula{font-family:var(--mono);font-size:12.5px;background:var(--paper-sunk);border:1px solid var(--rule);border-radius:9px;padding:13px 15px;color:var(--ink);line-height:1.8}
+.formula .c{color:var(--terracotta)}
+
+/* stat bars (pet) */
+.statbar{margin:9px 0}
+.statbar .l{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.statbar .t{height:8px;background:var(--paper-sunk);border-radius:6px;overflow:hidden}
+.statbar .t i{display:block;height:100%;border-radius:6px}
+
+/* matrix */
+.matrix{width:100%;border-collapse:collapse;font-size:12.5px}
+.matrix th,.matrix td{border:1px solid var(--rule);padding:9px 10px;text-align:center;position:static;background:transparent;text-transform:none;letter-spacing:0}
+.matrix td.res{text-align:left;font-weight:600;background:var(--paper-sunk)}
+.matrix .yes{color:var(--moss);font-weight:700}
+.matrix .no{color:var(--ink-faint)}
+
+/* toggles */
+.tog{width:40px;height:23px;border-radius:20px;background:var(--rule-strong);position:relative;border:0;flex:none;transition:background .15s}
+.tog::after{content:"";position:absolute;width:17px;height:17px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .15s}
+.tog.on{background:var(--moss)} .tog.on::after{left:20px}
+.tog.danger.on{background:var(--rust)}
+
+/* grids of cards */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tile{background:var(--paper-raised);border:1px solid var(--rule);border-radius:12px;padding:18px}
+.tile h4{font-family:var(--serif);font-weight:600;font-size:16px;margin:0 0 4px}
+.tile .big{font-family:var(--serif);font-size:30px;font-weight:600;letter-spacing:-.02em;margin:8px 0 2px}
+.tile .mut{font-size:12px;color:var(--ink-soft)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(42,38,34,.34);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:480px;max-width:92vw;background:var(--paper-raised);border-left:1px solid var(--rule-strong);z-index:60;transform:translateX(100%);transition:transform .26s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;box-shadow:-20px 0 50px rgba(42,38,34,.12)}
+.drawer.open{transform:none}
+.drawer .dh{padding:20px 22px 16px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:flex-start}
+.drawer .dh h3{font-family:var(--serif);font-weight:600;font-size:20px;margin:4px 0 0}
+.drawer .dh .x{border:0;background:transparent;font-size:22px;color:var(--ink-soft);line-height:1}
+.drawer .db{padding:20px 22px;overflow-y:auto;flex:1}
+.drawer .df{padding:16px 22px;border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:flex-end}
+.json{font-family:var(--mono);font-size:11.5px;background:var(--paper-sunk);border:1px solid var(--rule);border-radius:9px;padding:13px;white-space:pre;overflow-x:auto;line-height:1.7;color:var(--ink)}
+.json .add{color:var(--moss)} .json .del{color:var(--rust)} .json .k{color:var(--diamond)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;font-weight:600}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--rule-strong);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13.5px;background:var(--paper);color:var(--ink)}
+
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:90px 20px;color:var(--ink-soft)}
+.placeholder .rune{font-family:var(--serif);font-size:54px;color:var(--terracotta-soft);margin-bottom:14px}
+.placeholder h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:0 0 6px;color:var(--ink)}
+.placeholder p{max-width:460px;font-size:13px}
+
+.flowrap{display:flex;gap:18px;flex-wrap:wrap}
+.flowrap>*{flex:1;min-width:0}
+
+/* theme toggle */
+.themebtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule-strong);background:var(--paper-raised);color:var(--ink-soft);padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:500}
+.themebtn:hover{border-color:var(--ink-soft);color:var(--ink)}
+.themebtn .ti{font-size:14px;color:var(--terracotta)}
+
+@media(max-width:1100px){
+  :root{--rail:80px}
+  .sub-admin,.zz-word,.nav .group-label,.nav a .lbl,.nav a .pill,.railfoot,.themebtn #themeName{display:none}
+  .brand{padding:12px 8px}
+  .logo-plaque{padding:8px}
+  .logo-plaque img.zz-img{max-width:48px}
+  .zz-mark{width:40px;height:40px}
+  .nav a{justify-content:center}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .cols.t23,.cols.t11,.cols.t31{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+}
+
+/* ============================================================
+   THEME · RUNIC OBSIDIAN — tối, vân khắc, hổ phách
+   ============================================================ */
+[data-theme="obsidian"]{
+  --paper:#0E0D12; --paper-raised:#17151D; --paper-sunk:#0A090E;
+  --ink:#ECE5D6; --ink-soft:#9C927F; --ink-faint:#675F51;
+  --rule:#2A2733; --rule-strong:#3B3747;
+  --terracotta:#D89A4C; --terracotta-soft:#36291A; --terracotta-tint:#1F1810;
+  --moss:#9BB07C; --moss-soft:#2A3420; --moss-tint:#1B2114;
+  --clay:#D6A24E; --clay-tint:#272013;
+  --rust:#DC6E5F; --rust-tint:#2C1714;
+  --diamond:#84AEC4; --diamond-tint:#15242B;
+  --shadow:0 1px 0 rgba(0,0,0,.3);
+}
+[data-theme="obsidian"] body::before{mix-blend-mode:soft-light;opacity:.09}
+[data-theme="obsidian"] .topbar{background:rgba(14,13,18,.82)}
+[data-theme="obsidian"] .banner.amber{color:var(--clay)}
+[data-theme="obsidian"] .banner.rust{color:var(--rust)}
+[data-theme="obsidian"] .banner.moss{color:var(--moss)}
+[data-theme="obsidian"] .chip.clay{color:var(--clay)}
+[data-theme="obsidian"] .btn.primary,[data-theme="obsidian"] .seg button.on{color:#1b1610}
+[data-theme="obsidian"] .logo-plaque{background:#FBF7EE;border-color:rgba(216,154,76,.4);box-shadow:0 0 0 1px rgba(216,154,76,.22),0 2px 16px rgba(0,0,0,.55)}
+[data-theme="obsidian"] .divider .d,[data-theme="obsidian"] .feed .ic,[data-theme="obsidian"] .nav a.active .g{text-shadow:0 0 8px rgba(216,154,76,.55)}
+[data-theme="obsidian"] .nav a .g{opacity:.85}
+[data-theme="obsidian"] .kpi .spark svg path{filter:drop-shadow(0 0 3px rgba(216,154,76,.5))}
+[data-theme="obsidian"] .kpi-grid,[data-theme="obsidian"] .card,[data-theme="obsidian"] .tile,[data-theme="obsidian"] .tablewrap{box-shadow:0 1px 26px rgba(0,0,0,.3)}
+[data-theme="obsidian"] .sub-admin .g{text-shadow:0 0 8px rgba(216,154,76,.5)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="logo-plaque">
+        <img class="zz-img" src="assets/zenzoo-logo.png" alt="ZenZoo" onload="this.nextElementSibling.style.display='none'" onerror="this.remove()">
+        <div class="zz">
+          <svg class="zz-mark" viewBox="0 0 100 100" aria-hidden="true">
+            <g transform="rotate(-30 50 50)"><path d="M50 12C73 30 73 62 50 87C27 62 27 30 50 12Z" fill="#1C6CA4"/></g>
+            <g transform="rotate(30 50 50)"><path d="M50 12C73 30 73 62 50 87C27 62 27 30 50 12Z" fill="#54C0B6" opacity=".88"/></g>
+            <circle cx="50" cy="23" r="8.5" fill="#1C6CA4"/>
+            <circle cx="50" cy="23" r="3.4" fill="#FBF7EE"/>
+          </svg>
+          <div class="zz-word"><span class="zen">Zen</span><span class="zoo">Zoo</span></div>
+        </div>
+      </div>
+      <div class="sub-admin"><span class="g">ᚱ</span> Bảng điều hành · Admin</div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="group">
+        <div class="group-label">Lõi vận hành</div>
+        <a data-view="overview" class="active"><span class="g">ᚺ</span><span class="lbl">Tổng quan</span></a>
+        <a data-view="users"><span class="g">ᛗ</span><span class="lbl">Người dùng</span></a>
+        <a data-view="moderation"><span class="g">ᛟ</span><span class="lbl">Kiểm duyệt</span></a>
+      </div>
+      <div class="group">
+        <div class="group-label">Dòng tiền</div>
+        <a data-view="billing"><span class="g">ᚠ</span><span class="lbl">Thanh toán &amp; Gói</span></a>
+        <a data-view="ops"><span class="g">ᛞ</span><span class="lbl">Vận hành &amp; IPN</span></a>
+      </div>
+      <div class="group">
+        <div class="group-label">Phân tích</div>
+        <a data-view="analytics"><span class="g">ᛉ</span><span class="lbl">Phân tích</span></a>
+        <a data-view="audit"><span class="g">ᛏ</span><span class="lbl">Nhật ký kiểm toán</span></a>
+      </div>
+      <div class="group">
+        <div class="group-label">Nội dung game</div>
+        <a data-view="tasks"><span class="g">ᛒ</span><span class="lbl">Nhiệm vụ &amp; Mốc</span></a>
+        <a data-view="shop"><span class="g">ᛊ</span><span class="lbl">Cửa hàng &amp; Kinh tế</span></a>
+        <a data-view="pets"><span class="g">ᛜ</span><span class="lbl">Thú cưng &amp; Tiến hóa</span></a>
+        <a data-view="achievements"><span class="g">ᛥ</span><span class="lbl">Thành tựu &amp; Streak</span></a>
+        <a data-view="ai"><span class="g">ᚲ</span><span class="lbl">AI Focus Designer</span></a>
+      </div>
+      <div class="group">
+        <div class="group-label">Tiếp cận</div>
+        <a data-view="notifications"><span class="g">ᚦ</span><span class="lbl">Thông báo &amp; Chiến dịch</span></a>
+      </div>
+      <div class="group">
+        <div class="group-label">Quản trị &amp; bảo mật</div>
+        <a data-view="rbac"><span class="g">ᚷ</span><span class="lbl">Vai trò &amp; Bảo mật</span></a>
+        <a data-view="adminteam"><span class="g">ᛁ</span><span class="lbl">Đội quản trị</span></a>
+        <a data-view="flags"><span class="g">ᛕ</span><span class="lbl">Cờ tính năng &amp; Cấu hình</span></a>
+        <a data-view="gdpr"><span class="g">ᛈ</span><span class="lbl">Quyền riêng tư &amp; Xuất DL</span></a>
+        <a data-view="bulk"><span class="g">ᛃ</span><span class="lbl">Tác vụ hàng loạt</span></a>
+        <a data-view="support"><span class="g">ᚹ</span><span class="lbl">Hỗ trợ</span></a>
+      </div>
+    </nav>
+    <div class="railfoot">v0.1 · mockup thiết kế<br>Dữ liệu minh họa</div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="crumb" id="crumb">Lõi vận hành</div>
+        <h1 id="title">Tổng quan</h1>
+      </div>
+      <div class="right">
+        <div class="seg" id="range">
+          <button>Hôm nay</button><button class="on">7 ngày</button><button>30 ngày</button><button>90 ngày</button><button>Tùy chỉnh</button>
+        </div>
+        <label class="cmp"><input type="checkbox" checked> So với kỳ trước</label>
+        <button class="themebtn" id="themeBtn" onclick="toggleTheme()" title="Đổi giao diện"><span class="ti">◐</span><span id="themeName">Zen Editorial</span></button>
+        <div class="who"><div class="av">L</div><div><div class="nm">Lan Nguyễn</div><div class="ro">Super Admin</div></div></div>
+      </div>
+    </header>
+
+    <div class="scroll" id="views">
+<!-- ===================== OVERVIEW ===================== -->
+<section class="view active" id="v-overview">
+  <div class="banner amber"><span class="bi">◇</span><div><b>Bề mặt tổng hợp xây mới (NET-NEW).</b> App hiện chỉ có phân tích theo từng người dùng — mọi KPI dưới đây là rollup chéo người dùng (FocusSession, Wallet, Subscription, PaymentOrder, UserStreak) <b>chưa tồn tại trong backend</b>. Số liệu là <b>minh họa</b>.</div></div>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="lab"><span>Người dùng hoạt động / ngày</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum">1.842</div>
+      <div class="delta up">▲ 6,3% <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[1610,1655,1590,1720,1700,1788,1842]"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Độ bám DAU/MAU</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum">27<small>%</small></div>
+      <div class="delta up">▲ 1,2đ <span class="vs">dải lành mạnh ≥20%</span></div>
+      <div class="spark" data-spark="[24,25,24,26,25,26,27]" data-color="var(--moss)"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Tổng phút focus hôm nay</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum" data-kpi="focusMinutesToday">41.250<small>′</small></div>
+      <div class="delta up">▲ 4,8% <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[36800,38200,35900,40100,39500,40200,41250]"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Phiên focus hoàn thành</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum" data-kpi="focusSessionsToday">1.310</div>
+      <div class="delta down">▼ 2,1% <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[1290,1340,1280,1360,1335,1338,1310]"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Người dùng Zen Pro</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum" data-kpi="premiumUsers">312</div>
+      <div class="delta up">▲ 11 <span class="vs">người mới trong kỳ</span></div>
+      <div class="spark" data-spark="[286,290,295,298,301,307,312]" data-color="var(--moss)"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Doanh thu hôm nay</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum" data-kpi="revenueToday">1.247<small>k đ</small></div>
+      <div class="delta up">▲ 9,4% <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[980,1120,890,1340,1180,1090,1247]"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Streak trung bình</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum" data-kpi="avgStreak">4,2<small> ngày</small></div>
+      <div class="delta up">▲ 0,3 <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[3.6,3.7,3.9,3.8,4.0,4.1,4.2]" data-color="var(--moss)"></div>
+    </div>
+    <div class="kpi">
+      <div class="lab"><span>Free → Zen Pro</span><span class="tag-new">NET-NEW</span></div>
+      <div class="val tnum">4,6<small>%</small></div>
+      <div class="delta up">▲ 0,4đ <span class="vs">so với kỳ trước</span></div>
+      <div class="spark" data-spark="[3.9,4.0,4.1,4.2,4.3,4.5,4.6]" data-color="var(--terracotta)"></div>
+    </div>
+  </div>
+
+  <div class="divider"><span class="d">◇</span></div>
+
+  <div class="cols t23">
+    <div class="card">
+      <div class="hd"><h3>Hoạt động gần đây · toàn hệ thống</h3><span class="eyebrow">Mới nhất trước</span></div>
+      <div class="bd">
+        <ul class="feed" id="feedBody">
+          <li><span class="ic">ᚺ</span><div class="tx"><b>Trần Minh Anh</b> hoàn thành phiên <b>Deep Focus 45′</b> (đồng hành Eagle)</div><span class="tm">2 phút trước</span></li>
+          <li><span class="ic">ᚠ</span><div class="tx"><b>Lê Quốc Bảo</b> nâng cấp <b>Zen Pro Yearly</b> · 279.000đ</div><span class="tm">6 phút trước</span></li>
+          <li><span class="ic">ᛒ</span><div class="tx"><b>Phạm Văn Đức</b> claim nhiệm vụ <span class="mono">daily_login</span> · +10 token</div><span class="tm">9 phút trước</span></li>
+          <li><span class="ic">ᛊ</span><div class="tx"><b>Nguyễn Thị Hương</b> mua <b>fresh_berries</b> 🍓 · 100 token</div><span class="tm">12 phút trước</span></li>
+          <li><span class="ic">ᛟ</span><div class="tx"><b>Hoàng Gia Bảo</b> được gắn cờ <span class="chip clay" style="padding:0 7px">under_review</span> qua kiểm duyệt</div><span class="tm">18 phút trước</span></li>
+          <li><span class="ic">ᛏ</span><div class="tx"><b>admin.lan</b> điều chỉnh ví <span class="mono">-48.766 token</span> · lý do: nghi vấn vượt faucet</div><span class="tm">24 phút trước</span></li>
+          <li><span class="ic">ᚲ</span><div class="tx"><b>Trần Minh Anh</b> dùng <b>AI Focus Designer</b> → áp dụng kế hoạch Deep 45′</div><span class="tm">31 phút trước</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="hd"><h3>Tình trạng hệ thống</h3><span class="tag-new">NET-NEW</span></div>
+      <div class="bd">
+        <div class="srow"><div class="nm"><span class="g">ᛞ</span> Express API</div><span class="chip moss"><span class="dot"></span>Đang chạy</span></div>
+        <div class="srow"><div class="nm"><span class="g">ᛞ</span> PostgreSQL</div><span class="chip moss"><span class="dot"></span>Kết nối OK</span></div>
+        <div class="srow"><div class="nm"><span class="g">ᚠ</span> VNPay IPN</div><span class="chip clay">Mốc IPN cuối: chưa lưu</span></div>
+        <div class="srow"><div class="nm"><span class="g">ᚲ</span> Gemini Flash</div><span class="chip soft">BẬT · chưa đo quota</span></div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:14px 0 0">Liveness <span class="mono">GET /health</span> chỉ trả <span class="mono">{ok:true}</span>. Uptime %, error-rate, quota AI cần <b>đo lường mới</b> trước khi hiển thị số thực.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ===================== USERS ===================== -->
+<section class="view" id="v-users">
+  <div class="tbar">
+    <div class="search"><span class="g">⌕</span><input placeholder="Tìm theo tên, email hoặc userId…"></div>
+    <button class="btn" onclick="openDrawer('Bộ lọc','Lọc người dùng', filtersHTML(), '<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Đặt lại</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Áp dụng</button>')"><span class="g">⚑</span> Bộ lọc</button>
+    <button class="btn"><span class="g">↧</span> Xuất CSV</button>
+    <button class="btn primary"><span class="g">+</span> Mời / Tạo</button>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Người dùng</th><th>Provider</th><th>Gói</th>
+        <th class="sort">Ngày tạo</th><th>Đăng nhập cuối (UTC)</th>
+        <th class="sort r">Streak</th><th class="sort r">Level Kiki</th><th>Trạng thái</th>
+      </tr></thead>
+      <tbody id="usersBody">
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Nguyễn Thị Hương</span><span class="b">huong.nt@gmail.com</span></div></td>
+          <td><span class="chip soft">google</span></td><td><span class="chip terra">premium</span></td>
+          <td class="tnum">12/03/2026</td><td class="tnum">13/06 · 09:14</td>
+          <td class="r tnum">17</td><td class="r tnum">12</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Trần Minh Anh</span><span class="b">anh.tm@fpt.edu.vn</span></div></td>
+          <td><span class="chip soft">email</span></td><td><span class="chip terra">premium</span></td>
+          <td class="tnum">05/01/2026</td><td class="tnum">13/06 · 07:40</td>
+          <td class="r tnum">23</td><td class="r tnum">11</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Lê Quốc Bảo</span><span class="b">bao.lq@gmail.com</span></div></td>
+          <td><span class="chip soft">google</span></td><td><span class="chip terra">premium</span></td>
+          <td class="tnum">28/02/2026</td><td class="tnum">13/06 · 08:01</td>
+          <td class="r tnum">9</td><td class="r tnum">15</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Phạm Văn Đức</span><span class="b">duc.pv@fpt.edu.vn</span></div></td>
+          <td><span class="chip soft">email</span></td><td><span class="chip soft">free</span></td>
+          <td class="tnum">02/06/2026</td><td class="tnum">11/06 · 21:03</td>
+          <td class="r tnum">0</td><td class="r tnum">3</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Hoàng Gia Bảo</span><span class="b">baohg.demo@zenzoo.app</span></div></td>
+          <td><span class="chip soft">demo</span></td><td><span class="chip soft">free</span></td>
+          <td class="tnum">10/06/2026</td><td class="tnum">13/06 · 10:11</td>
+          <td class="r tnum">1</td><td class="r tnum">2</td><td><span class="chip clay">under_review</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Đỗ Thùy Linh</span><span class="b">linh.dt@gmail.com</span></div></td>
+          <td><span class="chip soft">google</span></td><td><span class="chip terra">premium</span></td>
+          <td class="tnum">19/04/2026</td><td class="tnum">13/06 · 06:55</td>
+          <td class="r tnum">31</td><td class="r tnum">18</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Vũ Hoàng Nam</span><span class="b">nam.vh@fpt.edu.vn</span></div></td>
+          <td><span class="chip soft">email</span></td><td><span class="chip soft">free</span></td>
+          <td class="tnum">07/05/2026</td><td class="tnum">09/06 · 14:22</td>
+          <td class="r tnum">0</td><td class="r tnum">5</td><td><span class="chip clay">Tạm khóa</span></td>
+        </tr>
+        <tr class="clk" onclick="go('user-detail')">
+          <td><div class="u-2"><span class="a">Bùi Khánh Vy</span><span class="b">vy.bk@gmail.com</span></div></td>
+          <td><span class="chip soft">google</span></td><td><span class="chip soft">free</span></td>
+          <td class="tnum">22/05/2026</td><td class="tnum">12/06 · 19:48</td>
+          <td class="r tnum">4</td><td class="r tnum">7</td><td><span class="chip moss"><span class="dot"></span>Active</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="foot">
+      <span id="usersCount">6.820 người dùng · hiển thị 1–8</span>
+      <div class="pgr"><b class="on">1</b><b>2</b><b>3</b><b>…</b><b>853</b></div>
+      <span>Mật độ: <b style="cursor:pointer">Thoải mái</b> · Gọn · &nbsp; 25 / 50 / 100 dòng</span>
+    </div>
+  </div>
+</section>
+<!-- ===================== USER DETAIL ===================== -->
+<section class="view" id="v-user-detail">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:13px;color:var(--ink-soft)">
+    <a onclick="go('users')" style="cursor:pointer;color:var(--terracotta)">Người dùng</a> <span>/</span> <b style="color:var(--ink)">Nguyễn Thị Hương</b>
+  </div>
+  <div class="cols t23">
+    <!-- LEFT -->
+    <div>
+      <div class="card pad" style="margin-bottom:22px">
+        <div style="display:flex;gap:18px;align-items:center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--terracotta);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-size:28px;font-weight:600">H</div>
+          <div style="flex:1">
+            <div style="font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.1">Nguyễn Thị Hương</div>
+            <div class="mono" style="font-size:12px;color:var(--ink-soft);margin-top:3px">huong.nt@gmail.com</div>
+            <div style="display:flex;gap:8px;margin-top:9px"><span class="chip soft">google</span><span class="chip terra">Zen Pro</span><span class="chip moss"><span class="dot"></span>Active</span></div>
+          </div>
+          <div style="text-align:right;font-size:11.5px;color:var(--ink-soft)">
+            <div>userId</div><div class="mono" style="color:var(--ink)">usr_8f3a…b21c ⧉</div>
+            <div style="margin-top:8px">Ngày tạo</div><div class="tnum" style="color:var(--ink)">12/03/2026</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:22px">
+        <div class="card pad">
+          <div class="eyebrow" style="margin-bottom:10px">Thú cưng · Kiki</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:var(--serif);font-size:18px;font-weight:600">Red Fox</span><span class="chip terra">skin: spirit</span></div>
+          <div style="font-size:12px;color:var(--ink-soft);margin:9px 0 3px">Cấp 12 · EXP 340 / 500</div>
+          <div class="track" style="margin-bottom:12px"><i style="width:68%"></i></div>
+          <div class="statbar"><div class="l"><span>Năng lượng</span><b class="tnum">80</b></div><div class="t"><i style="width:80%;background:var(--moss)"></i></div></div>
+          <div class="statbar"><div class="l"><span>Tâm trạng</span><b class="tnum">76</b></div><div class="t"><i style="width:76%;background:var(--terracotta)"></i></div></div>
+          <div class="statbar"><div class="l"><span>Đói</span><b class="tnum">72</b></div><div class="t"><i style="width:72%;background:var(--clay)"></i></div></div>
+          <div class="statbar"><div class="l"><span>Yêu thương</span><b class="tnum">68</b></div><div class="t"><i style="width:68%;background:var(--rust)"></i></div></div>
+        </div>
+        <div class="card pad">
+          <div class="eyebrow" style="margin-bottom:10px">Streak</div>
+          <div style="font-family:var(--serif);font-size:42px;font-weight:600;line-height:1">17<small style="font-size:16px;color:var(--ink-soft)"> ngày</small></div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:6px">Tốt nhất: <b style="color:var(--ink)">23 ngày</b></div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:3px">Focus cuối: <b style="color:var(--ink)">13/06 (UTC)</b></div>
+          <div class="divider" style="margin:16px 0 12px"><span class="d">◇</span></div>
+          <div class="eyebrow" style="margin-bottom:8px">Ví</div>
+          <dl class="kv">
+            <dt>Token</dt><dd class="tnum">1.234</dd>
+            <dt>Energy</dt><dd class="tnum">5.000</dd>
+            <dt>Kim cương</dt><dd class="tnum" style="color:var(--diamond)">20 ◆</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px">
+        <div class="hd"><h3>Phiên focus gần nhất</h3></div>
+        <table>
+          <thead><tr><th>Mục tiêu</th><th class="r">Phút</th><th>Đồng hành</th><th>Trạng thái</th><th>Thời điểm (UTC)</th></tr></thead>
+          <tbody>
+            <tr><td>Ôn thi PRM393</td><td class="r tnum">45</td><td>🦅 Eagle (+10% token)</td><td><span class="chip moss">completed</span></td><td class="tnum">13/06 · 07:12</td></tr>
+            <tr><td>Đọc tài liệu</td><td class="r tnum">25</td><td>🦊 Kiki (+5% EXP)</td><td><span class="chip moss">completed</span></td><td class="tnum">12/06 · 20:40</td></tr>
+            <tr><td>Viết báo cáo</td><td class="r tnum">50</td><td>🦒 Giraffe</td><td><span class="chip soft">give-up</span></td><td class="tnum">12/06 · 15:02</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card pad">
+        <div class="eyebrow" style="margin-bottom:12px">Dòng sự kiện (ActivityEvent)</div>
+        <ul class="feed">
+          <li><span class="ic">ᚺ</span><div class="tx">Hoàn thành <b>Deep Focus 45′</b></div><span class="tm">07:57 UTC</span></li>
+          <li><span class="ic">ᛒ</span><div class="tx">Claim <span class="mono">deep_focus</span> · +35 token / +3 ◆</div><span class="tm">07:58 UTC</span></li>
+          <li><span class="ic">ᛊ</span><div class="tx">Mua <b>fresh_berries</b> 🍓 · -100 token</div><span class="tm">08:05 UTC</span></li>
+          <li><span class="ic">ᛜ</span><div class="tx">Cho Kiki ăn → Đói +24</div><span class="tm">08:05 UTC</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RIGHT rail -->
+    <div>
+      <div class="card pad" style="margin-bottom:22px">
+        <div class="eyebrow" style="margin-bottom:12px">Gói đăng ký</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="chip terra">Zen Pro</span><span class="chip moss">active</span></div>
+        <dl class="kv" style="margin-top:10px">
+          <dt>Chu kỳ</dt><dd>zen_pro_monthly</dd>
+          <dt>Hết hạn</dt><dd class="tnum">13/07/2026</dd>
+          <dt>Thanh toán</dt><dd>VNPay · NCB</dd>
+        </dl>
+        <button class="btn ghost" style="width:100%;margin-top:14px;justify-content:center" onclick="go('billing')">Xem giao dịch →</button>
+      </div>
+
+      <div class="card pad" style="margin-bottom:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="eyebrow">Điều chỉnh số dư</div><span class="chip clay">RBAC</span></div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Ghi <span class="mono">WalletTransaction</span> · bắt buộc nhập lý do · vào Nhật ký kiểm toán.</p>
+        <button class="btn" style="width:100%;justify-content:center" onclick="openDrawer('RBAC-gated','Điều chỉnh ví',adjustHTML(),'<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Hủy</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Ghi điều chỉnh</button>')">Điều chỉnh số dư…</button>
+      </div>
+
+      <div class="card pad">
+        <div class="eyebrow" style="margin-bottom:12px">Thao tác tài khoản</div>
+        <button class="btn ghost" style="width:100%;justify-content:flex-start;margin-bottom:8px">↺ Đặt lại mật khẩu</button>
+        <button class="btn ghost" style="width:100%;justify-content:flex-start;margin-bottom:8px">⏻ Thu hồi tất cả phiên (2 token)</button>
+        <button class="btn" disabled style="width:100%;justify-content:flex-start;opacity:.55;cursor:not-allowed" title="Bị chặn đến khi gỡ lỗ hổng x-user-id">⚠ Đăng nhập với tư cách (BỊ CHẶN)</button>
+        <p style="font-size:11.5px;color:var(--clay);margin:10px 0 0">Mạo danh bị chặn đến khi gỡ lỗ hổng <span class="mono">x-user-id</span> &amp; xây impersonation có audit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ===================== BILLING ===================== -->
+<section class="view" id="v-billing">
+  <div class="seg" style="margin-bottom:20px">
+    <button class="on" data-k="txn" onclick="subtab(this,'bill')">Giao dịch</button>
+    <button data-k="subs" onclick="subtab(this,'bill')">Gói đăng ký</button>
+    <button data-k="demo" onclick="subtab(this,'bill')">Demo-upgrade</button>
+    <button data-k="price" onclick="subtab(this,'bill')">Bảng giá</button>
+  </div>
+
+  <!-- transactions -->
+  <div data-panel="bill" data-k="txn">
+    <div class="tbar">
+      <div class="search"><span class="g">⌕</span><input placeholder="Tìm vnpTxnRef, người dùng…"></div>
+      <span class="chip moss">paid</span><span class="chip soft">pending</span><span class="chip rust">failed</span><span class="chip clay">review</span>
+      <span style="font-size:12px;color:var(--ink-soft)">· <i>canceled/expired chỉ hiển thị phía client, server không ghi</i></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>vnpTxnRef</th><th>Người dùng</th><th>productCode</th><th class="r">Số tiền</th><th>Trạng thái</th><th>Bank</th><th>payDate</th></tr></thead>
+        <tbody id="payBody">
+          <tr class="clk" onclick="txnDrawer('paid')"><td class="mono">…123456</td><td>Trần Minh Anh</td><td class="mono">zen_pro_monthly</td><td class="r tnum">29.000đ</td><td><span class="chip moss"><span class="dot"></span>paid</span></td><td>NCB</td><td class="mono">2026­0613­0902</td></tr>
+          <tr class="clk" onclick="txnDrawer('review')"><td class="mono">…987789</td><td>Lê Quốc Bảo</td><td class="mono">zen_pro_yearly</td><td class="r tnum">279.000đ</td><td><span class="chip clay">review · lệch tiền</span></td><td>MBBANK</td><td class="mono">2026­0613­1041</td></tr>
+          <tr class="clk" onclick="txnDrawer('failed')"><td class="mono">…555456</td><td>Hoàng Gia Bảo</td><td class="mono">zen_pro_monthly</td><td class="r tnum">29.000đ</td><td><span class="chip rust">failed · code 24</span></td><td>—</td><td class="mono">2026­0613­1011</td></tr>
+          <tr class="clk" onclick="txnDrawer('pending')"><td class="mono">…400321</td><td>Nguyễn Thị Hương</td><td class="mono">zen_pro_yearly</td><td class="r tnum">279.000đ</td><td><span class="chip soft">pending</span></td><td>—</td><td class="mono">—</td></tr>
+          <tr class="clk" onclick="txnDrawer('paid')"><td class="mono">…401902</td><td>Đỗ Thùy Linh</td><td class="mono">zen_pro_monthly</td><td class="r tnum">29.000đ</td><td><span class="chip moss"><span class="dot"></span>paid</span></td><td>VCB</td><td class="mono">2026­0612­2233</td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span>Mở một dòng để xem rawReturnJson / rawIpnJson</span><div class="pgr"><b class="on">1</b><b>2</b><b>3</b></div></div>
+    </div>
+  </div>
+
+  <!-- subscriptions -->
+  <div data-panel="bill" data-k="subs" style="display:none">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Người dùng</th><th>Gói</th><th>Trạng thái</th><th>Hết hạn</th><th>productCode gần nhất</th><th class="r">Thao tác</th></tr></thead>
+        <tbody>
+          <tr><td>Lê Quốc Bảo</td><td><span class="chip terra">premium</span></td><td><span class="chip moss">active</span></td><td class="tnum">12/04/2027</td><td class="mono">zen_pro_yearly</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Gia hạn</button></td></tr>
+          <tr><td>Trần Minh Anh</td><td><span class="chip terra">premium</span></td><td><span class="chip moss">active</span></td><td class="tnum">13/07/2026</td><td class="mono">zen_pro_monthly</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Gia hạn</button></td></tr>
+          <tr><td>Vũ Hoàng Nam</td><td><span class="chip soft">free</span></td><td><span class="chip soft">—</span></td><td class="tnum">—</td><td class="mono">—</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Nâng cấp</button></td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span><b style="color:var(--clay)">18 gói</b> sắp hết hạn trong 7 ngày</span></div>
+    </div>
+  </div>
+
+  <!-- demo-upgrade -->
+  <div data-panel="bill" data-k="demo" style="display:none">
+    <div class="banner rust"><span class="bi">⚠</span><div><b>P0 · UNGATED ở mọi môi trường.</b> <span class="mono">POST /me/subscription/demo-upgrade</span> hiện cấp premium 30 ngày <b>không thanh toán, không kiểm soát môi trường, không audit, không lý do</b>. Toàn bộ cơ chế gate này là xây mới — nên chặn trước go-live, song song gỡ <span class="mono">x-user-id</span>.</div></div>
+    <div class="grid2">
+      <div class="card pad">
+        <div class="eyebrow" style="margin-bottom:14px">Cho phép demo-upgrade theo môi trường</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)"><span>dev</span><button class="tog on"></button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)"><span>demo</span><button class="tog on"></button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span>production <span class="chip rust" style="margin-left:6px">khóa TẮT</span></span><button class="tog" style="opacity:.5"></button></div>
+        <div class="field" style="margin-top:16px"><label>Bắt buộc nhập lý do khi đổi</label><input placeholder="VD: bật cho buổi demo nghiệm thu PRM393"></div>
+      </div>
+      <div class="card">
+        <div class="hd"><h3>Tài khoản cấp qua demo path</h3><span class="tag-new">cần audit mới</span></div>
+        <table>
+          <thead><tr><th>Người dùng</th><th>Thời điểm (UTC)</th></tr></thead>
+          <tbody>
+            <tr><td>Hoàng Gia Bảo</td><td class="tnum">10/06 · 09:12</td></tr>
+            <tr><td>(+ 6 tài khoản khác tháng này)</td><td class="tnum">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- pricing -->
+  <div data-panel="bill" data-k="price" style="display:none">
+    <div class="banner amber"><span class="bi">◇</span><div>Giá hiện <b>hard-code trong</b> <span class="mono">payment.service.ts → PAYMENT_PRODUCTS</span>. Sửa giá qua admin cần đưa vào schema/config — <b>NET-NEW</b>.</div></div>
+    <div class="grid3">
+      <div class="tile"><h4>Standard</h4><div class="mut">Miễn phí</div><div class="big">0đ</div><div class="mut">Mặc định cho người dùng mới</div></div>
+      <div class="tile" style="border-color:var(--terracotta)"><div style="display:flex;justify-content:space-between"><h4>Zen Pro</h4><span class="chip terra">đang bán</span></div><div class="big">29.000đ<small style="font-size:14px;color:var(--ink-soft)"> /tháng</small></div><div class="mut mono">zen_pro_monthly · 30 ngày</div><div style="margin-top:8px;font-size:13px">279.000đ /năm <span class="chip moss" style="margin-left:4px">-20%</span> <span class="mono" style="font-size:11px;color:var(--ink-soft)">zen_pro_yearly · 365 ngày</span></div></div>
+      <div class="tile" style="opacity:.7"><h4>Master</h4><div class="mut">Sắp ra mắt</div><div class="big">—</div><div class="mut">coming soon</div></div>
+    </div>
+  </div>
+</section>
+<!-- ===================== ANALYTICS ===================== -->
+<section class="view" id="v-analytics">
+  <div class="banner amber"><span class="bi">◇</span><div><b>Phân tích tổng hợp là NET-NEW</b> — app hiện chỉ đo theo từng người. Mọi con số dưới đây <b>minh họa</b>, dựng trên FocusSession / UserStreak / ActivityEvent / Subscription / PaymentOrder.</div></div>
+
+  <div class="sec-h"><h2>Gắn kết &amp; Giữ chân</h2><span class="note">Đo trên hành động có ý nghĩa: <b>phiên focus hoàn thành</b>, không phải mở app</span></div>
+  <div class="grid3" style="margin-bottom:8px">
+    <div class="tile"><div class="eyebrow">MAU</div><div class="big tnum">6.820</div><div class="mut">Người dùng hoạt động/tháng</div></div>
+    <div class="tile"><div class="eyebrow">WAU</div><div class="big tnum">3.110</div><div class="mut">Hoạt động/tuần</div></div>
+    <div class="tile"><div class="eyebrow">Độ bám DAU/MAU</div><div class="big tnum">27%</div><div class="mut">Dải lành mạnh ≥20%</div></div>
+  </div>
+
+  <div class="divider"><span class="d">◇</span></div>
+  <div class="cols t11">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:14px"><h2 style="font-size:17px">Cohort giữ chân</h2><span class="note">theo tháng đăng ký</span></div>
+      <table class="cohort">
+        <thead><tr><th style="text-align:left">Cohort</th><th>D1</th><th>D7</th><th>D14</th><th>D30</th></tr></thead>
+        <tbody>
+          <tr><td style="text-align:left;color:var(--ink-soft)">Th3 · 1.910</td><td><div class="cell" style="background:rgba(90,107,73,.92)">46%</div></td><td><div class="cell" style="background:rgba(90,107,73,.5)">23%</div></td><td><div class="cell" style="background:rgba(90,107,73,.34)">15%</div></td><td><div class="cell" style="background:rgba(90,107,73,.24)">10%</div></td></tr>
+          <tr><td style="text-align:left;color:var(--ink-soft)">Th4 · 2.240</td><td><div class="cell" style="background:rgba(90,107,73,.88)">45%</div></td><td><div class="cell" style="background:rgba(90,107,73,.46)">22%</div></td><td><div class="cell" style="background:rgba(90,107,73,.3)">13%</div></td><td><div class="cell" style="background:rgba(90,107,73,.2)">9%</div></td></tr>
+          <tr><td style="text-align:left;color:var(--ink-soft)">Th5 · 2.470</td><td><div class="cell" style="background:rgba(90,107,73,.86)">44%</div></td><td><div class="cell" style="background:rgba(90,107,73,.44)">21%</div></td><td><div class="cell" style="background:rgba(90,107,73,.26)">11%</div></td><td><div class="cell" style="background:rgba(90,107,73,.18)">9%</div></td></tr>
+          <tr><td style="text-align:left;color:var(--ink-soft)">Th6 · 1.260</td><td><div class="cell" style="background:rgba(90,107,73,.84)">43%</div></td><td><div class="cell" style="background:rgba(90,107,73,.4)">20%</div></td><td><div class="cell" style="background:rgba(217,205,186,.6);color:var(--ink-soft)">—</div></td><td><div class="cell" style="background:rgba(217,205,186,.6);color:var(--ink-soft)">—</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:14px"><h2 style="font-size:17px">Phân bố streak hiện tại</h2></div>
+      <ul class="barlist">
+        <li><div class="top"><span>0 ngày</span><b class="tnum">38%</b></div><div class="track"><i style="width:38%"></i></div></li>
+        <li><div class="top"><span>1–3 ngày</span><b class="tnum">29%</b></div><div class="track"><i style="width:29%"></i></div></li>
+        <li><div class="top"><span>4–7 ngày</span><b class="tnum">18%</b></div><div class="track"><i class="moss" style="width:18%"></i></div></li>
+        <li><div class="top"><span>8–14 ngày</span><b class="tnum">9%</b></div><div class="track"><i class="moss" style="width:9%"></i></div></li>
+        <li><div class="top"><span>15+ ngày</span><b class="tnum">6%</b></div><div class="track"><i class="moss" style="width:6%"></i></div></li>
+      </ul>
+      <p style="font-size:12px;color:var(--ink-soft);margin:14px 0 0"><b>Lưu ý code:</b> bỏ lỡ 1 ngày → <span class="mono">currentStreak</span> reset về 1 (hard-reset, không có soft-drop). Thưởng mốc 7 ngày / streak-freeze là NET-NEW.</p>
+    </div>
+  </div>
+
+  <div class="divider"><span class="d">◇</span></div>
+  <div class="cols t11">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Phễu chuyển đổi</h2></div>
+      <div class="funnel">
+        <div class="fstep"><span class="flab">Đăng ký</span><div class="fbar" style="width:100%">100%</div></div>
+        <div class="fstep"><span class="flab">Hoàn tất onboarding</span><div class="fbar" style="width:82%">82%</div><span class="fdrop">−18%</span></div>
+        <div class="fstep"><span class="flab">Phiên focus đầu tiên</span><div class="fbar" style="width:57%">57%</div><span class="fdrop">−25%</span></div>
+        <div class="fstep"><span class="flab">Claim phần thưởng đầu</span><div class="fbar" style="width:49%">49%</div><span class="fdrop">−8%</span></div>
+        <div class="fstep"><span class="flab">Lên Zen Pro</span><div class="fbar" style="width:4.6%;min-width:46px">4,6%</div><span class="fdrop">−44%</span></div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Áp dụng tính năng</h2></div>
+      <ul class="barlist">
+        <li><div class="top"><span><span class="mono">focus_completed</span></span><b class="tnum">41%</b></div><div class="track"><i style="width:41%"></i></div></li>
+        <li><div class="top"><span><span class="mono">daily_task_claimed</span></span><b class="tnum">33%</b></div><div class="track"><i style="width:33%"></i></div></li>
+        <li><div class="top"><span><span class="mono">shop_purchase</span></span><b class="tnum">14%</b></div><div class="track"><i style="width:14%"></i></div></li>
+        <li><div class="top"><span>pet feed / play</span><b class="tnum">9%</b></div><div class="track"><i style="width:9%"></i></div></li>
+      </ul>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 0"><b>AI Focus Designer:</b> 26% phiên dùng <i>Analyze</i>, trong đó 61% áp dụng kế hoạch.</p>
+    </div>
+  </div>
+
+  <div class="divider"><span class="d">◇</span></div>
+  <div class="sec-h"><h2>Doanh thu</h2><span class="tag-new">minh họa</span><span class="note">giữ tách biệt với dòng tiền thực · xuất CSV/PDF</span></div>
+  <div class="grid3">
+    <div class="tile"><div class="eyebrow">Tỉ lệ free → paid</div><div class="big tnum">4,6%</div><div class="mut">ARPU ≈ 10.900đ</div></div>
+    <div class="tile"><div class="eyebrow">Cơ cấu gói</div><div style="margin-top:14px"><div class="top" style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>zen_pro_monthly</span><b>62%</b></div><div class="track"><i style="width:62%"></i></div><div class="top" style="display:flex;justify-content:space-between;font-size:13px;margin:10px 0 6px"><span>zen_pro_yearly</span><b>38%</b></div><div class="track"><i class="moss" style="width:38%"></i></div></div></div>
+    <div class="tile"><div class="eyebrow">Zen Pro đang hoạt động</div><div class="big tnum">312</div><div class="mut">+11 trong kỳ</div></div>
+  </div>
+</section>
+<!-- ===================== TASKS ===================== -->
+<section class="view" id="v-tasks">
+  <div class="banner amber"><span class="bi">◇</span><div><span class="mono">TaskTemplate</span>/<span class="mono">DailyMilestone</span> có trong DB nhưng chỉ được ghi bởi <span class="mono">seed.ts</span> — sửa qua admin là <b>NET-NEW</b>. Nhiệm vụ tạo <b>lazily</b> mỗi request qua <span class="mono">ensureTodayTasks()</span>, <b>không có job reset 00:00</b>.</div></div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="hd"><h3>Mẫu nhiệm vụ hằng ngày</h3><button class="btn primary" style="padding:6px 12px" onclick="openDrawer('Sửa mẫu','deep_focus',taskHTML(),'<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Hoàn tác</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Lưu</button>')">+ Thêm mẫu</button></div>
+    <table>
+      <thead><tr><th>code</th><th>Tiêu đề</th><th>taskType</th><th class="r">target</th><th class="r">token</th><th class="r">◆</th><th class="r">điểm</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        <tr class="clk" onclick="openDrawer('Sửa mẫu','daily_login',taskHTML(),'<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Hoàn tác</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Lưu</button>')"><td class="mono">daily_login</td><td>Daily Login</td><td class="mono">daily_login</td><td class="r tnum">1</td><td class="r tnum">10</td><td class="r tnum" style="color:var(--diamond)">1</td><td class="r tnum">120</td><td><button class="tog on"></button></td></tr>
+        <tr><td class="mono">sunshine_collector</td><td>Complete 1 Pomodoro</td><td class="mono">pomodoro_count</td><td class="r tnum">1</td><td class="r tnum">20</td><td class="r tnum" style="color:var(--diamond)">2</td><td class="r tnum">220</td><td><button class="tog on"></button></td></tr>
+        <tr><td class="mono">deep_focus</td><td>Deep Focus</td><td class="mono">deep_focus</td><td class="r tnum">45</td><td class="r tnum">35</td><td class="r tnum" style="color:var(--diamond)">3</td><td class="r tnum">320</td><td><button class="tog on"></button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="divider"><span class="d">◇</span></div>
+  <div class="cols t23">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Thang mốc điểm hằng ngày</h2><span class="note">theo <span class="mono">pointsRequired</span></span></div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="srow"><div class="nm"><b class="tnum" style="font-family:var(--serif);font-size:18px">120</b> điểm</div><span>+10 token · +1 ◆</span></div>
+        <div class="srow"><div class="nm"><b class="tnum" style="font-family:var(--serif);font-size:18px">340</b> điểm</div><span>+20 token · +2 ◆</span></div>
+        <div class="srow"><div class="nm"><b class="tnum" style="font-family:var(--serif);font-size:18px">660</b> điểm</div><span>+35 token · +3 ◆</span></div>
+        <div class="srow"><div class="nm"><b class="tnum" style="font-family:var(--serif);font-size:18px">1045</b> điểm</div><span>+50 token · +5 ◆</span></div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="eyebrow" style="margin-bottom:10px">Tác động faucet (xem trước)</div>
+      <p style="font-size:13px;color:var(--ink-soft)">Tổng phát token tối đa/ngày qua nhiệm vụ + mốc nếu hoàn thành hết: <b style="color:var(--ink)" class="tnum">~180 token + 11 ◆</b>/người. Ladder tái tạo lazily mỗi ngày khi mở app, không bằng cron.</p>
+    </div>
+  </div>
+</section>
+<!-- ===================== SHOP ===================== -->
+<section class="view" id="v-shop">
+  <div class="cols t23" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Danh mục cửa hàng</h3><button class="btn primary" style="padding:6px 12px" onclick="openDrawer('Sửa món','energy_potion',shopHTML(),'<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Hủy</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Lưu</button>')">+ Thêm món</button></div>
+      <table>
+        <thead><tr><th>code</th><th>Tên</th><th>Loại</th><th class="r">Giá (token)</th><th>Hiệu ứng</th><th>Trạng thái</th></tr></thead>
+        <tbody id="shopBody">
+          <tr class="clk" onclick="openDrawer('Sửa món','energy_potion',shopHTML(),'<button class=&quot;btn ghost&quot; onclick=&quot;closeDrawer()&quot;>Hủy</button><button class=&quot;btn primary&quot; onclick=&quot;closeDrawer()&quot;>Lưu</button>')"><td class="mono">energy_potion</td><td>⚡ Energy Potion</td><td><span class="chip soft">potion</span></td><td class="r tnum">150</td><td>+20 energy</td><td><span class="chip clay">HOT</span></td></tr>
+          <tr><td class="mono">mood_booster</td><td>🌸 Mood Booster</td><td><span class="chip soft">potion</span></td><td class="r tnum">120</td><td>+20 mood</td><td><span class="chip moss">active</span></td></tr>
+          <tr><td class="mono">fresh_berries</td><td>🍓 Fresh Berries</td><td><span class="chip soft">food</span></td><td class="r tnum">100</td><td>+24 hunger</td><td><span class="chip clay">HOT</span></td></tr>
+          <tr><td class="mono">cozy_pet</td><td>🛋️ Cozy Pet</td><td><span class="chip soft">food</span></td><td class="r tnum">90</td><td>+18 love</td><td><span class="chip moss">active</span></td></tr>
+          <tr><td class="mono">companion_eagle</td><td>🦅 Eagle</td><td><span class="chip soft">companion</span></td><td class="r tnum">260</td><td>+10% token</td><td><span class="chip moss">active</span></td></tr>
+          <tr><td class="mono">companion_frog</td><td>🐸 Frog</td><td><span class="chip soft">companion</span></td><td class="r tnum">180</td><td>−20% hao energy</td><td><span class="chip moss">active</span></td></tr>
+          <tr><td class="mono">companion_giraffe</td><td>🦒 Giraffe</td><td><span class="chip soft">companion</span></td><td class="r tnum">320</td><td>+10 token @45′+</td><td><span class="chip moss">active</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="card pad" style="margin-bottom:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="eyebrow">Công thức phần thưởng</div><span class="tag-new">chỉ đọc · tuning NET-NEW</span></div>
+        <div class="formula"><span class="c">token</span> = 20 + plannedMinutes
+<span class="c">EXP</span> = 50
+<span class="c">energyLoss</span> = floor(minutes / 5)
+Kiki +5% EXP · Eagle +10% token
+Frog −20% energyLoss · Giraffe +10 token @≥45′</div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:12px 0 0"><b>Không</b> có faucet cap / giới hạn token theo ngày. Phạt bỏ cuộc ~10 token <b>chỉ phía client</b> — endpoint <span class="mono">/complete</span> không có nhánh phạt.</p>
+      </div>
+      <div class="card pad">
+        <div class="eyebrow" style="margin-bottom:12px">Tiền tệ</div>
+        <dl class="kv">
+          <dt>Token (mềm)</dt><dd class="tnum">khởi tạo 1.234</dd>
+          <dt>Energy</dt><dd class="tnum">5.000 · decay theo tick</dd>
+          <dt>Kim cương</dt><dd class="tnum" style="color:var(--diamond)">20 ◆ (cứng)</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PETS ===================== -->
+<section class="view" id="v-pets">
+  <div class="banner amber"><span class="bi">◇</span><div>Hằng số đồng hành &amp; decay <b>hard-code trong</b> <span class="mono">app.ts</span>; chỉnh qua admin là NET-NEW. Decay tính <b>lazily</b> lúc đọc (<span class="mono">applyPetDecay</span> catch-up từ <span class="mono">lastUpdatedAt</span>), <b>không có tick chạy nền</b>. Cosmetic-only, không pay-to-win.</div></div>
+  <div class="cols t11" style="align-items:start">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Loài &amp; Đồng hành</h2></div>
+      <div class="srow"><div class="nm" style="font-size:14px"><span style="font-size:18px">🦊</span> <b>Kiki · Red Fox</b></div><span>+5% EXP · mặc định</span></div>
+      <div class="srow"><div class="nm" style="font-size:14px"><span style="font-size:18px">🦅</span> Eagle · “Sharp Vision”</div><span>+10% token · 260</span></div>
+      <div class="srow"><div class="nm" style="font-size:14px"><span style="font-size:18px">🐸</span> Frog · “Calm Mind”</div><span>−20% hao energy · 180</span></div>
+      <div class="srow"><div class="nm" style="font-size:14px"><span style="font-size:18px">🦒</span> Giraffe · “Long Focus”</div><span>+10 token @45′+ · 320</span></div>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Tiến hóa &amp; Decay</h2></div>
+      <div class="eyebrow" style="margin-bottom:8px">Skin theo cấp</div>
+      <div style="display:flex;gap:8px;margin-bottom:18px"><span class="chip soft">standard · Lv1–9</span><span class="chip terra">spirit · Lv10–29</span><span class="chip clay">celestial · Lv30+</span></div>
+      <div class="eyebrow" style="margin-bottom:8px">Decay mỗi tick 30′ (tối đa 24 tick = 12 giờ)</div>
+      <dl class="kv">
+        <dt>Đói</dt><dd class="tnum">−2 / tick</dd>
+        <dt>Tâm trạng</dt><dd class="tnum">−1 / tick</dd>
+        <dt>Yêu thương</dt><dd class="tnum">−1 / tick</dd>
+      </dl>
+      <div class="eyebrow" style="margin:18px 0 8px">Chăm sóc (ShopItem → chỉ số)</div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0">🍓 fresh_berries → Đói +24 · 🌸 mood_booster → Tâm trạng +20 · 🛋️ cozy_pet → Yêu thương +18 · ⚡ energy_potion → Năng lượng +20</p>
+    </div>
+  </div>
+</section>
+<!-- ===================== ACHIEVEMENTS ===================== -->
+<section class="view" id="v-achievements">
+  <div class="cols t11" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Định nghĩa thành tựu</h3><span class="tag-new">hard-coded · schema NET-NEW</span></div>
+      <div class="bd">
+        <div style="padding:14px 0;border-bottom:1px solid var(--rule)">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--serif);font-size:16px">Bạn đồng hành năng suất I</b><span class="chip terra">★★☆☆☆</span></div>
+          <div class="mono" style="font-size:11px;color:var(--ink-soft);margin:4px 0 8px">productive_partner_i · 5 nhiệm vụ con</div>
+          <div style="font-size:13px">Phần thưởng: <b>+100 token / +100 EXP</b> · tiến độ TB người dùng <b class="tnum">2,3/5</b> sao</div>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin:12px 0 0">Cần editor nhiệm vụ con + điều kiện kích hoạt + badge art + trạng thái draft/live khi đưa vào schema.</p>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Cấu hình Streak</h2></div>
+      <dl class="kv">
+        <dt>Quy tắc đếm</dt><dd>+1 ở phiên focus đầu tiên trong ngày</dd>
+        <dt>Khi bỏ lỡ</dt><dd><span class="chip rust">hard-reset về 1</span></dd>
+        <dt>Streak tốt nhất hệ thống</dt><dd class="tnum">142 ngày</dd>
+      </dl>
+      <div class="divider" style="margin:16px 0"><span class="d">◇</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Thưởng mốc 7 ngày (+50 token) <span class="tag-new" style="margin-left:6px">NET-NEW</span></span><button class="tog"></button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Streak-freeze / ân hạn <span class="tag-new" style="margin-left:6px">NET-NEW</span></span><button class="tog"></button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AI ===================== -->
+<section class="view" id="v-ai">
+  <div class="banner amber"><span class="bi">◇</span><div><b>AI Focus Designer (Gemini Flash)</b> hiện <b>không</b> có feature flag trong DB, <b>không</b> log quota/chi phí, prompt hard-code và <b>ép xuất tiếng Anh</b>. Endpoint: <span class="mono">/focus-plans/analyze</span>, <span class="mono">/focus-plans/recap</span>. Model: <span class="mono">gemini-2.5-flash → flash-lite</span> (fallback rule-based).</div></div>
+  <div class="cols t11" style="align-items:start">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Cờ &amp; Quota</h2></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)"><span>Bật cho <b>premium</b></span><button class="tog on"></button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span>Bật cho <b>free</b></span><button class="tog"></button></div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="tile" style="background:var(--paper-sunk)"><div class="eyebrow">Lượt gọi hôm nay</div><div class="big tnum" style="color:var(--ink-faint)">—</div><div class="mut">bộ đếm chưa tồn tại</div></div>
+        <div class="tile" style="background:var(--paper-sunk)"><div class="eyebrow">Chi phí ước tính</div><div class="big tnum" style="color:var(--ink-faint)">—</div><div class="mut">cần telemetry mới</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--clay);margin:12px 0 0">Cờ AI hiện chỉ là “<span class="mono">GEMINI_API_KEY</span> đã đặt?” — không có quota/cost counter.</p>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Quản lý prompt</h2></div>
+      <div class="eyebrow" style="margin-bottom:8px">analyze · v3 (10/06)</div>
+      <div class="formula" style="white-space:pre-wrap">Trả về: subject · clarity · mode · recommended minutes · pomodoro · steps.
+⚠ Prompt ép OUTPUT TIẾNG ANH.</div>
+      <div class="field" style="margin-top:14px"><label>Sandbox · mục tiêu</label><input value="Ôn thi PRM393"></div>
+      <div style="background:var(--paper-sunk);border:1px solid var(--rule);border-radius:9px;padding:12px;font-size:13px"><b>Kết quả:</b> mode <b>Deep</b> · 45′ · 2 pomodoro — <i style="color:var(--ink-soft)">(plan trả bằng tiếng Anh do prompt hiện tại)</i></div>
+    </div>
+  </div>
+</section>
+<!-- ===================== RBAC ===================== -->
+<section class="view" id="v-rbac">
+  <div class="banner rust"><span class="bi">⚠</span><div><b>Lỗ hổng P0.</b> JWT chỉ mang <span class="mono">{userId}</span>; bảng User <b>không có cột role</b>; fallback header <span class="mono">x-user-id</span> (<span class="mono">auth.middleware.ts</span>) cho phép <b>mạo danh bất kỳ ai</b>. PHẢI gỡ trước khi mở bất kỳ API đặc quyền nào. Toàn bộ RBAC bên dưới là <b>nền tảng xây mới</b>.</div></div>
+  <div class="cols t31" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Vai trò</h3></div>
+      <div class="bd" style="padding:6px 0">
+        <div class="srow" style="padding:11px 18px;background:var(--terracotta-tint)"><div class="nm"><b>Support Agent</b></div><span class="chip soft">12</span></div>
+        <div class="srow" style="padding:11px 18px"><div class="nm">Super Admin</div><span class="chip soft">2</span></div>
+        <div class="srow" style="padding:11px 18px"><div class="nm">Ops / Live-Ops</div><span class="chip soft">4</span></div>
+        <div class="srow" style="padding:11px 18px"><div class="nm">Finance Admin</div><span class="chip soft">3</span></div>
+        <div class="srow" style="padding:11px 18px"><div class="nm">Content Editor</div><span class="chip soft">5</span></div>
+        <div class="srow" style="padding:11px 18px"><div class="nm">Auditor / Read-Only</div><span class="chip soft">2</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="card pad" style="margin-bottom:22px">
+        <div class="sec-h" style="margin-bottom:14px"><h2 style="font-size:17px">Ma trận quyền · Support Agent</h2><span class="note">least-privilege</span></div>
+        <table class="matrix">
+          <thead><tr><th class="res" style="text-align:left">Tài nguyên</th><th>Create</th><th>Read</th><th>Update</th><th>Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="res">Người dùng</td><td class="no">·</td><td class="yes">✓</td><td class="no">·</td><td class="no">·</td></tr>
+            <tr><td class="res">Thanh toán</td><td class="no">·</td><td class="yes">✓</td><td class="no">·</td><td class="no">·</td></tr>
+            <tr><td class="res">Refund</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td></tr>
+            <tr><td class="res">Cửa hàng</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td></tr>
+            <tr><td class="res">Nhật ký kiểm toán</td><td class="no">·</td><td class="yes">✓</td><td class="no">·</td><td class="no">·</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card pad">
+        <div class="sec-h" style="margin-bottom:14px"><h2 style="font-size:17px">Kiểm soát hành động rủi ro cao</h2></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)"><span>MFA bắt buộc cho refund &amp; xóa tài khoản</span><button class="tog on"></button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)"><span>Phê duyệt 2 người: cấp &gt;10.000 token hàng loạt</span><button class="tog on"></button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0"><span>Trạng thái gỡ <span class="mono">x-user-id</span></span><span class="chip rust">CHƯA hoàn tất</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AUDIT ===================== -->
+<section class="view" id="v-audit">
+  <div class="tbar">
+    <div class="search"><span class="g">⌕</span><input placeholder="Lọc theo actor / action / tài nguyên…"></div>
+    <button class="btn"><span class="g">↧</span> Xuất</button>
+    <span class="tag-new">bảng mới · tái dùng WalletTransaction / ActivityEvent / raw*Json</span>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Thời điểm (UTC)</th><th>Actor</th><th>Hành động</th><th>Đối tượng</th><th>Lý do</th><th>IP</th></tr></thead>
+      <tbody>
+        <tr class="clk" onclick="auditDrawer('impersonate')"><td class="mono">13/06 13:05</td><td class="mono">admin.lan</td><td><span class="chip rust">IMPERSONATE_START</span></td><td>Phạm Văn Đức</td><td>hỗ trợ claim phần thưởng</td><td class="mono">14.161.x.x</td></tr>
+        <tr class="clk" onclick="auditDrawer('price')"><td class="mono">13/06 11:20</td><td class="mono">finance.huy</td><td><span class="chip clay">PRICE_EDIT</span></td><td class="mono">zen_pro_monthly</td><td>KM hè · 29.000→25.000đ</td><td class="mono">113.22.x.x</td></tr>
+        <tr class="clk" onclick="auditDrawer('wallet')"><td class="mono">13/06 09:40</td><td class="mono">ops.lan</td><td><span class="chip clay">WALLET_ADJUST</span></td><td>−48.766 token</td><td>nghi vượt faucet cap</td><td class="mono">14.161.x.x</td></tr>
+        <tr class="clk" onclick="auditDrawer('role')"><td class="mono">13/06 08:15</td><td class="mono">super.admin</td><td><span class="chip terra">ROLE_CHANGE</span></td><td>finance.huy</td><td>cấp Finance Admin</td><td class="mono">14.161.x.x</td></tr>
+      </tbody>
+    </table>
+    <div class="foot"><span>Append-only · không sửa/xóa được · mới nhất trước</span></div>
+  </div>
+</section>
+<!-- ===================== FLAGS & SETTINGS ===================== -->
+<section class="view" id="v-flags">
+  <div class="seg" style="margin-bottom:20px">
+    <button class="on" data-k="flags" onclick="subtab(this,'set')">Cờ tính năng</button>
+    <button data-k="sys" onclick="subtab(this,'set')">Hệ thống</button>
+    <button data-k="keys" onclick="subtab(this,'set')">Khóa &amp; Bí mật</button>
+  </div>
+
+  <div data-panel="set" data-k="flags">
+    <div class="banner rust"><span class="bi">⚠</span><div><span class="mono">useTestFocusDuration</span> phải <b>TẮT</b> ở demo/production (nếu BẬT, phiên focus chạy theo giây để test — hỏng nghiệm thu).</div></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Cờ</th><th>Phạm vi</th><th>Mô tả</th><th class="r">Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td class="mono" style="color:var(--rust)">useTestFocusDuration</td><td><span class="chip soft">prod · demo</span></td><td>Rút ngắn thời lượng focus để test</td><td class="r"><button class="tog danger"></button></td></tr>
+          <tr><td class="mono">demo_upgrade</td><td><span class="chip soft">prod</span></td><td>Cấp Zen Pro không thanh toán</td><td class="r"><button class="tog"></button></td></tr>
+          <tr><td class="mono">ai_focus_designer</td><td><span class="chip terra">premium</span></td><td>AI gợi ý kế hoạch focus</td><td class="r"><button class="tog on"></button></td></tr>
+          <tr><td class="mono">focus_guard_android</td><td><span class="chip soft">100%</span></td><td>Chặn app gây xao nhãng (Android)</td><td class="r"><button class="tog on"></button></td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span>Mỗi lần đổi cần tiêu đề + comment · có tab diff audit · rollout/rollback an toàn</span></div>
+    </div>
+  </div>
+
+  <div data-panel="set" data-k="sys" style="display:none">
+    <div class="grid2" style="align-items:start">
+      <div class="card pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="eyebrow">Múi giờ ứng dụng</div><span class="tag-new">NET-NEW</span></div>
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px">Máy chủ chạy <b>UTC</b> (<span class="mono">todayDate()</span> dùng <span class="mono">Date.UTC</span>, streak/expiry dùng <span class="mono">setUTCDate</span>) — <b>chưa có cấu hình ICT</b>. Mọi mốc “reset hằng ngày” hiện theo UTC.</p>
+        <div class="field"><label>“Daily reset” theo</label><select><option>UTC (hiện tại)</option><option>UTC+7 · ICT (đề xuất)</option></select></div>
+      </div>
+      <div class="card pad">
+        <div class="eyebrow" style="margin-bottom:12px">Xác thực &amp; mặc định</div>
+        <div class="srow"><div class="nm">Google OAuth</div><span class="chip moss">BẬT</span></div>
+        <div class="srow"><div class="nm">Apple / Facebook</div><span class="chip soft">sắp ra mắt</span></div>
+        <div class="srow"><div class="nm">Số dư khởi tạo (Wallet)</div><span class="tnum">1.234 / 5.000 / 20 ◆</span></div>
+        <div class="srow"><div class="nm">Runtime info (kết nối backend)</div><span class="chip clay">ẩn ở production</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-panel="set" data-k="keys" style="display:none">
+    <div class="banner amber"><span class="bi">◇</span><div>Khóa hiển thị dạng che. <b>Xoay khóa (rotation)</b> cho VNPay / Google / Gemini là <b>NET-NEW</b>.</div></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Khóa</th><th>Giá trị</th><th class="r">Hành động</th></tr></thead>
+        <tbody>
+          <tr><td>VNPay merchant + return/IPN URL</td><td class="mono">vnp_••••••3F2A</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Test</button> <button class="btn ghost" style="padding:5px 10px">Xoay ⟳</button></td></tr>
+          <tr><td>Google OAuth client</td><td class="mono">••••••.apps.googleusercontent.com</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Test</button></td></tr>
+          <tr><td>Gemini API key</td><td class="mono">AIza••••••9kQ</td><td class="r"><button class="btn ghost" style="padding:5px 10px">Test</button> <button class="btn ghost" style="padding:5px 10px">Xoay ⟳</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== OPS ===================== -->
+<section class="view" id="v-ops">
+  <div class="banner amber"><span class="bi">◇</span><div><b>Toàn bộ module này NET-NEW.</b> Xác nhận thanh toán phụ thuộc hoàn toàn vào callback VNPay return/IPN (<span class="mono">verifyVnpayParams</span>) — <b>không có API truy vấn ngược</b>, nên hàng đợi đối soát IPN thất bại là bắt buộc.</div></div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="hd"><h3>Hàng đợi IPN lỗi / chưa nhận · Dead-letter</h3><span class="chip clay">2 mục cần xử lý</span></div>
+    <table>
+      <thead><tr><th>vnpTxnRef</th><th>Người dùng</th><th class="r">Số tiền</th><th>Lý do</th><th class="r">Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">…400321</td><td>Nguyễn Thị Hương</td><td class="r tnum">279.000đ</td><td><span class="chip soft">pending quá 30′ · chưa nhận IPN</span></td><td class="r"><button class="btn ghost" style="padding:5px 10px">Replay rawIpnJson</button></td></tr>
+        <tr><td class="mono">…987789</td><td>Lê Quốc Bảo</td><td class="r tnum">279.000đ</td><td><span class="chip clay">review · lệch tiền (nhận 269.000đ)</span></td><td class="r"><button class="btn ghost" style="padding:5px 10px">Đối soát thủ công</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sec-h"><h2>Tác vụ toàn vẹn dữ liệu</h2></div>
+  <div class="grid3">
+    <div class="tile"><div class="eyebrow">Ví lệch sổ</div><div class="big tnum">3</div><div class="mut">balance ≠ Σ WalletTransaction</div><button class="btn ghost" style="margin-top:10px;width:100%;justify-content:center">Chạy kiểm tra</button></div>
+    <div class="tile"><div class="eyebrow">Sub hết hạn còn active</div><div class="big tnum">12</div><div class="mut">expiresAt &lt; hôm nay · chưa hạ free (không có cron)</div><button class="btn ghost" style="margin-top:10px;width:100%;justify-content:center">Hạ về free</button></div>
+    <div class="tile"><div class="eyebrow">Inventory mồ côi</div><div class="big tnum">1</div><div class="mut">shopItem đã xóa</div><button class="btn ghost" style="margin-top:10px;width:100%;justify-content:center">Dọn</button></div>
+  </div>
+</section>
+<!-- ===================== MODERATION ===================== -->
+<section class="view" id="v-moderation">
+  <div class="banner amber"><span class="bi">◇</span><div>Vòng đời tài khoản (Active → Tạm khóa → Cấm → Đã xóa) cần <b>schema mới</b>: User hiện <b>không có cột</b> <span class="mono">status / deletedAt</span>. Vì không có soft-delete, Xóa hiện <b>không hoàn tác được</b> — recycle-bin là NET-NEW.</div></div>
+  <div class="cols t11" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Hành động vòng đời</h3></div>
+      <table>
+        <thead><tr><th>Người dùng</th><th>Trạng thái</th><th class="r">Hành động</th></tr></thead>
+        <tbody>
+          <tr><td><div class="u-2"><span class="a">Hoàng Gia Bảo</span><span class="b">cờ: lạm dụng demo-upgrade</span></div></td><td><span class="chip clay">under_review</span></td><td class="r"><button class="btn danger" style="padding:5px 10px">Tạm khóa…</button></td></tr>
+          <tr><td><div class="u-2"><span class="a">Vũ Hoàng Nam</span><span class="b">đến 20/06/2026</span></div></td><td><span class="chip clay">Tạm khóa</span></td><td class="r"><button class="btn ghost" style="padding:5px 10px">Mở khóa</button></td></tr>
+          <tr><td><div class="u-2"><span class="a">spam_bot_204</span><span class="b">tạo token bất thường</span></div></td><td><span class="chip rust">Cấm</span></td><td class="r"><button class="btn ghost" style="padding:5px 10px">Xem</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="hd"><h3>Hàng đợi điều chỉnh tiến độ</h3><span class="tag-new">faucet-cap NET-NEW</span></div>
+      <div class="bd">
+        <div style="padding:12px 0;border-bottom:1px solid var(--rule)">
+          <div style="display:flex;justify-content:space-between"><b>Hoàng Gia Bảo</b><span class="chip rust">+50.000 token / 1 giờ</span></div>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:8px 0">Vượt ngưỡng nghi vấn. Đề xuất: trừ <b class="tnum">48.766 token</b> → ghi <span class="mono">WalletTransaction</span> <span class="mono">reason='admin_adjust'</span>, <span class="mono">refType='moderation'</span>.</p>
+          <button class="btn" style="padding:6px 12px">Áp dụng điều chỉnh + ghi audit</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:12px 0 0">So với baseline faucet-cap — baseline này <b>chưa tồn tại</b> trong backend, cần xây trước.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== NOTIFICATIONS ===================== -->
+<section class="view" id="v-notifications">
+  <div class="banner amber"><span class="bi">◇</span><div><b>NET-NEW.</b> Client hiện chỉ <b>đọc</b> bảng <span class="mono">Notification</span> — chưa có cơ chế admin broadcast. Composer dưới đây mô phỏng kiểu inbox của app (chấm chưa đọc, thời gian tương đối).</div></div>
+  <div class="cols t11" style="align-items:start">
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Soạn thông báo / announcement</h2></div>
+      <div class="field"><label>Phân khúc nhận</label><select><option>Tất cả người dùng (6.820)</option><option>Power users: streak 7+ (612)</option><option>Free chưa nâng cấp</option><option>Sub sắp hết hạn (18)</option></select></div>
+      <div class="field"><label>Tiêu đề</label><input value="Chuỗi focus của bạn đang chờ ✦"></div>
+      <div class="field"><label>Nội dung</label><textarea rows="3">Kiki nhớ bạn! Mở app hoàn thành 1 phiên để giữ streak nhé.</textarea></div>
+      <button class="btn primary" style="width:100%;justify-content:center">Gửi (qua Tác vụ hàng loạt)</button>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:16px"><h2 style="font-size:17px">Trigger tái gắn kết</h2></div>
+      <div class="srow"><div class="nm">Bỏ lỡ streak hôm qua</div><span class="chip moss">đang chạy</span></div>
+      <div class="srow"><div class="nm">Pet đói &lt; 20</div><span class="chip moss">đang chạy</span></div>
+      <div class="srow"><div class="nm">Sub hết hạn trong 3 ngày</div><span class="chip soft">tắt</span></div>
+      <div class="srow"><div class="nm">Không hoạt động 7 ngày</div><span class="chip soft">tắt</span></div>
+    </div>
+  </div>
+</section>
+<!-- ===================== ADMIN TEAM ===================== -->
+<section class="view" id="v-adminteam">
+  <div class="banner amber"><span class="bi">◇</span><div><b>NET-NEW.</b> Quản trị viên là <b>nhóm người dùng riêng</b> — bảng <span class="mono">User</span> chỉ dành cho end-user và không có cột role. Module này cấp/mời admin, gán vai trò, theo dõi MFA &amp; lịch sử đăng nhập.</div></div>
+  <div class="tbar">
+    <div class="search"><span class="g">⌕</span><input placeholder="Tìm quản trị viên…"></div>
+    <button class="btn primary"><span class="g">+</span> Mời quản trị viên</button>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Quản trị viên</th><th>Vai trò</th><th>MFA</th><th>Đăng nhập cuối (UTC)</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        <tr><td><div class="u-2"><span class="a">Lan Nguyễn</span><span class="b">lan@zenzoo.app</span></div></td><td><span class="chip terra">Super Admin</span></td><td><span class="chip moss">đã bật</span></td><td class="tnum">13/06 · 13:40</td><td><span class="chip moss"><span class="dot"></span>active</span></td></tr>
+        <tr><td><div class="u-2"><span class="a">Huy Trần</span><span class="b">finance.huy@zenzoo.app</span></div></td><td><span class="chip soft">Finance Admin</span></td><td><span class="chip moss">đã bật</span></td><td class="tnum">13/06 · 11:22</td><td><span class="chip moss"><span class="dot"></span>active</span></td></tr>
+        <tr><td><div class="u-2"><span class="a">ops.lan</span><span class="b">ops@zenzoo.app</span></div></td><td><span class="chip soft">Ops / Live-Ops</span></td><td><span class="chip clay">chưa bật</span></td><td class="tnum">12/06 · 19:03</td><td><span class="chip moss"><span class="dot"></span>active</span></td></tr>
+        <tr><td><div class="u-2"><span class="a">vy.support</span><span class="b">vy@zenzoo.app</span></div></td><td><span class="chip soft">Support Agent</span></td><td><span class="chip clay">chưa bật</span></td><td class="tnum">—</td><td><span class="chip soft">đã mời</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== GDPR ===================== -->
+<section class="view" id="v-gdpr">
+  <div class="banner amber"><span class="bi">◇</span><div><b>NET-NEW.</b> App lưu email, displayName, avatarUrl, Google providerId và <b>IP trong</b> <span class="mono">PaymentOrder.rawReturnJson / rawIpnJson</span>. Cần quy trình DSAR (xuất dữ liệu) &amp; quyền xóa tôn trọng chuỗi <span class="mono">onDelete: Cascade</span>, kèm che PII.</div></div>
+  <div class="cols t11" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Hàng đợi yêu cầu chủ thể dữ liệu (DSAR)</h3></div>
+      <table>
+        <thead><tr><th>Người dùng</th><th>Loại</th><th>Hạn</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td>Trần Minh Anh</td><td>Xuất dữ liệu</td><td class="tnum">20/06</td><td><span class="chip clay">đang xử lý</span></td></tr>
+          <tr><td>Đỗ Thùy Linh</td><td>Quyền được quên</td><td class="tnum">24/06</td><td><span class="chip soft">chờ duyệt</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card pad">
+      <div class="sec-h" style="margin-bottom:14px"><h2 style="font-size:17px">Trình tạo Xuất / Xóa</h2><span class="note">cascade-aware</span></div>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px">Bao gồm: User, Pet, Wallet + WalletTransaction, Subscription, PaymentOrder (che IP/email trong raw JSON), FocusSession, UserStreak, UserInventory, ActivityEvent.</p>
+      <div style="display:flex;gap:10px"><button class="btn" style="flex:1;justify-content:center">Xuất ZIP</button><button class="btn danger" style="flex:1;justify-content:center">Xóa (type-to-confirm)</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BULK ===================== -->
+<section class="view" id="v-bulk">
+  <div class="banner amber"><span class="bi">◇</span><div><b>NET-NEW.</b> Bề mặt job bất đồng bộ để chạy thao tác hàng loạt an toàn trên <b>6.820 người dùng</b> (gửi thông báo, cấp số dư, gia hạn sub, import/export CSV) — có tiến độ, <b>dry-run</b>, xử lý lỗi từng phần, retry.</div></div>
+  <div class="cols t23" style="align-items:start">
+    <div class="card">
+      <div class="hd"><h3>Hàng đợi job</h3><button class="btn primary" style="padding:6px 12px">+ Job mới (dry-run)</button></div>
+      <table>
+        <thead><tr><th>Job</th><th>Tiến độ</th><th class="r">Lỗi</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td>Gửi nudge “giữ streak” · 612 người</td><td><div class="track" style="width:140px"><i class="moss" style="width:100%"></i></div></td><td class="r tnum">0</td><td><span class="chip moss">xong</span></td></tr>
+          <tr><td>Cấp +500 token quà sự kiện · 6.820</td><td><div class="track" style="width:140px"><i style="width:64%"></i></div></td><td class="r tnum">3</td><td><span class="chip clay">đang chạy 64%</span></td></tr>
+          <tr><td>Export CSV người dùng premium</td><td><div class="track" style="width:140px"><i style="width:12%"></i></div></td><td class="r tnum">0</td><td><span class="chip soft">hàng đợi</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card pad">
+      <div class="eyebrow" style="margin-bottom:10px">Dry-run xem trước</div>
+      <p style="font-size:13px;color:var(--ink-soft)">Job “Cấp +500 token” sẽ ảnh hưởng <b class="tnum">6.820</b> ví, tổng phát <b class="tnum">3.410.000</b> token. <b style="color:var(--clay)">Cần phê duyệt 2 người</b> (vượt 10.000 token hàng loạt).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SUPPORT ===================== -->
+<section class="view" id="v-support">
+  <div class="banner amber"><span class="bi">◇</span><div><b>NET-NEW.</b> Inbox ticket nhẹ gắn với hồ sơ người dùng, có ghi chú nội bộ, câu trả lời mẫu, và link nhanh tới chi tiết user / giao dịch / (sau khi mở khóa) impersonation.</div></div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Ticket</th><th>Người dùng</th><th>Chủ đề</th><th>Ưu tiên</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        <tr class="clk" onclick="go('user-detail')"><td class="mono">#1042</td><td>Nguyễn Thị Hương</td><td>Thanh toán Zen Pro chưa lên premium</td><td><span class="chip rust">cao</span></td><td><span class="chip clay">đang mở</span></td></tr>
+        <tr><td class="mono">#1041</td><td>Phạm Văn Đức</td><td>Không claim được nhiệm vụ daily_login</td><td><span class="chip soft">thường</span></td><td><span class="chip clay">đang mở</span></td></tr>
+        <tr><td class="mono">#1039</td><td>Lê Quốc Bảo</td><td>Hỏi về hoàn tiền gói năm</td><td><span class="chip soft">thường</span></td><td><span class="chip moss">đã đóng</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<!--VIEWS-END--></div>
+  </div>
+</div>
+
+<!-- drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dh"><div><div class="eyebrow" id="dwEye">Chi tiết</div><h3 id="dwTitle">—</h3></div><button class="x" id="dwX">×</button></div>
+  <div class="db" id="dwBody"></div>
+  <div class="df" id="dwFoot"></div>
+</aside>
+
+<script>
+/* ---------- router ---------- */
+const META={
+  overview:["Lõi vận hành","Tổng quan"], users:["Lõi vận hành","Người dùng"],
+  moderation:["Lõi vận hành","Kiểm duyệt & Vòng đời tài khoản"],
+  billing:["Dòng tiền","Thanh toán & Gói Zen Pro"], ops:["Dòng tiền","Vận hành & Đối soát IPN"],
+  analytics:["Phân tích","Phân tích & Báo cáo"], audit:["Phân tích","Nhật ký kiểm toán"],
+  tasks:["Nội dung game","Nhiệm vụ & Mốc điểm"], shop:["Nội dung game","Cửa hàng & Kinh tế ảo"],
+  pets:["Nội dung game","Thú cưng & Tiến hóa"], achievements:["Nội dung game","Thành tựu & Streak"],
+  ai:["Nội dung game","AI Focus Designer (Gemini)"], notifications:["Tiếp cận","Thông báo & Chiến dịch"],
+  rbac:["Quản trị & bảo mật","Vai trò & Bảo mật"], adminteam:["Quản trị & bảo mật","Đội quản trị"],
+  flags:["Quản trị & bảo mật","Cờ tính năng & Cấu hình"], gdpr:["Quản trị & bảo mật","Quyền riêng tư & Xuất dữ liệu"],
+  bulk:["Quản trị & bảo mật","Tác vụ hàng loạt & Hàng đợi"], support:["Quản trị & bảo mật","Hỗ trợ"],
+  "user-detail":["Lõi vận hành","Người dùng / Hồ sơ chi tiết"]
+};
+function go(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='v-'+v));
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
+  const m=META[v]||["",""]; document.getElementById('crumb').textContent=m[0]; document.getElementById('title').textContent=m[1];
+  document.getElementById('views').scrollTop=0;
+}
+document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('a[data-view]');if(a){go(a.dataset.view)}});
+document.getElementById('range').addEventListener('click',e=>{if(e.target.tagName==='BUTTON'){[...e.target.parentNode.children].forEach(b=>b.classList.remove('on'));e.target.classList.add('on')}});
+
+/* theme switch: Zen Editorial <-> Runic Obsidian */
+function toggleTheme(){
+  const r=document.documentElement, on=r.getAttribute('data-theme')==='obsidian';
+  r.setAttribute('data-theme', on?'':'obsidian');
+  document.getElementById('themeName').textContent = on?'Zen Editorial':'Runic Obsidian';
+  document.getElementById('themeBtn').querySelector('.ti').textContent = on?'◐':'◑';
+}
+
+/* drawer */
+const scrim=document.getElementById('scrim'),drawer=document.getElementById('drawer');
+function openDrawer(eye,title,body,foot){document.getElementById('dwEye').textContent=eye;document.getElementById('dwTitle').textContent=title;document.getElementById('dwBody').innerHTML=body;document.getElementById('dwFoot').innerHTML=foot||'';scrim.classList.add('open');drawer.classList.add('open')}
+function closeDrawer(){scrim.classList.remove('open');drawer.classList.remove('open')}
+scrim.addEventListener('click',closeDrawer);document.getElementById('dwX').addEventListener('click',closeDrawer);
+
+/* sub-tabs */
+function subtab(el,group){
+  [...el.parentNode.children].forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('[data-panel="'+group+'"]').forEach(p=>{p.style.display=(p.dataset.k===el.dataset.k)?'block':'none'});
+}
+
+/* drawer content builders */
+const FOOT_SAVE='<button class="btn ghost" onclick="closeDrawer()">Hủy</button><button class="btn primary" onclick="closeDrawer()">Lưu</button>';
+function filtersHTML(){return `
+  <div class="field"><label>Provider</label><select><option>Tất cả</option><option>google</option><option>email</option><option>demo</option></select></div>
+  <div class="field"><label>Gói</label><select><option>Tất cả</option><option>free</option><option>premium</option></select></div>
+  <div class="field"><label>Trạng thái</label><select><option>Tất cả</option><option>Active</option><option>under_review</option><option>Tạm khóa</option><option>Cấm</option></select></div>
+  <div class="field"><label>Khoảng ngày tạo</label><input type="text" value="01/01/2026 – 13/06/2026"></div>
+  <div class="field"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox"> Chỉ người có Zen Pro</label></div>`;}
+function adjustHTML(){return `
+  <div class="banner amber" style="margin-bottom:16px"><span class="bi">◇</span><div>Ghi <span class="mono">WalletTransaction</span> · <span class="mono">reason='admin_adjust'</span> · vào Nhật ký kiểm toán.</div></div>
+  <dl class="kv" style="margin-bottom:16px"><dt>Token hiện tại</dt><dd class="tnum">1.234</dd><dt>Kim cương</dt><dd class="tnum" style="color:var(--diamond)">20 ◆</dd></dl>
+  <div class="field"><label>Loại tiền</label><select><option>Token</option><option>Energy</option><option>Kim cương</option></select></div>
+  <div class="field"><label>Thay đổi (+/−)</label><input type="text" value="-48766"></div>
+  <div class="field"><label>Lý do (bắt buộc)</label><textarea rows="2">Vượt faucet cap nghi vấn — điều chỉnh theo kiểm duyệt</textarea></div>`;}
+function taskHTML(){return `
+  <div class="field"><label>code</label><input value="deep_focus" class="mono"></div>
+  <div class="field"><label>Tiêu đề</label><input value="Deep Focus"></div>
+  <div class="field"><label>taskType</label><input value="deep_focus" class="mono"></div>
+  <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>target</label><input value="45"></div><div class="field" style="flex:1"><label>token</label><input value="35"></div><div class="field" style="flex:1"><label>◆</label><input value="3"></div><div class="field" style="flex:1"><label>điểm</label><input value="320"></div></div>
+  <div class="field"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> isActive (publish)</label></div>`;}
+function shopHTML(){return `
+  <div class="field"><label>code</label><input value="energy_potion" class="mono"></div>
+  <div class="field"><label>Tên</label><input value="⚡ Energy Potion"></div>
+  <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>itemType</label><select><option>potion</option><option>food</option><option>companion</option></select></div><div class="field" style="flex:1"><label>Giá (token)</label><input value="150"></div></div>
+  <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label>effectType</label><input value="energy" class="mono"></div><div class="field" style="flex:1"><label>effectValue</label><input value="20"></div></div>
+  <div class="field"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> isHot (HOT badge)</label></div>`;}
+function txnDrawer(status){
+  const M={paid:['moss','paid','00','Giao dịch thành công'],review:['clay','review','00','Số tiền lệch — chờ đối soát'],failed:['rust','failed','24','Khách hàng hủy'],pending:['soft','pending','—','Chưa nhận IPN']};
+  const m=M[status]||M.paid;
+  const amt = status==='review'?'269000 / kỳ vọng 279000':(status==='pending'?'279000':'29000');
+  const body=`
+    <div style="display:flex;gap:8px;margin-bottom:16px"><span class="chip ${m[0]}">${m[1]}</span><span class="chip soft">responseCode ${m[2]}</span></div>
+    <dl class="kv" style="margin-bottom:18px"><dt>productCode</dt><dd class="mono">zen_pro_monthly</dd><dt>amountVnd</dt><dd class="tnum">${amt}</dd><dt>vnpTransactionNo</dt><dd class="mono">14922033</dd><dt>vnpTransactionStatus</dt><dd class="mono">${m[2]}</dd></dl>
+    <div class="eyebrow" style="margin-bottom:8px">rawReturnJson</div>
+    <div class="json"><span class="k">"vnp_ResponseCode"</span>: "${m[2]}",
+<span class="k">"vnp_Amount"</span>: "${status==='review'?'26900000':(status==='pending'?'27900000':'2900000')}",
+<span class="k">"vnp_BankCode"</span>: "NCB",
+<span class="k">"vnp_TxnRef"</span>: "...123456",
+<span class="k">"vnp_OrderInfo"</span>: "Nang cap Zen Pro"</div>
+    <div class="eyebrow" style="margin:16px 0 8px">rawIpnJson</div>
+    <div class="json">${status==='pending'?'<span class="del">// chưa nhận IPN — chờ callback VNPay</span>':'<span class="k">"vnp_TransactionStatus"</span>: "'+m[2]+'",\n<span class="k">"vnp_PayDate"</span>: "20260613090210",\n<span class="k">"received"</span>: "13/06 09:02 UTC"'}</div>`;
+  const foot = status==='paid' ? '<button class="btn ghost" onclick="closeDrawer()">Đóng</button><button class="btn danger" onclick="closeDrawer()">Refund (NET-NEW)</button>'
+            : '<button class="btn ghost" onclick="closeDrawer()">Đóng</button><button class="btn" onclick="closeDrawer()">Đối soát thủ công (NET-NEW)</button>';
+  openDrawer('Giao dịch VNPay · '+m[3], 'vnpTxnRef …'+(status==='review'?'987789':(status==='pending'?'400321':'123456')), body, foot);
+}
+function auditDrawer(type){
+  const D={
+    impersonate:['IMPERSONATE_START','admin.lan → Phạm Văn Đức','<span class="add">+ "impersonationStart": "13/06 13:05 UTC"</span>\n<span class="add">+ "reason": "hỗ trợ claim phần thưởng"</span>\n<span class="add">+ "tagAllActions": "Impersonated By admin.lan"</span>'],
+    price:['PRICE_EDIT','zen_pro_monthly','<span class="del">- "amountVnd": 29000</span>\n<span class="add">+ "amountVnd": 25000</span>\n  "comment": "KM hè"'],
+    wallet:['WALLET_ADJUST','−48.766 token','<span class="del">- "tokens": 50000</span>\n<span class="add">+ "tokens": 1234</span>\n  "refType": "moderation",\n  "reason": "vượt faucet cap"'],
+    role:['ROLE_CHANGE','finance.huy','<span class="del">- "role": null</span>\n<span class="add">+ "role": "Finance Admin"</span>\n  "by": "super.admin"']
+  };
+  const d=D[type]||D.role;
+  openDrawer('Bản ghi kiểm toán · '+d[0], d[1], `<div class="eyebrow" style="margin-bottom:8px">Diff trước / sau</div><div class="json">${d[2]}</div><p style="font-size:12px;color:var(--ink-soft);margin:14px 0 0">Bản ghi append-only — không thể sửa hay xóa.</p>`, '<button class="btn ghost" onclick="closeDrawer()">Đóng</button>');
+}
+
+/* sparkline + mini chart generators */
+function spark(data,color,w,h){
+  color=color||'var(--terracotta)';w=w||220;h=h||34;
+  const mn=Math.min(...data),mx=Math.max(...data),sp=mx-mn||1;
+  const pts=data.map((d,i)=>[(i/(data.length-1))*w,h-2-((d-mn)/sp)*(h-4)]);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const last=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${color}" stroke-width="1.6"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="${color}"/></svg>`;
+}
+function renderSparks(){document.querySelectorAll('[data-spark]').forEach(el=>{el.innerHTML=spark(JSON.parse(el.dataset.spark),el.dataset.color)})}
+window.addEventListener('DOMContentLoaded',()=>{renderSparks(); if(typeof adminInit==='function') adminInit();});
+</script>
+<style>
+/* ---- admin live-data: login modal + data-source badge ---- */
+.login-scrim{position:fixed;inset:0;background:rgba(20,18,16,.55);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center}
+.login-scrim.open{display:flex}
+.login-card{background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:16px;padding:30px 28px;width:368px;max-width:92vw;box-shadow:0 30px 80px rgba(42,38,34,.32)}
+.login-logo{font-family:var(--serif);font-size:25px;font-weight:600;color:var(--terracotta);letter-spacing:.06em}
+.login-sub{font-size:13px;color:var(--ink-soft);margin:4px 0 20px}
+.login-err{color:var(--rust);font-size:12.5px;min-height:18px;margin:2px 0 8px}
+.login-hint{font-size:11.5px;color:var(--ink-faint);text-align:center;margin-top:14px}
+.srcbadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;padding:6px 11px;border-radius:20px;border:1px solid;cursor:default}
+.srcbadge.live{color:var(--moss);border-color:var(--moss);background:var(--moss-tint)}
+.srcbadge.mock{color:var(--ink-soft);border-color:var(--rule-strong)}
+.srcbadge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+</style>
+<script>
+/* ====================== ADMIN LIVE-DATA LAYER ======================
+   Nối giao diện vào API thật của backend (/admin/api/*).
+   Có FALLBACK: nếu chưa đăng nhập / backend chưa chạy -> giữ dữ liệu mẫu. */
+const API_BASE = location.protocol.startsWith('http') ? '' : 'http://localhost:3000';
+const TOKEN_KEY = 'zz_admin_token';
+let ADMIN = null;
+
+const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+const setToken = t => t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
+
+async function api(path, opts = {}){
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', ...(opts.headers||{}),
+      ...(getToken() ? { Authorization: 'Bearer ' + getToken() } : {}) },
+  });
+  if(res.status === 401){ setToken(''); showLogin(); throw new Error('unauth'); }
+  if(!res.ok){ let m = 'Lỗi ' + res.status; try{ m = (await res.json()).error || m; }catch(_){} throw new Error(m); }
+  return res.json();
+}
+
+/* helpers */
+const vnd = n => Number(n||0).toLocaleString('vi-VN');
+const esc = s => String(s==null?'':s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function fmtDate(d){ if(!d) return '—'; const t = new Date(d); return t.toLocaleDateString('vi-VN') + ' · ' + t.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}); }
+const planChip = p => (p && p !== 'free') ? '<span class="chip terra">'+esc(p)+'</span>' : '<span class="chip soft">free</span>';
+const payChip = s => { const m={paid:'moss',pending:'soft',failed:'rust',review:'clay'}; return '<span class="chip '+(m[s]||'soft')+'">'+esc(s)+'</span>'; };
+function setSource(live){ const el=document.getElementById('srcBadge'); if(!el) return; el.className='srcbadge '+(live?'live':'mock'); el.innerHTML = live ? '<span class="dot"></span> API thật' : '○ Dữ liệu mẫu'; }
+
+/* login modal */
+function buildLogin(){
+  const w = document.createElement('div'); w.id='loginScrim'; w.className='login-scrim';
+  w.innerHTML = `<div class="login-card">
+    <div class="login-logo">RUNE · Admin</div>
+    <div class="login-sub">Đăng nhập bảng điều hành</div>
+    <div class="field"><label>Email</label><input id="lgEmail" value="admin@zenzoo.app"></div>
+    <div class="field"><label>Mật khẩu</label><input id="lgPass" type="password" value="zenzoo-admin"></div>
+    <div id="lgErr" class="login-err"></div>
+    <button class="btn primary" id="lgBtn" style="width:100%;justify-content:center">Đăng nhập</button>
+    <div class="login-hint">Demo: admin@zenzoo.app / zenzoo-admin</div>
+  </div>`;
+  document.body.appendChild(w);
+  document.getElementById('lgBtn').addEventListener('click', doLogin);
+  w.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+}
+const showLogin = () => document.getElementById('loginScrim')?.classList.add('open');
+const hideLogin = () => document.getElementById('loginScrim')?.classList.remove('open');
+async function doLogin(){
+  const email = document.getElementById('lgEmail').value, password = document.getElementById('lgPass').value;
+  const err = document.getElementById('lgErr'); err.textContent = '';
+  try{
+    const r = await fetch(API_BASE + '/admin/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) });
+    if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.error || 'Đăng nhập thất bại'); }
+    const data = await r.json();
+    setToken(data.token); ADMIN = data.admin; hideLogin(); applyAdmin(); loadView(currentView());
+  }catch(e){ err.textContent = e.message; }
+}
+function logout(){ setToken(''); ADMIN=null; setSource(false); showLogin(); }
+function applyAdmin(){
+  if(!ADMIN) return;
+  const nm=document.querySelector('.who .nm'), ro=document.querySelector('.who .ro'), av=document.querySelector('.who .av');
+  if(nm) nm.textContent = ADMIN.name || ADMIN.email;
+  if(ro) ro.textContent = ADMIN.role;
+  if(av) av.textContent = (ADMIN.name || ADMIN.email || 'A').charAt(0).toUpperCase();
+}
+
+/* view router hook */
+const currentView = () => document.querySelector('#nav a.active')?.dataset.view || 'overview';
+function loadView(v){
+  if(!getToken()) return; // chưa đăng nhập -> giữ dữ liệu mẫu
+  if(v==='overview') loadOverview();
+  else if(v==='users') loadUsers();
+  else if(v==='billing') loadPayments();
+  else if(v==='shop') loadShop();
+}
+document.getElementById('nav').addEventListener('click', e => { const a=e.target.closest('a[data-view]'); if(a) setTimeout(()=>loadView(a.dataset.view), 0); });
+
+/* loaders */
+async function loadOverview(){
+  try{
+    const d = await api('/admin/api/overview');
+    document.querySelectorAll('[data-kpi]').forEach(el => {
+      const v = d.kpis[el.dataset.kpi]; if(v==null) return;
+      const k = el.dataset.kpi;
+      if(k==='revenueToday') el.innerHTML = vnd(v)+'<small> đ</small>';
+      else if(k==='focusMinutesToday') el.innerHTML = vnd(v)+'<small>′</small>';
+      else if(k==='avgStreak') el.innerHTML = String(v).replace('.',',')+'<small> ngày</small>';
+      else el.textContent = vnd(v);
+    });
+    const feed = document.getElementById('feedBody');
+    if(feed && d.recent && d.recent.length){
+      feed.innerHTML = d.recent.map(e => `<li><span class="ic">${esc(e.icon||'•')}</span><div class="tx"><b>${esc(e.actor)}</b> ${esc(e.title)} ${e.subtitle?'· '+esc(e.subtitle):''}</div><span class="tm">${fmtDate(e.at)}</span></li>`).join('');
+    }
+    setSource(true);
+  }catch(e){ if(e.message!=='unauth') setSource(false); }
+}
+async function loadUsers(){
+  try{
+    const d = await api('/admin/api/users?pageSize=25');
+    const body = document.getElementById('usersBody'); if(!body) return;
+    body.innerHTML = d.items.map(u => `<tr class="clk" onclick="openUser('${u.id}')">
+      <td><div class="u-2"><span class="a">${esc(u.displayName)}</span><span class="b">${esc(u.email)}</span></div></td>
+      <td><span class="chip soft">${esc(u.provider)}</span></td>
+      <td>${planChip(u.plan)}</td>
+      <td class="tnum">${fmtDate(u.createdAt)}</td>
+      <td class="tnum" style="color:var(--ink-faint)">—</td>
+      <td class="r tnum">${u.streak}</td>
+      <td class="r tnum">${u.level}</td>
+      <td><span class="chip moss"><span class="dot"></span>${esc(u.status)}</span></td>
+    </tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:30px">Không có người dùng</td></tr>`;
+    const cnt = document.getElementById('usersCount'); if(cnt) cnt.textContent = vnd(d.total)+' người dùng · hiển thị '+d.items.length;
+    setSource(true);
+  }catch(e){ if(e.message!=='unauth') setSource(false); }
+}
+async function openUser(id){
+  try{
+    const u = await api('/admin/api/users/'+id);
+    const pet=u.pet, w=u.wallet, st=u.streak, sub=u.subscription;
+    const body = `
+      <div style="display:flex;gap:8px;margin-bottom:14px">${planChip(sub&&sub.plan)}<span class="chip moss"><span class="dot"></span>${esc((sub&&sub.status)||'active')}</span></div>
+      <dl class="kv" style="margin-bottom:14px">
+        <dt>Email</dt><dd class="mono">${esc(u.email)}</dd>
+        <dt>Provider</dt><dd>${esc(u.provider)}</dd>
+        <dt>Ngày tạo</dt><dd class="tnum">${fmtDate(u.createdAt)}</dd>
+        <dt>userId</dt><dd class="mono" style="font-size:11px">${esc(u.id)}</dd>
+      </dl>
+      ${pet?`<div class="eyebrow" style="margin:12px 0 8px">Thú cưng</div><dl class="kv"><dt>${esc(pet.species)} · ${esc(pet.name)}</dt><dd>Lv ${pet.level} · EXP ${pet.exp}/${pet.expToNext}</dd><dt>NL / Tâm trạng</dt><dd class="tnum">${pet.energy} / ${pet.mood}</dd><dt>Đói / Yêu thương</dt><dd class="tnum">${pet.hunger} / ${pet.love}</dd></dl>`:''}
+      ${w?`<div class="eyebrow" style="margin:12px 0 8px">Ví</div><dl class="kv"><dt>Token</dt><dd class="tnum">${vnd(w.tokens)}</dd><dt>Energy</dt><dd class="tnum">${vnd(w.energy)}</dd><dt>Kim cương</dt><dd class="tnum" style="color:var(--diamond)">${w.diamonds} ◆</dd></dl>`:''}
+      ${st?`<div class="eyebrow" style="margin:12px 0 8px">Streak</div><dl class="kv"><dt>Hiện tại / Tốt nhất</dt><dd class="tnum">${st.currentStreak} / ${st.bestStreak}</dd></dl>`:''}
+      <div class="eyebrow" style="margin:12px 0 8px">Phiên focus gần nhất</div>
+      ${(u.focusSessions||[]).map(s=>`<div class="srow" style="font-size:12.5px"><span>${esc(s.label)} · ${s.plannedMinutes}′</span><span class="chip ${s.status==='completed'?'moss':'soft'}">${esc(s.status)}</span></div>`).join('') || '<div style="color:var(--ink-soft);font-size:12.5px">—</div>'}`;
+    const foot = `<button class="btn ghost" onclick="closeDrawer()">Đóng</button><button class="btn danger" onclick="forceLogout('${u.id}')">Thu hồi phiên (${(u._count&&u._count.refreshTokens)||0})</button>`;
+    openDrawer('Người dùng', u.displayName, body, foot);
+  }catch(e){ if(e.message!=='unauth') alert(e.message); }
+}
+async function forceLogout(id){
+  try{ const r = await api('/admin/api/users/'+id+'/force-logout', {method:'POST'}); closeDrawer(); alert('Đã thu hồi '+r.revoked+' phiên đăng nhập.'); }
+  catch(e){ if(e.message!=='unauth') alert(e.message); }
+}
+async function loadPayments(){
+  try{
+    const d = await api('/admin/api/payments');
+    const body = document.getElementById('payBody'); if(!body) return;
+    body.innerHTML = d.items.map(o => `<tr><td class="mono">…${esc(String(o.vnpTxnRef||'').slice(-6))}</td><td>${esc(o.user)}</td><td class="mono">${esc(o.productCode)}</td><td class="r tnum">${vnd(o.amountVnd)}đ</td><td>${payChip(o.status)}</td><td>${esc(o.bankCode||'—')}</td><td class="mono">${esc(o.payDate||'—')}</td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:30px">Chưa có giao dịch</td></tr>`;
+    setSource(true);
+  }catch(e){ if(e.message!=='unauth') setSource(false); }
+}
+async function loadShop(){
+  try{
+    const d = await api('/admin/api/shop-items');
+    const body = document.getElementById('shopBody'); if(!body) return;
+    body.innerHTML = d.items.map(it => `<tr class="clk" onclick='editShop(${JSON.stringify({id:it.id,code:it.code,name:it.name,priceTokens:it.priceTokens,isActive:it.isActive,isHot:it.isHot})})'>
+      <td class="mono">${esc(it.code)}</td><td>${esc(it.emoji)} ${esc(it.name)}</td><td><span class="chip soft">${esc(it.itemType)}</span></td>
+      <td class="r tnum">${vnd(it.priceTokens)}</td><td>+${it.effectValue} ${esc(it.effectType)}</td>
+      <td>${it.isHot?'<span class="chip clay">HOT</span>':(it.isActive?'<span class="chip moss">active</span>':'<span class="chip soft">off</span>')}</td></tr>`).join('');
+    setSource(true);
+  }catch(e){ if(e.message!=='unauth') setSource(false); }
+}
+function editShop(it){
+  const body = `<div class="field"><label>code</label><input class="mono" value="${esc(it.code)}" disabled></div>
+    <div class="field"><label>Giá (token)</label><input id="shPrice" value="${it.priceTokens}"></div>
+    <div class="field"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="shHot" ${it.isHot?'checked':''}> HOT</label></div>
+    <div class="field"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="shActive" ${it.isActive?'checked':''}> Đang bán</label></div>`;
+  openDrawer('Sửa món', it.name, body, `<button class="btn ghost" onclick="closeDrawer()">Hủy</button><button class="btn primary" onclick="saveShop('${it.id}')">Lưu</button>`);
+}
+async function saveShop(id){
+  try{
+    await api('/admin/api/shop-items/'+id, { method:'PUT', body: JSON.stringify({
+      priceTokens: Number(document.getElementById('shPrice').value),
+      isHot: document.getElementById('shHot').checked,
+      isActive: document.getElementById('shActive').checked,
+    })});
+    closeDrawer(); loadShop();
+  }catch(e){ if(e.message!=='unauth') alert(e.message); }
+}
+
+function adminInit(){
+  buildLogin();
+  const right = document.querySelector('.topbar .right');
+  if(right){ const b=document.createElement('span'); b.id='srcBadge'; b.className='srcbadge mock'; b.innerHTML='○ Dữ liệu mẫu'; right.insertBefore(b, right.firstChild); }
+  const who = document.querySelector('.who');
+  if(who){ who.style.cursor='pointer'; who.title='Đăng xuất'; who.addEventListener('click', ()=>{ if(getToken() && confirm('Đăng xuất quản trị?')) logout(); }); }
+  if(getToken()){
+    api('/admin/api/auth/me').then(a => { ADMIN=a; applyAdmin(); loadView(currentView()); }).catch(()=>{});
+  } else {
+    showLogin();
+  }
+}
+</script>
+</body>
+</html>

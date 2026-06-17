@@ -1,0 +1,34 @@
+/* ============================================================
+   ManLab — Elevation, shadows, focus, motion
+   Restrained, technical. Crisp hairline borders do most of the
+   work; shadows are soft and low. No heavy drop shadows.
+   ============================================================ */
+
+:root {
+  /* Shadows — cool-tinted, subtle */
+  --shadow-xs:  0 1px 1px rgba(16, 29, 64, 0.04);
+  --shadow-sm:  0 1px 2px rgba(16, 29, 64, 0.06), 0 1px 1px rgba(16, 29, 64, 0.04);
+  --shadow-md:  0 4px 10px -2px rgba(16, 29, 64, 0.08), 0 2px 4px -2px rgba(16, 29, 64, 0.06);
+  --shadow-lg:  0 12px 28px -6px rgba(16, 29, 64, 0.14), 0 4px 8px -4px rgba(16, 29, 64, 0.08);
+  --shadow-xl:  0 24px 48px -12px rgba(16, 29, 64, 0.20), 0 8px 16px -8px rgba(16, 29, 64, 0.10);
+
+  /* Focus ring */
+  --ring-width: 3px; /* @kind spacing */
+  --ring: 0 0 0 var(--ring-width) var(--focus-ring); /* @kind shadow */
+
+  /* Inner / inset */
+  --shadow-inset: inset 0 1px 2px rgba(16, 29, 64, 0.06);
+
+  /* Motion — quick, precise, no bounce */
+  --ease-standard: cubic-bezier(0.2, 0, 0.1, 1); /* @kind other */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1); /* @kind other */
+  --dur-fast:   120ms; /* @kind other */
+  --dur-base:   180ms; /* @kind other */
+  --dur-slow:   260ms; /* @kind other */
+
+  --transition-control: background-color var(--dur-fast) var(--ease-standard),
+                        border-color var(--dur-fast) var(--ease-standard),
+                        color var(--dur-fast) var(--ease-standard),
+                        box-shadow var(--dur-fast) var(--ease-standard); /* @kind other */
+}

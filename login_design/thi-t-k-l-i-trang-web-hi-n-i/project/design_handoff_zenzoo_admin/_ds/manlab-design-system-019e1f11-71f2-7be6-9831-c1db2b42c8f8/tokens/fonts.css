@@ -1,0 +1,11 @@
+/* ============================================================
+   ManLab — Web fonts
+   Be Vietnam Pro  → UI + display (full Vietnamese diacritic support)
+   JetBrains Mono  → technical codes, IDs, measured values (P21.DL.001, ±0.02%)
+
+   NOTE: loaded from Google Fonts CDN. No licensed binaries were
+   provided, so these are CDN references. Replace with self-hosted
+   @font-face + woff2 files for production if required.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');

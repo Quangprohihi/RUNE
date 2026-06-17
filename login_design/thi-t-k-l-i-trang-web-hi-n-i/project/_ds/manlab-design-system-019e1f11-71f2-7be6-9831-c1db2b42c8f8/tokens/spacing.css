@@ -1,0 +1,58 @@
+/* ============================================================
+   ManLab — Spacing, radius, sizing, layout tokens
+   4px base grid. Comfortable-but-dense ERP rhythm.
+   ============================================================ */
+
+:root {
+  /* Spacing scale (4px base) */
+  --space-0:  0;
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  6px;
+  --space-4:  8px;
+  --space-5:  12px;
+  --space-6:  16px;
+  --space-7:  20px;
+  --space-8:  24px;
+  --space-9:  32px;
+  --space-10: 40px;
+  --space-11: 48px;
+  --space-12: 64px;
+  --space-13: 80px;
+  --space-14: 96px;
+
+  /* Border radius */
+  --radius-xs:   3px;
+  --radius-sm:   5px;
+  --radius-md:   7px;   /* default control radius */
+  --radius-lg:   10px;  /* cards */
+  --radius-xl:   14px;  /* large panels */
+  --radius-2xl:  20px;
+  --radius-pill: 999px;
+
+  /* Border widths */
+  --bw-hair:  1px; /* @kind spacing */
+  --bw-thin:  1.5px; /* @kind spacing */
+  --bw-thick: 2px; /* @kind spacing */
+
+  /* Control heights (ERP density) */
+  --control-sm: 28px; /* @kind spacing */
+  --control-md: 34px; /* @kind spacing */
+  --control-lg: 42px; /* @kind spacing */
+
+  /* Layout chrome */
+  --sidebar-w:        264px;
+  --sidebar-w-collapsed: 64px;
+  --topbar-h:         56px;
+  --subbar-h:         48px;
+  --content-max:      1440px;
+  --page-gutter:      var(--space-9);
+
+  /* Z-index ladder */
+  --z-base:    0; /* @kind other */
+  --z-sticky:  100; /* @kind other */
+  --z-dropdown: 400; /* @kind other */
+  --z-overlay: 800; /* @kind other */
+  --z-modal:   900; /* @kind other */
+  --z-toast:   1000; /* @kind other */
+}
