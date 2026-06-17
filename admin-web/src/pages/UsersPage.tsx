@@ -154,7 +154,7 @@ export function UsersPage() {
                 }}>{p}</button>
               ))}
             </div>
-            <span style={{ font: 'var(--fw-regular) 12px/1 var(--font-sans)', color: 'var(--text-faint)' }}>25 / 50 / 100 dòng</span>
+            <span style={{ font: 'var(--fw-regular) 12px/1 var(--font-sans)', color: 'var(--text-faint)' }}>15 dòng / trang</span>
           </div>
         </Card>
       )}
