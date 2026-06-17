@@ -138,6 +138,15 @@ async function main() {
   const someUsers = await prisma.user.findMany({ take: 3, orderBy: { createdAt: 'asc' } });
   if (someUsers[0]) await prisma.user.update({ where: { id: someUsers[0].id }, data: { status: 'review' } });
   if (someUsers[1]) await prisma.user.update({ where: { id: someUsers[1].id }, data: { status: 'suspended' } });
+
+  // Subscription packages (admin-editable; mirror the hardcoded fallback in payment.service.ts).
+  const packages = [
+    { productCode: 'zen_pro_monthly', title: 'Zen Pro Monthly', plan: 'premium', amountVnd: 29000, durationDays: 30 },
+    { productCode: 'zen_pro_yearly', title: 'Zen Pro Yearly', plan: 'premium', amountVnd: 279000, durationDays: 365 },
+  ];
+  for (const p of packages) {
+    await prisma.subscriptionPackage.upsert({ where: { productCode: p.productCode }, create: p, update: { title: p.title, plan: p.plan } });
+  }
 }
 
 main()

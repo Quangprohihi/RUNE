@@ -8,8 +8,8 @@ export function monthlyEquivalentVnd(productCode: string): number {
   return 0;
 }
 
-export function computeMrr(monthly: number, yearly: number): number {
-  return monthly * MONTHLY_VND + yearly * Math.round(YEARLY_VND / 12);
+export function computeMrr(monthlyCount: number, monthlyVnd: number, yearlyCount: number, yearlyVnd: number): number {
+  return monthlyCount * monthlyVnd + yearlyCount * Math.round(yearlyVnd / 12);
 }
 
 export function refundRate(refunded: number, paid: number): number {

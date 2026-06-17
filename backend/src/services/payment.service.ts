@@ -29,14 +29,32 @@ const paymentProducts = {
 type ProductCode = keyof typeof paymentProducts;
 type VnpayCallbackParams = Record<string, string>;
 
-function getProduct(productCode: string) {
-  const product = paymentProducts[productCode as ProductCode];
-  if (!product) {
-    throw Object.assign(new Error('Unsupported payment product'), {
-      status: 400,
-    });
+type Product = {
+  productCode: string;
+  productType: string;
+  plan: string;
+  amountVnd: number;
+  durationDays: number;
+  title: string;
+};
+
+// Reads the admin-editable package from the DB; falls back to the hardcoded
+// constant so a missing/empty table can never break the live payment flow.
+async function getProduct(productCode: string): Promise<Product> {
+  const fallback = paymentProducts[productCode as ProductCode];
+  const row = await prisma.subscriptionPackage.findUnique({ where: { productCode } }).catch(() => null);
+  if (row && row.isActive) {
+    return {
+      productCode: row.productCode,
+      productType: 'subscription',
+      plan: row.plan,
+      amountVnd: row.amountVnd,
+      durationDays: row.durationDays,
+      title: row.title,
+    };
   }
-  return product;
+  if (fallback) return fallback;
+  throw Object.assign(new Error('Unsupported payment product'), { status: 400 });
 }
 
 function createTxnRef() {
@@ -76,7 +94,7 @@ export async function createVnpayPaymentOrder({
   productCode: string;
   userId: string;
 }) {
-  const product = getProduct(productCode);
+  const product = await getProduct(productCode);
   const txnRef = createTxnRef();
   const order = await prisma.paymentOrder.create({
     data: {
@@ -178,7 +196,7 @@ async function applyPaidCascade(
   params: VnpayCallbackParams = {},
   meta: { adminId?: string } = {},
 ) {
-  const product = getProduct(order.productCode);
+  const product = await getProduct(order.productCode);
   const expiresAt = paidExpiresAt(product.durationDays);
   const paidAt = new Date();
   const isAdmin = source === 'admin';

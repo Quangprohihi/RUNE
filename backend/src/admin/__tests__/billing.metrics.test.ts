@@ -10,9 +10,10 @@ describe('monthlyEquivalentVnd', () => {
 });
 
 describe('computeMrr', () => {
-  it('sums monthly + yearly-normalized recurring revenue', () => {
-    expect(computeMrr(2, 1)).toBe(2 * 29000 + Math.round(279000 / 12));
-    expect(computeMrr(0, 0)).toBe(0);
+  it('sums monthly + yearly-normalized recurring revenue at the given prices', () => {
+    expect(computeMrr(2, 29000, 1, 279000)).toBe(2 * 29000 + Math.round(279000 / 12));
+    expect(computeMrr(0, 29000, 0, 279000)).toBe(0);
+    expect(computeMrr(1, 39000, 0, 279000)).toBe(39000); // reflects an edited monthly price
   });
 });
 

@@ -37,6 +37,9 @@ export function BillingPage() {
   const [range, setRange] = useState<RangeKey>('30d');
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [sumErr, setSumErr] = useState<string | null>(null);
+  const [editPkg, setEditPkg] = useState<string | null>(null);
+  const [draftPrice, setDraftPrice] = useState('');
+  const [draftActive, setDraftActive] = useState(true);
 
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [from, setFrom] = useState('');
@@ -62,6 +65,18 @@ export function BillingPage() {
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadTx(); }, [filter, from, to, page]);
+
+  async function savePackage(code: string) {
+    const amountVnd = Number(draftPrice);
+    if (!Number.isFinite(amountVnd) || amountVnd < 0) return;
+    try {
+      await api.updatePackage(code, { amountVnd, isActive: draftActive });
+      setEditPkg(null);
+      loadSummary();
+    } catch (e) {
+      setSumErr(friendlyError(e));
+    }
+  }
 
   async function confirmOrder(id: string) {
     if (typeof window !== 'undefined' && !window.confirm('Xác nhận đơn này là đã thanh toán?')) return;
@@ -175,15 +190,38 @@ export function BillingPage() {
 
         {/* package cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {(summary?.packages ?? []).map((p) => (
-            <div key={p.code} style={{ background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: '14px 16px', borderLeft: p.code === 'free' ? '1px solid var(--border-subtle)' : '3px solid var(--accent)' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                <span style={{ font: 'var(--fw-semibold) 14px/1.2 var(--font-sans)', color: 'var(--text-strong)' }}>{p.label}</span>
-                <span style={{ font: 'var(--fw-semibold) 13px/1 var(--font-mono)', color: 'var(--text-body)' }}>{p.priceVnd === 0 ? '0đ' : `${formatInt(p.priceVnd)}đ`}</span>
+          {(summary?.packages ?? []).map((p) => {
+            const editable = p.code !== 'free';
+            const isEditing = editPkg === p.code;
+            return (
+              <div key={p.code} style={{ background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', padding: '14px 16px', borderLeft: p.code === 'free' ? '1px solid var(--border-subtle)' : '3px solid var(--accent)', opacity: p.isActive === false ? 0.6 : 1 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ font: 'var(--fw-semibold) 14px/1.2 var(--font-sans)', color: 'var(--text-strong)' }}>{p.label}{p.isActive === false ? ' · tắt' : ''}</span>
+                  <span style={{ font: 'var(--fw-semibold) 13px/1 var(--font-mono)', color: 'var(--text-body)' }}>{p.priceVnd === 0 ? '0đ' : `${formatInt(p.priceVnd)}đ`}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+                  <span style={{ font: 'var(--fw-regular) 12px/1.4 var(--font-sans)', color: 'var(--text-muted)' }}><b style={{ color: 'var(--text-strong)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatInt(p.subscribers)}</b> người dùng</span>
+                  {editable && !isEditing && (
+                    <button type="button" onClick={() => { setEditPkg(p.code); setDraftPrice(String(p.priceVnd)); setDraftActive(p.isActive !== false); }} style={{ font: 'var(--fw-semibold) 12px/1 var(--font-sans)', color: 'var(--brand)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Sửa</button>
+                  )}
+                </div>
+                {isEditing && (
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--border-subtle)', paddingTop: 10 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, font: 'var(--fw-medium) 12px/1 var(--font-sans)', color: 'var(--text-body)' }}>Giá (đ)
+                      <input type="number" min={0} value={draftPrice} onChange={(e) => setDraftPrice(e.target.value)} aria-label="Giá gói" style={{ flex: 1, height: 32, padding: '0 10px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', font: 'var(--fw-regular) 13px/1 var(--font-mono)', color: 'var(--text-strong)' }} />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, font: 'var(--fw-regular) 13px/1 var(--font-sans)', color: 'var(--text-body)', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={draftActive} onChange={(e) => setDraftActive(e.target.checked)} style={{ width: 15, height: 15, accentColor: 'var(--brand)' }} /> Đang bán
+                    </label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Button size="sm" onClick={() => savePackage(p.code)}>Lưu</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setEditPkg(null)}>Hủy</Button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ font: 'var(--fw-regular) 12px/1.4 var(--font-sans)', color: 'var(--text-muted)', marginTop: 6 }}><b style={{ color: 'var(--text-strong)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatInt(p.subscribers)}</b> người dùng</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

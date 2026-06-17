@@ -367,7 +367,7 @@ export function registerAdminRoutes(app: any, deps: any) {
 
       const [
         revenueCurAgg, revenuePrevAgg, paidCount, refundedCount,
-        dauFocus, dauEvents, totalUsers, premiumSubs, paidSubOrders,
+        dauFocus, dauEvents, totalUsers, premiumSubs, paidSubOrders, pkgRows,
       ] = await Promise.all([
         prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: curStart, lte: end } } }),
         prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: prevStart, lt: prevEnd } } }),
@@ -378,6 +378,7 @@ export function registerAdminRoutes(app: any, deps: any) {
         prisma.user.count(),
         prisma.subscription.findMany({ where: { plan: { not: 'free' }, status: 'active' }, select: { userId: true } }),
         prisma.paymentOrder.findMany({ where: { status: 'paid', productType: 'subscription' }, orderBy: { paidAt: 'desc' }, select: { userId: true, productCode: true, paidAt: true } }),
+        prisma.subscriptionPackage.findMany(),
       ]);
 
       const revenue = revenueCurAgg._sum.amountVnd ?? 0;
@@ -387,20 +388,61 @@ export function registerAdminRoutes(app: any, deps: any) {
       const { monthly, yearly } = bucketLatestPaidByUser(paidSubOrders as any, premiumIds);
       const freeCount = Math.max(0, totalUsers - premiumIds.size);
 
+      const pkg = (code: string, fallback: number) => {
+        const r = pkgRows.find((p: any) => p.productCode === code);
+        return { amountVnd: r?.amountVnd ?? fallback, isActive: r?.isActive ?? true };
+      };
+      const m = pkg('zen_pro_monthly', 29000);
+      const y = pkg('zen_pro_yearly', 279000);
+
       res.json({
         range,
         kpis: {
           revenue: { value: revenue, deltaPct: deltaPct(revenue, revenuePrev) },
-          mrr: { value: computeMrr(monthly, yearly) },
+          mrr: { value: computeMrr(monthly, m.amountVnd, yearly, y.amountVnd) },
           arpu: { value: arpu(revenue, activeUsers) },
           refundRate: { value: refundRate(refundedCount, paidCount) },
         },
         packages: [
-          { code: 'free', label: 'Free', priceVnd: 0, subscribers: freeCount },
-          { code: 'zen_pro_monthly', label: 'Zen Pro · Monthly', priceVnd: 29000, subscribers: monthly },
-          { code: 'zen_pro_yearly', label: 'Zen Pro · Yearly', priceVnd: 279000, subscribers: yearly },
+          { code: 'free', label: 'Free', priceVnd: 0, subscribers: freeCount, isActive: true },
+          { code: 'zen_pro_monthly', label: 'Zen Pro · Monthly', priceVnd: m.amountVnd, subscribers: monthly, isActive: m.isActive },
+          { code: 'zen_pro_yearly', label: 'Zen Pro · Yearly', priceVnd: y.amountVnd, subscribers: yearly, isActive: y.isActive },
         ],
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- subscription packages (list + edit price/duration/active) ----
+  app.get('/admin/api/packages', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const rows = await prisma.subscriptionPackage.findMany({ orderBy: { amountVnd: 'asc' } });
+      res.json({ items: rows });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put('/admin/api/packages/:code', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req, 'moderator');
+      const { amountVnd, durationDays, isActive } = req.body ?? {};
+      const data: any = {};
+      if (amountVnd !== undefined) {
+        const v = Number(amountVnd);
+        if (!Number.isFinite(v) || v < 0) throw Object.assign(new Error('Giá không hợp lệ'), { status: 400 });
+        data.amountVnd = Math.round(v);
+      }
+      if (durationDays !== undefined) {
+        const d = Number(durationDays);
+        if (!Number.isInteger(d) || d < 1 || d > 730) throw Object.assign(new Error('Số ngày không hợp lệ (1–730)'), { status: 400 });
+        data.durationDays = d;
+      }
+      if (isActive !== undefined) data.isActive = Boolean(isActive);
+      const row = await prisma.subscriptionPackage.update({ where: { productCode: req.params.code }, data });
+      res.json(row);
     } catch (error) {
       next(error);
     }

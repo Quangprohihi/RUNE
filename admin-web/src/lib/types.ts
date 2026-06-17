@@ -29,7 +29,7 @@ export interface BillingKpi { value: number; deltaPct?: number | null; }
 export interface BillingSummary {
   range: RangeKey;
   kpis: { revenue: BillingKpi; mrr: BillingKpi; arpu: BillingKpi; refundRate: BillingKpi };
-  packages: { code: string; label: string; priceVnd: number; subscribers: number }[];
+  packages: { code: string; label: string; priceVnd: number; subscribers: number; isActive?: boolean }[];
 }
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'review' | 'refunded';
 export interface PaymentRow {

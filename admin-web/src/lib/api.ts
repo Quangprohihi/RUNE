@@ -76,4 +76,6 @@ export const api = {
   payments: (params: PaymentsQuery = {}) => request<PaymentsResponse>(`/payments${buildPaymentsQuery(params)}`),
   confirmPayment: (id: string) => request<{ id: string; status: PaymentStatus }>(`/payments/${id}/confirm`, { method: 'POST' }),
   billing: { summary: (range: RangeKey) => request<BillingSummary>(`/billing/summary?range=${range}`) },
+  updatePackage: (code: string, body: { amountVnd?: number; durationDays?: number; isActive?: boolean }) =>
+    request<unknown>(`/packages/${code}`, { method: 'PUT', body: JSON.stringify(body) }),
 };
