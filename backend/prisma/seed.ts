@@ -147,6 +147,19 @@ async function main() {
   for (const p of packages) {
     await prisma.subscriptionPackage.upsert({ where: { productCode: p.productCode }, create: p, update: { title: p.title, plan: p.plan } });
   }
+
+  // Sample admin-action audit rows (only if empty, so live actions aren't drowned out).
+  if ((await prisma.adminAuditLog.count()) === 0) {
+    const target = someUsers[0]?.id ?? 'unknown';
+    await prisma.adminAuditLog.createMany({
+      data: [
+        { actorId: 'adm_super', actorEmail: 'admin@zenzoo.app', actorRole: 'super-admin', action: 'package.update', resourceType: 'package', resourceId: 'zen_pro_monthly', ip: '127.0.0.1', metadata: { amountVnd: 29000 } },
+        { actorId: 'adm_mod', actorEmail: 'mod@zenzoo.app', actorRole: 'moderator', action: 'subscription.extend', resourceType: 'user', resourceId: target, ip: '127.0.0.1', metadata: { days: 30 } },
+        { actorId: 'adm_mod', actorEmail: 'mod@zenzoo.app', actorRole: 'moderator', action: 'payment.confirm', resourceType: 'payment_order', resourceId: 'seed-order', ip: '10.0.0.8', metadata: { amountVnd: 29000 } },
+        { actorId: 'adm_super', actorEmail: 'admin@zenzoo.app', actorRole: 'super-admin', action: 'user.force_logout', resourceType: 'user', resourceId: target, ip: '127.0.0.1', metadata: { revoked: 2 } },
+      ],
+    });
+  }
 }
 
 main()

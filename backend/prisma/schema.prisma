@@ -90,6 +90,24 @@ model SubscriptionPackage {
   @@map("subscription_packages")
 }
 
+model AdminAuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actorId      String   @map("actor_id")
+  actorEmail   String   @map("actor_email")
+  actorRole    String   @map("actor_role")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  ip           String?
+  metadata     Json?
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([action])
+  @@map("admin_audit_logs")
+}
+
 model PaymentOrder {
   id                   String    @id @default(uuid()) @db.Uuid
   userId               String    @map("user_id") @db.Uuid

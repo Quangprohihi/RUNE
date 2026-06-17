@@ -8,6 +8,7 @@ import { extendExpiry } from '../admin/subscription.util';
 import {
   analyticsWindow, granularityBuckets, distinctPerBucket, hourlyAverage, AnalyticsRange, Granularity,
 } from '../admin/analytics.metrics';
+import { clientIp } from '../admin/audit.util';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -18,6 +19,31 @@ import {
  */
 export function registerAdminRoutes(app: any, deps: any) {
   const { prisma } = deps;
+
+  // Best-effort admin-action audit trail. NEVER throws — an audit-write failure
+  // must not break the underlying privileged action that just succeeded.
+  async function recordAdminAction(
+    req: any,
+    admin: { adminId: string; email: string; role: string },
+    entry: { action: string; resourceType: string; resourceId: string; metadata?: any },
+  ) {
+    try {
+      await prisma.adminAuditLog.create({
+        data: {
+          actorId: admin.adminId,
+          actorEmail: admin.email,
+          actorRole: admin.role,
+          action: entry.action,
+          resourceType: entry.resourceType,
+          resourceId: entry.resourceId,
+          ip: clientIp(req.header?.('x-forwarded-for'), req.ip),
+          metadata: entry.metadata ?? undefined,
+        },
+      });
+    } catch {
+      /* swallow — audit is best-effort */
+    }
+  }
 
   // ---- auth ----
   app.post('/admin/api/auth/login', (req: any, res: any, next: any) => {
@@ -255,10 +281,14 @@ export function registerAdminRoutes(app: any, deps: any) {
   // ---- force-logout (real action via RefreshToken, no schema change) ----
   app.post('/admin/api/users/:id/force-logout', async (req: any, res: any, next: any) => {
     try {
-      requireAdmin(req, 'moderator');
+      const admin = requireAdmin(req, 'moderator');
       const result = await prisma.refreshToken.updateMany({
         where: { userId: req.params.id, revokedAt: null },
         data: { revokedAt: new Date() },
+      });
+      await recordAdminAction(req, admin, {
+        action: 'user.force_logout', resourceType: 'user', resourceId: req.params.id,
+        metadata: { revoked: result.count },
       });
       res.json({ ok: true, revoked: result.count });
     } catch (error) {
@@ -300,6 +330,11 @@ export function registerAdminRoutes(app: any, deps: any) {
           icon: '🛠️',
           metadata: { action, days: req.body?.days ?? null, by: admin.adminId },
         },
+      });
+      await recordAdminAction(req, admin, {
+        action: action === 'cancel' ? 'subscription.cancel' : 'subscription.extend',
+        resourceType: 'user', resourceId: userId,
+        metadata: action === 'extend' ? { days: Number(req.body?.days) } : undefined,
       });
       res.json(sub);
     } catch (error) {
@@ -521,7 +556,7 @@ export function registerAdminRoutes(app: any, deps: any) {
 
   app.put('/admin/api/packages/:code', async (req: any, res: any, next: any) => {
     try {
-      requireAdmin(req, 'moderator');
+      const admin = requireAdmin(req, 'moderator');
       const { amountVnd, durationDays, isActive } = req.body ?? {};
       const data: any = {};
       if (amountVnd !== undefined) {
@@ -536,6 +571,9 @@ export function registerAdminRoutes(app: any, deps: any) {
       }
       if (isActive !== undefined) data.isActive = Boolean(isActive);
       const row = await prisma.subscriptionPackage.update({ where: { productCode: req.params.code }, data });
+      await recordAdminAction(req, admin, {
+        action: 'package.update', resourceType: 'package', resourceId: req.params.code, metadata: data,
+      });
       res.json(row);
     } catch (error) {
       next(error);
@@ -547,6 +585,10 @@ export function registerAdminRoutes(app: any, deps: any) {
     try {
       const admin = requireAdmin(req, 'moderator');
       const order = await adminConfirmOrder(req.params.id, admin.adminId);
+      await recordAdminAction(req, admin, {
+        action: 'payment.confirm', resourceType: 'payment_order', resourceId: req.params.id,
+        metadata: { amountVnd: order?.amountVnd ?? null },
+      });
       res.json(order);
     } catch (error) {
       next(error);
@@ -590,22 +632,71 @@ export function registerAdminRoutes(app: any, deps: any) {
     }
   });
 
-  // ---- audit-ish feed derived from WalletTransaction (read-only) ----
+  // ---- admin-action audit trail (paginated) — "Hành động admin" tab ----
+  app.get('/admin/api/admin-audit', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const page = Math.max(1, Number(req.query.page ?? 1));
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 15)));
+      const action = String(req.query.action ?? '').trim();
+      const q = String(req.query.q ?? '').trim();
+      const where: any = {};
+      if (action) where.action = action;
+      if (q) where.actorEmail = { contains: q, mode: 'insensitive' };
+      const [total, rows] = await Promise.all([
+        prisma.adminAuditLog.count({ where }),
+        prisma.adminAuditLog.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+      ]);
+      res.json({
+        total, page, pageSize,
+        items: rows.map((r: any) => ({
+          id: r.id,
+          at: r.createdAt,
+          actorId: r.actorId,
+          actorEmail: r.actorEmail,
+          actorRole: r.actorRole,
+          action: r.action,
+          resourceType: r.resourceType,
+          resourceId: r.resourceId,
+          ip: r.ip ?? null,
+          metadata: r.metadata ?? null,
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- wallet/economy ledger (paginated, read-only) — "Giao dịch ví" tab ----
   app.get('/admin/api/audit', async (req: any, res: any, next: any) => {
     try {
       requireAdmin(req);
-      const tx = await prisma.walletTransaction.findMany({
-        take: 25,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { displayName: true } } },
-      });
+      const page = Math.max(1, Number(req.query.page ?? 1));
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 15)));
+      const [total, tx] = await Promise.all([
+        prisma.walletTransaction.count(),
+        prisma.walletTransaction.findMany({
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: { user: { select: { displayName: true } } },
+        }),
+      ]);
       res.json({
+        total, page, pageSize,
         items: tx.map((t: any) => ({
+          id: t.id,
           at: t.createdAt,
           actor: t.user?.displayName ?? '—',
-          action: t.reason,
-          entity: `${t.amount} ${t.currency}`,
-          ref: t.refType ?? '',
+          reason: t.reason,
+          amount: t.amount,
+          currency: t.currency,
+          refType: t.refType ?? '',
         })),
       });
     } catch (error) {
