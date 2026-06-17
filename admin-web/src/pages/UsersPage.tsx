@@ -163,10 +163,17 @@ export function UsersPage() {
 }
 
 function pageList(current: number, total: number): (number | '…')[] {
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-  const out: (number | '…')[] = [1, 2, 3];
-  if (current > 4) out.push('…');
-  if (current > 3 && current < total) out.push(current);
-  out.push('…', total);
-  return out.filter((v, i, a) => a.indexOf(v) === i || v === '…');
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  // Always expose first, last, and the current page ± 1 (each clickable), with
+  // ellipses bridging gaps — so any page is reachable by stepping or jumping.
+  const wanted = [1, total, current, current - 1, current + 1].filter((n) => n >= 1 && n <= total);
+  const sorted = Array.from(new Set(wanted)).sort((a, b) => a - b);
+  const out: (number | '…')[] = [];
+  let prev = 0;
+  for (const n of sorted) {
+    if (prev && n - prev > 1) out.push('…');
+    out.push(n);
+    prev = n;
+  }
+  return out;
 }

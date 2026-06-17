@@ -42,6 +42,7 @@ export function registerAdminRoutes(app: any, deps: any) {
       const now = new Date();
       const { curStart, prevStart, prevEnd, end } = windowFor(range, now);
       const mauStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const quarterStart = windowFor('quarter', now).curStart;
       const edges = bucketEdges(curStart, end, sparkBucketCount(range));
 
       const [
@@ -53,6 +54,7 @@ export function registerAdminRoutes(app: any, deps: any) {
         avgStreakAgg,
         dauFocus, dauEvents, mauFocus, mauEvents,
         recent,
+        revenueQuarterAgg,
       ] = await Promise.all([
         prisma.user.count(),
         prisma.subscription.count({ where: { plan: { not: 'free' }, status: 'active' } }),
@@ -67,10 +69,11 @@ export function registerAdminRoutes(app: any, deps: any) {
         prisma.paymentOrder.findMany({ where: { status: 'paid', paidAt: { gte: curStart, lte: end } }, select: { paidAt: true, amountVnd: true } }),
         prisma.userStreak.aggregate({ _avg: { currentStreak: true } }),
         prisma.focusSession.findMany({ where: { startedAt: { gte: curStart, lte: end } }, select: { userId: true, startedAt: true } }),
-        prisma.activityEvent.findMany({ where: { createdAt: { gte: curStart, lte: end } }, select: { userId: true } }),
+        prisma.activityEvent.findMany({ where: { createdAt: { gte: curStart, lte: end } }, select: { userId: true, createdAt: true } }),
         prisma.focusSession.findMany({ where: { startedAt: { gte: mauStart, lte: end } }, select: { userId: true } }),
         prisma.activityEvent.findMany({ where: { createdAt: { gte: mauStart, lte: end } }, select: { userId: true } }),
         prisma.activityEvent.findMany({ take: 7, orderBy: { createdAt: 'desc' }, include: { user: { select: { displayName: true } } } }),
+        prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: quarterStart, lte: end } } }),
       ]);
 
       const dau = new Set<string>([...dauFocus.map((r: any) => r.userId), ...dauEvents.map((r: any) => r.userId)]).size;
@@ -83,7 +86,13 @@ export function registerAdminRoutes(app: any, deps: any) {
       const revenue = revenueCur._sum.amountVnd ?? 0;
       const revenuePrevVal = revenuePrev._sum.amountVnd ?? 0;
 
-      const dauSpark = bucketCounts(dauFocus.map((r: any) => new Date(r.startedAt)), edges);
+      const dauSpark = bucketCounts(
+        [
+          ...dauFocus.map((r: any) => new Date(r.startedAt)),
+          ...dauEvents.map((r: any) => new Date(r.createdAt)),
+        ],
+        edges,
+      );
       const sessionSpark = bucketCounts(sessionRows.map((r: any) => new Date(r.startedAt)), edges);
       const minuteSpark = bucketSums(minuteRows.map((r: any) => ({ at: new Date(r.startedAt), value: r.plannedMinutes })), edges);
       const revenueSpark = bucketSums(paymentRows.map((r: any) => ({ at: new Date(r.paidAt), value: r.amountVnd })), edges);
@@ -103,7 +112,7 @@ export function registerAdminRoutes(app: any, deps: any) {
           conversion: point(conversion),
         },
         goals: [
-          { label: 'Doanh thu quý', value: Math.round((revenue / Math.max(1, Number(process.env.QUARTER_REVENUE_TARGET ?? 100000000))) * 100), max: 100, unit: '%' },
+          { label: 'Doanh thu quý', value: Math.round(((revenueQuarterAgg._sum.amountVnd ?? 0) / Math.max(1, Number(process.env.QUARTER_REVENUE_TARGET ?? 100000000))) * 100), max: 100, unit: '%' },
           { label: 'Zen Pro · mục tiêu ' + Number(process.env.QUARTER_PRO_TARGET ?? 400), value: premiumUsers, max: Number(process.env.QUARTER_PRO_TARGET ?? 400) },
           { label: 'Tỉ lệ chuyển đổi', value: conversion, max: Number(process.env.CONVERSION_TARGET ?? 8), unit: '%' },
         ],
@@ -256,7 +265,8 @@ export function registerAdminRoutes(app: any, deps: any) {
     try {
       requireAdmin(req);
       const status = String(req.query.status ?? '').trim();
-      const where: any = status ? { status } : {};
+      const allowedStatuses = ['pending', 'paid', 'failed', 'refunded'];
+      const where: any = allowedStatuses.includes(status) ? { status } : {};
       const orders = await prisma.paymentOrder.findMany({
         where,
         take: 50,

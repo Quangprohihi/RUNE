@@ -15,6 +15,9 @@ export function downloadCsv(filename: string, csv: string): void {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  // Revoke after the browser has had a tick to start the download (sync revoke can cancel it).
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
