@@ -33,7 +33,7 @@ export function UsersPage() {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const pageSize = 15;
   const [data, setData] = useState<UsersResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

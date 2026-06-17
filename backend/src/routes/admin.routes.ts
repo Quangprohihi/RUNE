@@ -166,7 +166,7 @@ export function registerAdminRoutes(app: any, deps: any) {
       const plan = String(req.query.plan ?? '').trim();     // 'free' | 'premium'
       const status = String(req.query.status ?? '').trim();  // 'active' | 'suspended' | 'review'
       const page = Math.max(1, Number(req.query.page ?? 1));
-      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 25)));
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 15)));
 
       // Compose filters with AND so search (q) and the plan OR-filter don't collide.
       const and: any[] = [];
@@ -314,7 +314,7 @@ export function registerAdminRoutes(app: any, deps: any) {
       const status = String(req.query.status ?? '').trim();
       const allowed = ['pending', 'paid', 'failed', 'review', 'refunded'];
       const page = Math.max(1, Number(req.query.page ?? 1));
-      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 25)));
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 15)));
       const from = String(req.query.from ?? '').trim();
       const to = String(req.query.to ?? '').trim();
 
