@@ -79,3 +79,6 @@
 .zz-rail::-webkit-scrollbar-thumb { background: var(--rail-border, rgba(255,255,255,.12)); border-radius: 8px; }
 .zz-rail::-webkit-scrollbar-track { background: transparent; }
 @keyframes zzshimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ---- Login fields ---- */
+.zzl-field:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--focus-ring, rgba(28,80,201,.18)); }
