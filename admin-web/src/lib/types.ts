@@ -83,3 +83,15 @@ export interface ShopItemsResponse { items: ShopItem[]; }
 export interface EconomyKpis { tokenFaucet: number; tokenSink: number; tokenNet: number; diamondFaucet: number; }
 export interface EconomyResponse { range: RangeKey; kpis: EconomyKpis; activeItems: number; }
 export interface ShopItemUpdate { priceTokens?: number; isActive?: boolean; isHot?: boolean; }
+
+export interface TaskTemplate {
+  id: string; code: string; title: string; description: string; taskType: string;
+  targetValue: number; rewardTokens: number; rewardDiamonds: number; rewardPoints: number; isActive: boolean;
+}
+export interface DailyMilestone {
+  id: string; pointsRequired: number; rewardTokens: number; rewardDiamonds: number; isActive: boolean;
+}
+export interface TaskKpis { activeTasks: number; dailyTokenFaucet: number; activeMilestones: number; }
+export interface TaskConfigResponse { kpis: TaskKpis; tasks: TaskTemplate[]; milestones: DailyMilestone[]; }
+export interface TaskUpdate { rewardTokens?: number; rewardDiamonds?: number; rewardPoints?: number; isActive?: boolean; }
+export interface MilestoneUpdate { rewardTokens?: number; rewardDiamonds?: number; isActive?: boolean; }

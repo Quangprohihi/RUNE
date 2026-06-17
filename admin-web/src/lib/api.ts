@@ -7,6 +7,7 @@ import type {
   UserDetail, SubscriptionAction, AnalyticsResponse, AnalyticsQuery,
   AdminAuditResponse, WalletAuditResponse, AuditQuery,
   ShopItemsResponse, ShopItem, EconomyResponse, ShopItemUpdate,
+  TaskConfigResponse, TaskTemplate, DailyMilestone, TaskUpdate, MilestoneUpdate,
 } from './types';
 
 const BASE = '/admin/api';
@@ -110,4 +111,9 @@ export const api = {
   economy: (range: RangeKey) => request<EconomyResponse>(`/economy?range=${range}`),
   updateShopItem: (id: string, body: ShopItemUpdate) =>
     request<ShopItem>(`/shop-items/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  taskConfig: () => request<TaskConfigResponse>('/tasks'),
+  updateTask: (id: string, body: TaskUpdate) =>
+    request<TaskTemplate>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  updateMilestone: (id: string, body: MilestoneUpdate) =>
+    request<DailyMilestone>(`/milestones/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 };

@@ -20,7 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { screen: 'audit', label: 'Nhật ký kiểm toán', to: '/audit', enabled: true },
   ]},
   { title: 'Nội dung game', items: [
-    wip('tasks', 'Nhiệm vụ & Mốc'),
+    { screen: 'tasks', label: 'Nhiệm vụ & Mốc', to: '/tasks', enabled: true },
     { screen: 'shop', label: 'Cửa hàng & Kinh tế', to: '/shop', enabled: true },
     wip('pets', 'Thú cưng & Tiến hóa'),
     wip('achievements', 'Thành tựu & Streak'),
@@ -47,6 +47,7 @@ export const ROUTE_META: Record<string, RouteMeta> = {
   '/analytics': { crumb: 'Phân tích', title: 'Phân tích' },
   '/audit': { crumb: 'Phân tích', title: 'Nhật ký kiểm toán' },
   '/shop': { crumb: 'Nội dung game', title: 'Cửa hàng & Kinh tế' },
+  '/tasks': { crumb: 'Nội dung game', title: 'Nhiệm vụ & Mốc' },
 };
 export function metaFor(pathname: string): RouteMeta {
   if (pathname.startsWith('/users')) return ROUTE_META['/users'];
@@ -54,5 +55,6 @@ export function metaFor(pathname: string): RouteMeta {
   if (pathname.startsWith('/analytics')) return ROUTE_META['/analytics'];
   if (pathname.startsWith('/audit')) return ROUTE_META['/audit'];
   if (pathname.startsWith('/shop')) return ROUTE_META['/shop'];
+  if (pathname.startsWith('/tasks')) return ROUTE_META['/tasks'];
   return ROUTE_META['/'];
 }
