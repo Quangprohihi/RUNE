@@ -38,3 +38,16 @@ export interface PaymentRow {
 }
 export interface PaymentsResponse { total: number; page: number; pageSize: number; items: PaymentRow[]; }
 export interface PaymentsQuery { status?: string; from?: string; to?: string; page?: number; pageSize?: number; }
+
+export interface UserDetail {
+  id: string; email: string; displayName: string; provider: string; createdAt: string;
+  status?: UserStatus; lastLoginAt?: string | null;
+  subscription: { plan: string; status: string; expiresAt: string | null } | null;
+  pet: { name: string; species: string; level: number; exp: number; expToNext: number; energy: number; mood: number; hunger: number; love: number } | null;
+  wallet: { tokens: number; diamonds: number; energy: number } | null;
+  streak: { currentStreak: number; bestStreak: number } | null;
+  focusSessions: { id: string; label: string; plannedMinutes: number; companionCode: string | null; status: string; startedAt: string }[];
+  activityEvents: { id: string; title: string; subtitle: string; icon: string; createdAt: string }[];
+  _count?: { refreshTokens: number };
+}
+export interface SubscriptionAction { action: 'cancel' | 'extend'; days?: number; }

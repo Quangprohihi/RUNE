@@ -4,6 +4,7 @@ import {
 } from '../admin/admin.metrics';
 import { computeMrr, refundRate, arpu, bucketLatestPaidByUser } from '../admin/billing.metrics';
 import { adminConfirmOrder } from '../services/payment.service';
+import { extendExpiry } from '../admin/subscription.util';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -257,6 +258,47 @@ export function registerAdminRoutes(app: any, deps: any) {
         data: { revokedAt: new Date() },
       });
       res.json({ ok: true, revoked: result.count });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- manage a user's subscription (cancel / extend) ----
+  app.post('/admin/api/users/:id/subscription', async (req: any, res: any, next: any) => {
+    try {
+      const admin = requireAdmin(req, 'moderator');
+      const userId = String(req.params.id);
+      const action = String(req.body?.action ?? '');
+      const now = new Date();
+      let data: any;
+      if (action === 'cancel') {
+        data = { plan: 'free', status: 'expired', expiresAt: now };
+      } else if (action === 'extend') {
+        const days = Number(req.body?.days);
+        if (!Number.isFinite(days) || days < 1 || days > 730) {
+          throw Object.assign(new Error('Số ngày gia hạn không hợp lệ (1–730)'), { status: 400 });
+        }
+        const existing = await prisma.subscription.findUnique({ where: { userId } });
+        data = { plan: 'premium', status: 'active', expiresAt: extendExpiry(existing?.expiresAt ?? null, days, now) };
+      } else {
+        throw Object.assign(new Error('Hành động không hợp lệ'), { status: 400 });
+      }
+      const sub = await prisma.subscription.upsert({
+        where: { userId },
+        create: { userId, ...data },
+        update: data,
+      });
+      await prisma.activityEvent.create({
+        data: {
+          userId,
+          eventType: 'subscription_admin',
+          title: action === 'cancel' ? 'Subscription bị hủy (admin)' : 'Subscription gia hạn (admin)',
+          subtitle: action === 'extend' ? `+${req.body?.days} ngày` : 'Hạ về Free',
+          icon: '🛠️',
+          metadata: { action, days: req.body?.days ?? null, by: admin.adminId },
+        },
+      });
+      res.json(sub);
     } catch (error) {
       next(error);
     }

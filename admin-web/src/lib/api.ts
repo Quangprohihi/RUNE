@@ -4,6 +4,7 @@ import type {
   AdminMe, LoginResponse, OverviewResponse, HealthResponse,
   UsersResponse, UsersQuery, RangeKey,
   BillingSummary, PaymentsResponse, PaymentsQuery, PaymentStatus,
+  UserDetail, SubscriptionAction,
 } from './types';
 
 const BASE = '/admin/api';
@@ -68,6 +69,10 @@ export const api = {
   overview: (range: RangeKey) => request<OverviewResponse>(`/overview?range=${range}`),
   health: () => request<HealthResponse>('/health'),
   users: (params: UsersQuery) => request<UsersResponse>(`/users${buildUsersQuery(params)}`),
+  userDetail: (id: string) => request<UserDetail>(`/users/${id}`),
+  userSubscription: (id: string, body: SubscriptionAction) =>
+    request<{ plan: string; status: string; expiresAt: string | null }>(`/users/${id}/subscription`, { method: 'POST', body: JSON.stringify(body) }),
+  forceLogout: (id: string) => request<{ ok: boolean; revoked: number }>(`/users/${id}/force-logout`, { method: 'POST' }),
   payments: (params: PaymentsQuery = {}) => request<PaymentsResponse>(`/payments${buildPaymentsQuery(params)}`),
   confirmPayment: (id: string) => request<{ id: string; status: PaymentStatus }>(`/payments/${id}/confirm`, { method: 'POST' }),
   billing: { summary: (range: RangeKey) => request<BillingSummary>(`/billing/summary?range=${range}`) },
