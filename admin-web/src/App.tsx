@@ -1,3 +1,28 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './shell/ThemeProvider';
+import { ProtectedRoute } from './shell/ProtectedRoute';
+import { AppShell } from './shell/AppShell';
+import { LoginPage } from './pages/LoginPage';
+import { WipPage } from './pages/WipPage';
+import { OverviewPage } from './pages/OverviewPage';
+import { UsersPage } from './pages/UsersPage';
+import { UserDetailPage } from './pages/UserDetailPage';
+
 export default function App() {
-  return <div style={{ padding: 24, fontFamily: 'sans-serif' }}>ZenZoo Admin — scaffold OK</div>;
+  return (
+    <ThemeProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShell />}>
+            <Route path="/" element={<OverviewPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/:id" element={<UserDetailPage />} />
+            <Route path="/wip/:screen" element={<WipPage />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ThemeProvider>
+  );
 }
