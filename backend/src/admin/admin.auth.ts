@@ -83,7 +83,13 @@ export function authenticateAdmin(email: unknown, password: unknown) {
 }
 
 export function verifyAdminToken(token: string): AdminPayload {
-  const payload = jwt.verify(token, ADMIN_SECRET) as AdminPayload;
+  let payload: AdminPayload;
+  try {
+    payload = jwt.verify(token, ADMIN_SECRET) as AdminPayload;
+  } catch {
+    // Expired or malformed token → 401 (so the client redirects to login), not a 500.
+    throw Object.assign(new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'), { status: 401 });
+  }
   if (payload?.kind !== 'admin' || !payload.adminId) {
     throw Object.assign(new Error('Token quản trị không hợp lệ'), { status: 401 });
   }
