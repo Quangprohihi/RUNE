@@ -47,8 +47,11 @@ function buildUsersQuery(p: UsersQuery): string {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) => {
+    // Clear any stale token so a wrong-password 401 isn't mistaken for "session expired".
+    clearToken();
+    return request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  },
   me: () => request<AdminMe>('/auth/me'),
   overview: (range: RangeKey) => request<OverviewResponse>(`/overview?range=${range}`),
   health: () => request<HealthResponse>('/health'),

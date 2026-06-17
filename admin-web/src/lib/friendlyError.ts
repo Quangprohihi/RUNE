@@ -9,7 +9,14 @@ export class ApiError extends Error {
 
 export function friendlyError(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    // 401 is used both for bad login credentials and for an expired/missing token.
+    // Prefer the server's specific message (e.g. "Sai email hoặc mật khẩu quản trị");
+    // fall back to the session-expired text only for the synthetic 'Unauthorized'.
+    if (err.status === 401) {
+      return err.message && err.message !== 'Unauthorized'
+        ? err.message
+        : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    }
     if (err.status === 403) return 'Tài khoản không đủ quyền cho thao tác này.';
     if (err.status === 404) return 'Không tìm thấy dữ liệu.';
     if (err.status >= 500) return 'Máy chủ gặp sự cố. Vui lòng thử lại sau.';
