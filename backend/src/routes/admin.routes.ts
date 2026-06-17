@@ -10,6 +10,7 @@ import {
 } from '../admin/analytics.metrics';
 import { clientIp } from '../admin/audit.util';
 import { economySummary, parsePriceTokens } from '../admin/shop.metrics';
+import { parseReward, dailyTokenFaucet } from '../admin/task.metrics';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -648,12 +649,60 @@ export function registerAdminRoutes(app: any, deps: any) {
     }
   });
 
-  // ---- task templates (read) ----
+  // ---- tasks + milestones config (the economy "faucet"): KPIs + both catalogs ----
   app.get('/admin/api/tasks', async (req: any, res: any, next: any) => {
     try {
       requireAdmin(req);
-      const items = await prisma.taskTemplate.findMany({ orderBy: { rewardTokens: 'asc' } });
-      res.json({ items });
+      const [tasks, milestones] = await Promise.all([
+        prisma.taskTemplate.findMany({ orderBy: { rewardTokens: 'asc' } }),
+        prisma.dailyMilestone.findMany({ orderBy: { pointsRequired: 'asc' } }),
+      ]);
+      res.json({
+        kpis: {
+          activeTasks: tasks.filter((t: any) => t.isActive).length,
+          dailyTokenFaucet: dailyTokenFaucet(tasks as any),
+          activeMilestones: milestones.filter((m: any) => m.isActive).length,
+        },
+        tasks,
+        milestones,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put('/admin/api/tasks/:id', async (req: any, res: any, next: any) => {
+    try {
+      const admin = requireAdmin(req, 'moderator');
+      const { rewardTokens, rewardDiamonds, rewardPoints, isActive } = req.body ?? {};
+      const data: any = {};
+      if (rewardTokens !== undefined) data.rewardTokens = parseReward(rewardTokens);
+      if (rewardDiamonds !== undefined) data.rewardDiamonds = parseReward(rewardDiamonds);
+      if (rewardPoints !== undefined) data.rewardPoints = parseReward(rewardPoints);
+      if (isActive !== undefined) data.isActive = Boolean(isActive);
+      const row = await prisma.taskTemplate.update({ where: { id: req.params.id }, data });
+      await recordAdminAction(req, admin, {
+        action: 'task.update', resourceType: 'task_template', resourceId: req.params.id, metadata: data,
+      });
+      res.json(row);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put('/admin/api/milestones/:id', async (req: any, res: any, next: any) => {
+    try {
+      const admin = requireAdmin(req, 'moderator');
+      const { rewardTokens, rewardDiamonds, isActive } = req.body ?? {};
+      const data: any = {};
+      if (rewardTokens !== undefined) data.rewardTokens = parseReward(rewardTokens);
+      if (rewardDiamonds !== undefined) data.rewardDiamonds = parseReward(rewardDiamonds);
+      if (isActive !== undefined) data.isActive = Boolean(isActive);
+      const row = await prisma.dailyMilestone.update({ where: { id: req.params.id }, data });
+      await recordAdminAction(req, admin, {
+        action: 'milestone.update', resourceType: 'milestone', resourceId: req.params.id, metadata: data,
+      });
+      res.json(row);
     } catch (error) {
       next(error);
     }
