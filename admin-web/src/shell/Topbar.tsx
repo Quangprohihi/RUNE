@@ -1,12 +1,11 @@
 import { useLocation } from 'react-router-dom';
 import { Icon, icons, IconButton, Input } from '../ds';
 import { metaFor } from './nav';
-import { getAdmin, initialsFromAdmin } from './topbarUtil';
+import { UserMenu } from './UserMenu';
 
 export function Topbar() {
   const { pathname } = useLocation();
   const meta = metaFor(pathname);
-  const admin = getAdmin();
   return (
     <header style={{
       position: 'sticky', top: 46, zIndex: 120, background: 'color-mix(in srgb, var(--slate-0) 88%, transparent)',
@@ -24,13 +23,7 @@ export function Topbar() {
         <IconButton label="Thông báo"><Icon>{icons.bell}</Icon></IconButton>
         <IconButton label="Cài đặt"><Icon>{icons.gear}</Icon></IconButton>
         <div style={{ width: 1, height: 30, background: 'var(--border-subtle)' }} />
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ width: 36, height: 36, flex: 'none', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', font: 'var(--fw-semibold) 13px/1 var(--font-sans)', background: 'var(--blue-100)', color: 'var(--blue-700)', border: '1px solid color-mix(in srgb, var(--blue-700) 14%, transparent)' }}>{initialsFromAdmin(admin?.name)}</span>
-          <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-            <span style={{ font: 'var(--fw-semibold) 13px/1.3 var(--font-sans)', color: 'var(--text-strong)' }}>{admin?.name ?? 'Quản trị viên'}</span>
-            <span style={{ font: 'var(--fw-regular) 12px/1.3 var(--font-sans)', color: 'var(--text-muted)' }}>{admin?.role ?? '—'}</span>
-          </span>
-        </span>
+        <UserMenu />
       </div>
     </header>
   );
