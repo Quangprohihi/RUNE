@@ -4,7 +4,7 @@ import type {
   AdminMe, LoginResponse, OverviewResponse, HealthResponse,
   UsersResponse, UsersQuery, RangeKey,
   BillingSummary, PaymentsResponse, PaymentsQuery, PaymentStatus,
-  UserDetail, SubscriptionAction,
+  UserDetail, SubscriptionAction, AnalyticsResponse, AnalyticsQuery,
 } from './types';
 
 const BASE = '/admin/api';
@@ -78,4 +78,14 @@ export const api = {
   billing: { summary: (range: RangeKey) => request<BillingSummary>(`/billing/summary?range=${range}`) },
   updatePackage: (code: string, body: { amountVnd?: number; durationDays?: number; isActive?: boolean }) =>
     request<unknown>(`/packages/${code}`, { method: 'PUT', body: JSON.stringify(body) }),
+  analytics: (p: AnalyticsQuery = {}) => {
+    const sp = new URLSearchParams();
+    if (p.range) sp.set('range', p.range);
+    if (p.granularity) sp.set('granularity', p.granularity);
+    if (p.compare) sp.set('compare', 'true');
+    if (p.from) sp.set('from', p.from);
+    if (p.to) sp.set('to', p.to);
+    const s = sp.toString();
+    return request<AnalyticsResponse>(`/analytics${s ? `?${s}` : ''}`);
+  },
 };

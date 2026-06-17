@@ -51,3 +51,14 @@ export interface UserDetail {
   _count?: { refreshTokens: number };
 }
 export interface SubscriptionAction { action: 'cancel' | 'extend'; days?: number; }
+
+export interface AnalyticsKpi { value: number; deltaPct: number | null; }
+export interface AnalyticsResponse {
+  range: string; granularity: string; compare: boolean; rangeLabel: string;
+  kpis: { activeUsers: AnalyticsKpi; focusMinutes: AnalyticsKpi; revenue: AnalyticsKpi; newPro: AnalyticsKpi };
+  series: { label: string; cur: number[]; prev: number[] | null };
+  bucketLabels: string[];
+  funnel: { label: string; value: number; pct: number }[];
+  hourly: { label: string; minutes: number }[];
+}
+export interface AnalyticsQuery { range?: string; granularity?: string; compare?: boolean; from?: string; to?: string; }

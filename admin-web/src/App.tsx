@@ -8,6 +8,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { UsersPage } from './pages/UsersPage';
 import { UserDetailPage } from './pages/UserDetailPage';
 import { BillingPage } from './pages/BillingPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:id" element={<UserDetailPage />} />
             <Route path="/billing" element={<BillingPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/wip/:screen" element={<WipPage />} />
           </Route>
         </Route>
