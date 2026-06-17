@@ -3,7 +3,7 @@ import { getToken, clearToken } from './auth';
 import type {
   AdminMe, LoginResponse, OverviewResponse, HealthResponse,
   UsersResponse, UsersQuery, RangeKey,
-  BillingSummary, PaymentsResponse, PaymentsQuery,
+  BillingSummary, PaymentsResponse, PaymentsQuery, PaymentStatus,
 } from './types';
 
 const BASE = '/admin/api';
@@ -69,5 +69,6 @@ export const api = {
   health: () => request<HealthResponse>('/health'),
   users: (params: UsersQuery) => request<UsersResponse>(`/users${buildUsersQuery(params)}`),
   payments: (params: PaymentsQuery = {}) => request<PaymentsResponse>(`/payments${buildPaymentsQuery(params)}`),
+  confirmPayment: (id: string) => request<{ id: string; status: PaymentStatus }>(`/payments/${id}/confirm`, { method: 'POST' }),
   billing: { summary: (range: RangeKey) => request<BillingSummary>(`/billing/summary?range=${range}`) },
 };

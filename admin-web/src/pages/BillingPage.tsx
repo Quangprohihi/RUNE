@@ -42,7 +42,7 @@ export function BillingPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const pageSize = 15;
   const [tx, setTx] = useState<PaymentsResponse | null>(null);
   const [txErr, setTxErr] = useState<string | null>(null);
   const [txLoading, setTxLoading] = useState(true);
@@ -62,6 +62,17 @@ export function BillingPage() {
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadTx(); }, [filter, from, to, page]);
+
+  async function confirmOrder(id: string) {
+    if (typeof window !== 'undefined' && !window.confirm('Xác nhận đơn này là đã thanh toán?')) return;
+    try {
+      await api.confirmPayment(id);
+      loadTx();
+      loadSummary();
+    } catch (e) {
+      setTxErr(friendlyError(e));
+    }
+  }
 
   const totalPages = tx ? Math.max(1, Math.ceil(tx.total / tx.pageSize)) : 1;
   const pages = useMemo(() => pageList(page, totalPages), [page, totalPages]);
@@ -125,13 +136,14 @@ export function BillingPage() {
                   <thead>
                     <tr>
                       <th style={TH}>Mã giao dịch</th><th style={TH}>Người dùng</th><th style={TH}>Gói</th>
-                      <th style={{ ...TH, textAlign: 'right' }}>Số tiền</th><th style={TH}>Trạng thái</th>
+                      <th style={{ ...TH, textAlign: 'right' }}>Số tiền</th><th style={TH}>Trạng thái</th><th style={{ ...TH, textAlign: 'right' }}></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {txLoading && !tx && Array.from({ length: 6 }).map((_, i) => (<tr key={`s${i}`}><td style={TD} colSpan={5}><Skeleton height={24} /></td></tr>))}
+                    {txLoading && !tx && Array.from({ length: 6 }).map((_, i) => (<tr key={`s${i}`}><td style={TD} colSpan={6}><Skeleton height={24} /></td></tr>))}
                     {tx?.items.map((o: PaymentRow) => {
                       const b = STATUS_BADGE[o.status] ?? { status: 'draft' as DesignStatus, label: o.status };
+                      const canConfirm = o.status === 'pending' || o.status === 'review';
                       return (
                         <tr key={o.id}>
                           <td style={{ ...TD, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-body)' }}>{o.vnpTxnRef}</td>
@@ -139,10 +151,13 @@ export function BillingPage() {
                           <td style={TD}>{o.productCode === 'zen_pro_yearly' ? <Tag tone="accent">Yearly</Tag> : o.productCode === 'zen_pro_monthly' ? <Tag tone="neutral">Monthly</Tag> : <Tag tone="outline">{o.productCode}</Tag>}</td>
                           <td style={{ ...TD, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-strong)' }}>{formatInt(o.amountVnd)}đ</td>
                           <td style={TD}><StatusBadge status={b.status}>{b.label}</StatusBadge></td>
+                          <td style={{ ...TD, textAlign: 'right' }}>{canConfirm && (
+                            <button type="button" onClick={() => confirmOrder(o.id)} style={{ font: 'var(--fw-semibold) 12px/1 var(--font-sans)', color: 'var(--brand)', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>Xác nhận</button>
+                          )}</td>
                         </tr>
                       );
                     })}
-                    {tx && tx.items.length === 0 && (<tr><td style={{ ...TD, textAlign: 'center', color: 'var(--text-muted)' }} colSpan={5}>Không có giao dịch khớp bộ lọc.</td></tr>)}
+                    {tx && tx.items.length === 0 && (<tr><td style={{ ...TD, textAlign: 'center', color: 'var(--text-muted)' }} colSpan={6}>Không có giao dịch khớp bộ lọc.</td></tr>)}
                   </tbody>
                 </table>
               </div>

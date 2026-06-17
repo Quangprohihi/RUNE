@@ -18,13 +18,17 @@ const payments: PaymentsResponse = {
   items: [{ id: 'p1', vnpTxnRef: 'VNP123', user: 'Lê Quốc Bảo', productCode: 'zen_pro_yearly', amountVnd: 279000, status: 'paid', bankCode: 'NCB', payDate: null, paidAt: '2026-06-13T09:14:00.000Z', createdAt: '2026-06-13T09:14:00.000Z' }],
 };
 
-const { summaryMock, paymentsMock } = vi.hoisted(() => ({ summaryMock: vi.fn(), paymentsMock: vi.fn() }));
-vi.mock('../lib/api', () => ({ api: { billing: { summary: (...a: unknown[]) => summaryMock(...a) }, payments: (...a: unknown[]) => paymentsMock(...a) } }));
+const { summaryMock, paymentsMock, confirmMock } = vi.hoisted(() => ({ summaryMock: vi.fn(), paymentsMock: vi.fn(), confirmMock: vi.fn() }));
+vi.mock('../lib/api', () => ({ api: { billing: { summary: (...a: unknown[]) => summaryMock(...a) }, payments: (...a: unknown[]) => paymentsMock(...a), confirmPayment: (...a: unknown[]) => confirmMock(...a) } }));
 
 function renderPage() { return render(<MemoryRouter><BillingPage /></MemoryRouter>); }
 
 describe('BillingPage', () => {
-  beforeEach(() => { summaryMock.mockReset().mockResolvedValue(summary); paymentsMock.mockReset().mockResolvedValue(payments); });
+  beforeEach(() => {
+    summaryMock.mockReset().mockResolvedValue(summary);
+    paymentsMock.mockReset().mockResolvedValue(payments);
+    confirmMock.mockReset().mockResolvedValue({ id: 'p1', status: 'paid' });
+  });
 
   it('renders KPIs, a transaction row, and package cards', async () => {
     renderPage();
@@ -47,5 +51,14 @@ describe('BillingPage', () => {
       const last = paymentsMock.mock.calls.at(-1)![0] as { status?: string };
       expect(last.status).toBe('paid');
     });
+  });
+
+  it('confirms a pending order via the API', async () => {
+    paymentsMock.mockReset().mockResolvedValue({ total: 1, page: 1, pageSize: 15, items: [{ ...payments.items[0], id: 'pend1', vnpTxnRef: 'PEND1', status: 'pending' }] });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('PEND1')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }));
+    await waitFor(() => expect(confirmMock).toHaveBeenCalledWith('pend1'));
   });
 });

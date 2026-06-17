@@ -3,6 +3,7 @@ import {
   windowFor, bucketEdges, bucketCounts, bucketSums, deltaPct, round1, sparkBucketCount, RangeKey,
 } from '../admin/admin.metrics';
 import { computeMrr, refundRate, arpu, bucketLatestPaidByUser } from '../admin/billing.metrics';
+import { adminConfirmOrder } from '../services/payment.service';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -358,6 +359,17 @@ export function registerAdminRoutes(app: any, deps: any) {
           { code: 'zen_pro_yearly', label: 'Zen Pro · Yearly', priceVnd: 279000, subscribers: yearly },
         ],
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- manual-confirm a stuck (pending/review) order ----
+  app.post('/admin/api/payments/:id/confirm', async (req: any, res: any, next: any) => {
+    try {
+      const admin = requireAdmin(req, 'moderator');
+      const order = await adminConfirmOrder(req.params.id, admin.adminId);
+      res.json(order);
     } catch (error) {
       next(error);
     }

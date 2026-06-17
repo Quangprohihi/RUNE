@@ -167,16 +167,21 @@ export async function recordVnpayReturn(params: VnpayCallbackParams) {
   });
 }
 
-async function confirmPaidOrder(
-  order: NonNullable<
-    Awaited<ReturnType<typeof prisma.paymentOrder.findUnique>>
-  >,
-  params: VnpayCallbackParams,
-  source: 'ipn' | 'return',
+type CascadeSource = 'ipn' | 'return' | 'admin';
+
+// Shared paid→subscription cascade used by the VNPay IPN/return flow AND by the
+// admin manual-confirm action. For source==='admin', params is empty (no VNPay
+// fields to write) and the activity log notes it was confirmed by an admin.
+async function applyPaidCascade(
+  order: NonNullable<Awaited<ReturnType<typeof prisma.paymentOrder.findUnique>>>,
+  source: CascadeSource,
+  params: VnpayCallbackParams = {},
+  meta: { adminId?: string } = {},
 ) {
   const product = getProduct(order.productCode);
   const expiresAt = paidExpiresAt(product.durationDays);
   const paidAt = new Date();
+  const isAdmin = source === 'admin';
   await prisma.$transaction(async (tx) => {
     await tx.paymentOrder.update({
       where: { id: order.id },
@@ -214,14 +219,17 @@ async function confirmPaidOrder(
       data: {
         userId: order.userId,
         eventType: 'payment_paid',
-        title: 'Zen Pro activated',
-        subtitle: `${product.title} payment confirmed`,
+        title: isAdmin ? 'Đơn thanh toán xác nhận thủ công' : 'Zen Pro activated',
+        subtitle: isAdmin
+          ? `${product.title} · xác nhận bởi admin`
+          : `${product.title} payment confirmed`,
         icon: '💳',
         metadata: {
           orderId: order.id,
           productCode: order.productCode,
           amountVnd: order.amountVnd,
           source,
+          ...(meta.adminId ? { by: meta.adminId } : {}),
         },
       },
     });
@@ -240,6 +248,29 @@ async function confirmPaidOrder(
       },
     });
   });
+}
+
+async function confirmPaidOrder(
+  order: NonNullable<
+    Awaited<ReturnType<typeof prisma.paymentOrder.findUnique>>
+  >,
+  params: VnpayCallbackParams,
+  source: 'ipn' | 'return',
+) {
+  await applyPaidCascade(order, source, params);
+}
+
+/** Admin manual confirmation of a stuck (pending/review) order — bypasses VNPay verification. */
+export async function adminConfirmOrder(orderId: string, adminId: string) {
+  const order = await prisma.paymentOrder.findUnique({ where: { id: orderId } });
+  if (!order) {
+    throw Object.assign(new Error('Không tìm thấy đơn thanh toán'), { status: 404 });
+  }
+  if (order.status !== 'pending' && order.status !== 'review') {
+    throw Object.assign(new Error('Đơn không ở trạng thái chờ xác nhận'), { status: 409 });
+  }
+  await applyPaidCascade(order, 'admin', {}, { adminId });
+  return prisma.paymentOrder.findUnique({ where: { id: orderId } });
 }
 
 export async function handleVnpayIpn(params: VnpayCallbackParams) {
