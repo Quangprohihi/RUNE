@@ -5,6 +5,9 @@ import {
 import { computeMrr, refundRate, arpu, bucketLatestPaidByUser } from '../admin/billing.metrics';
 import { adminConfirmOrder } from '../services/payment.service';
 import { extendExpiry } from '../admin/subscription.util';
+import {
+  analyticsWindow, granularityBuckets, distinctPerBucket, hourlyAverage, AnalyticsRange, Granularity,
+} from '../admin/analytics.metrics';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -408,6 +411,97 @@ export function registerAdminRoutes(app: any, deps: any) {
           { code: 'zen_pro_monthly', label: 'Zen Pro · Monthly', priceVnd: m.amountVnd, subscribers: monthly, isActive: m.isActive },
           { code: 'zen_pro_yearly', label: 'Zen Pro · Yearly', priceVnd: y.amountVnd, subscribers: yearly, isActive: y.isActive },
         ],
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- analytics (KPIs + series + funnel + hourly) ----
+  app.get('/admin/api/analytics', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const range = (['today', 'week', 'month', 'quarter', 'year', 'custom'].includes(String(req.query.range)) ? String(req.query.range) : 'month') as AnalyticsRange;
+      const granularity = (['day', 'week', 'month', 'quarter'].includes(String(req.query.granularity)) ? String(req.query.granularity) : 'day') as Granularity;
+      const compare = String(req.query.compare) === 'true';
+      const now = new Date();
+      const { curStart, curEnd, prevStart, prevEnd, span } = analyticsWindow(range, now, String(req.query.from || ''), String(req.query.to || ''));
+      const edges = granularityBuckets(curStart, curEnd, granularity);
+      const days = Math.max(1, Math.round(span / (24 * 60 * 60 * 1000)));
+
+      const [
+        focusCur, eventCur, focusPrev, eventPrev,
+        revCur, revPrev, newProCur, newProPrev,
+        totalUsers, usersWithSession, usersCompleted, retained, premiumCount,
+      ] = await Promise.all([
+        prisma.focusSession.findMany({ where: { startedAt: { gte: curStart, lte: curEnd } }, select: { userId: true, startedAt: true, plannedMinutes: true, status: true } }),
+        prisma.activityEvent.findMany({ where: { createdAt: { gte: curStart, lte: curEnd } }, select: { userId: true, createdAt: true } }),
+        prisma.focusSession.findMany({ where: { startedAt: { gte: prevStart, lt: prevEnd } }, select: { userId: true, startedAt: true, plannedMinutes: true, status: true } }),
+        prisma.activityEvent.findMany({ where: { createdAt: { gte: prevStart, lt: prevEnd } }, select: { userId: true, createdAt: true } }),
+        prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: curStart, lte: curEnd } } }),
+        prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: prevStart, lt: prevEnd } } }),
+        prisma.paymentOrder.count({ where: { status: 'paid', productType: 'subscription', paidAt: { gte: curStart, lte: curEnd } } }),
+        prisma.paymentOrder.count({ where: { status: 'paid', productType: 'subscription', paidAt: { gte: prevStart, lt: prevEnd } } }),
+        prisma.user.count(),
+        prisma.focusSession.findMany({ distinct: ['userId'], select: { userId: true } }),
+        prisma.focusSession.findMany({ where: { status: 'completed' }, distinct: ['userId'], select: { userId: true } }),
+        prisma.userStreak.count({ where: { bestStreak: { gte: 7 } } }),
+        prisma.subscription.count({ where: { plan: { not: 'free' }, status: 'active' } }),
+      ]);
+
+      const curRows = [
+        ...focusCur.map((f: any) => ({ userId: f.userId, at: new Date(f.startedAt) })),
+        ...eventCur.map((e: any) => ({ userId: e.userId, at: new Date(e.createdAt) })),
+      ];
+      const prevRows = [
+        ...focusPrev.map((f: any) => ({ userId: f.userId, at: new Date(f.startedAt) })),
+        ...eventPrev.map((e: any) => ({ userId: e.userId, at: new Date(e.createdAt) })),
+      ];
+      const activeUsers = new Set(curRows.map((r) => r.userId)).size;
+      const activePrev = new Set(prevRows.map((r) => r.userId)).size;
+      const focusMinutes = focusCur.filter((f: any) => f.status === 'completed').reduce((a: number, f: any) => a + f.plannedMinutes, 0);
+      const focusMinutesPrev = focusPrev.filter((f: any) => f.status === 'completed').reduce((a: number, f: any) => a + f.plannedMinutes, 0);
+      const revenue = revCur._sum.amountVnd ?? 0;
+      const revenuePrev = revPrev._sum.amountVnd ?? 0;
+
+      const cur = distinctPerBucket(curRows, edges);
+      let prev: number[] | null = null;
+      if (compare) prev = distinctPerBucket(prevRows, granularityBuckets(prevStart, prevEnd, granularity));
+
+      const dm = (d: Date) => `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      const bucketLabels = edges.slice(0, -1).map((d) =>
+        range === 'today' ? `${String(d.getUTCHours()).padStart(2, '0')}:00` : dm(d),
+      );
+
+      const HOUR_LABELS = ['0-2', '2-4', '4-6', '6-8', '8-10', '10-12', '12-14', '14-16', '16-18', '18-20', '20-22', '22-24'];
+      const hourly = hourlyAverage(
+        focusCur.filter((f: any) => f.status === 'completed').map((f: any) => ({ at: new Date(f.startedAt), minutes: f.plannedMinutes })),
+        days,
+      ).map((minutes, i) => ({ label: HOUR_LABELS[i], minutes }));
+
+      const stage1 = totalUsers || 1;
+      const funnel = [
+        { label: 'Cài đặt app', value: totalUsers },
+        { label: 'Tạo phiên đầu', value: usersWithSession.length },
+        { label: 'Hoàn thành ≥1 phiên', value: usersCompleted.length },
+        { label: 'Giữ chân ≥7 ngày', value: retained },
+        { label: 'Nâng cấp Zen Pro', value: premiumCount },
+      ].map((s) => ({ ...s, pct: Math.round((s.value / stage1) * 1000) / 10 }));
+
+      const names: Record<string, string> = { today: 'Hôm nay', week: 'Tuần', month: 'Tháng', quarter: 'Quý', year: 'Năm', custom: 'Tùy chỉnh' };
+      res.json({
+        range, granularity, compare,
+        rangeLabel: `${names[range]} · ${dm(curStart)} – ${dm(curEnd)}`,
+        kpis: {
+          activeUsers: { value: activeUsers, deltaPct: deltaPct(activeUsers, activePrev) },
+          focusMinutes: { value: focusMinutes, deltaPct: deltaPct(focusMinutes, focusMinutesPrev) },
+          revenue: { value: revenue, deltaPct: deltaPct(revenue, revenuePrev) },
+          newPro: { value: newProCur, deltaPct: deltaPct(newProCur, newProPrev) },
+        },
+        series: { label: 'Người dùng hoạt động', cur, prev },
+        bucketLabels,
+        funnel,
+        hourly,
       });
     } catch (error) {
       next(error);
