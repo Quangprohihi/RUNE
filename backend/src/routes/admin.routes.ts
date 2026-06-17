@@ -9,6 +9,7 @@ import {
   analyticsWindow, granularityBuckets, distinctPerBucket, hourlyAverage, AnalyticsRange, Granularity,
 } from '../admin/analytics.metrics';
 import { clientIp } from '../admin/audit.util';
+import { economySummary, parsePriceTokens } from '../admin/shop.metrics';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -608,14 +609,40 @@ export function registerAdminRoutes(app: any, deps: any) {
 
   app.put('/admin/api/shop-items/:id', async (req: any, res: any, next: any) => {
     try {
-      requireAdmin(req, 'moderator');
+      const admin = requireAdmin(req, 'moderator');
       const { priceTokens, isActive, isHot } = req.body ?? {};
       const data: any = {};
-      if (priceTokens !== undefined) data.priceTokens = Number(priceTokens);
+      if (priceTokens !== undefined) data.priceTokens = parsePriceTokens(priceTokens);
       if (isActive !== undefined) data.isActive = Boolean(isActive);
       if (isHot !== undefined) data.isHot = Boolean(isHot);
       const item = await prisma.shopItem.update({ where: { id: req.params.id }, data });
+      await recordAdminAction(req, admin, {
+        action: 'shop.update', resourceType: 'shop_item', resourceId: req.params.id, metadata: data,
+      });
       res.json(item);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- game-economy KPIs (range-windowed, read-only) ----
+  app.get('/admin/api/economy', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const range = (['today', '7d', '30d', 'quarter'].includes(String(req.query.range)) ? String(req.query.range) : '30d') as RangeKey;
+      const { curStart, end } = windowFor(range, new Date());
+      const inWindow = { createdAt: { gte: curStart, lte: end } };
+      const [tokenCredit, tokenDebit, diamondCredit, activeItems] = await Promise.all([
+        prisma.walletTransaction.aggregate({ _sum: { amount: true }, where: { ...inWindow, currency: 'tokens', amount: { gt: 0 } } }),
+        prisma.walletTransaction.aggregate({ _sum: { amount: true }, where: { ...inWindow, currency: 'tokens', amount: { lt: 0 } } }),
+        prisma.walletTransaction.aggregate({ _sum: { amount: true }, where: { ...inWindow, currency: 'diamonds', amount: { gt: 0 } } }),
+        prisma.shopItem.count({ where: { isActive: true } }),
+      ]);
+      res.json({
+        range,
+        kpis: economySummary(tokenCredit._sum.amount ?? 0, tokenDebit._sum.amount ?? 0, diamondCredit._sum.amount ?? 0),
+        activeItems,
+      });
     } catch (error) {
       next(error);
     }
