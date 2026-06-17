@@ -2,6 +2,7 @@ import { authenticateAdmin, requireAdmin } from '../admin/admin.auth';
 import {
   windowFor, bucketEdges, bucketCounts, bucketSums, deltaPct, round1, sparkBucketCount, RangeKey,
 } from '../admin/admin.metrics';
+import { computeMrr, refundRate, arpu, bucketLatestPaidByUser } from '../admin/billing.metrics';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -260,20 +261,39 @@ export function registerAdminRoutes(app: any, deps: any) {
     }
   });
 
-  // ---- payments / transactions ----
+  // ---- payments / transactions (paginated, date + status filter) ----
   app.get('/admin/api/payments', async (req: any, res: any, next: any) => {
     try {
       requireAdmin(req);
       const status = String(req.query.status ?? '').trim();
-      const allowedStatuses = ['pending', 'paid', 'failed', 'refunded'];
-      const where: any = allowedStatuses.includes(status) ? { status } : {};
-      const orders = await prisma.paymentOrder.findMany({
-        where,
-        take: 50,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { displayName: true } } },
-      });
+      const allowed = ['pending', 'paid', 'failed', 'review', 'refunded'];
+      const page = Math.max(1, Number(req.query.page ?? 1));
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize ?? 25)));
+      const from = String(req.query.from ?? '').trim();
+      const to = String(req.query.to ?? '').trim();
+
+      const where: any = {};
+      if (allowed.includes(status)) where.status = status;
+      const createdAt: any = {};
+      if (from) { const d = new Date(from); if (!isNaN(d.getTime())) createdAt.gte = d; }
+      if (to) { const d = new Date(to); if (!isNaN(d.getTime())) { d.setUTCHours(23, 59, 59, 999); createdAt.lte = d; } }
+      if (createdAt.gte || createdAt.lte) where.createdAt = createdAt;
+
+      const [total, orders] = await Promise.all([
+        prisma.paymentOrder.count({ where }),
+        prisma.paymentOrder.findMany({
+          where,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: { createdAt: 'desc' },
+          include: { user: { select: { displayName: true } } },
+        }),
+      ]);
+
       res.json({
+        total,
+        page,
+        pageSize,
         items: orders.map((o: any) => ({
           id: o.id,
           vnpTxnRef: o.vnpTxnRef,
@@ -286,6 +306,57 @@ export function registerAdminRoutes(app: any, deps: any) {
           paidAt: o.paidAt,
           createdAt: o.createdAt,
         })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- billing summary (read-only KPIs + package breakdown) ----
+  app.get('/admin/api/billing/summary', async (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const range = (['today', '7d', '30d', 'quarter'].includes(String(req.query.range))
+        ? String(req.query.range)
+        : '30d') as RangeKey;
+      const now = new Date();
+      const { curStart, prevStart, prevEnd, end } = windowFor(range, now);
+
+      const [
+        revenueCurAgg, revenuePrevAgg, paidCount, refundedCount,
+        dauFocus, dauEvents, totalUsers, premiumSubs, paidSubOrders,
+      ] = await Promise.all([
+        prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: curStart, lte: end } } }),
+        prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: prevStart, lt: prevEnd } } }),
+        prisma.paymentOrder.count({ where: { status: 'paid', paidAt: { gte: curStart, lte: end } } }),
+        prisma.paymentOrder.count({ where: { status: 'refunded', updatedAt: { gte: curStart, lte: end } } }),
+        prisma.focusSession.findMany({ where: { startedAt: { gte: curStart, lte: end } }, select: { userId: true } }),
+        prisma.activityEvent.findMany({ where: { createdAt: { gte: curStart, lte: end } }, select: { userId: true } }),
+        prisma.user.count(),
+        prisma.subscription.findMany({ where: { plan: { not: 'free' }, status: 'active' }, select: { userId: true } }),
+        prisma.paymentOrder.findMany({ where: { status: 'paid', productType: 'subscription' }, orderBy: { paidAt: 'desc' }, select: { userId: true, productCode: true, paidAt: true } }),
+      ]);
+
+      const revenue = revenueCurAgg._sum.amountVnd ?? 0;
+      const revenuePrev = revenuePrevAgg._sum.amountVnd ?? 0;
+      const activeUsers = new Set<string>([...dauFocus.map((r: any) => r.userId), ...dauEvents.map((r: any) => r.userId)]).size;
+      const premiumIds = new Set<string>(premiumSubs.map((s: any) => s.userId));
+      const { monthly, yearly } = bucketLatestPaidByUser(paidSubOrders as any, premiumIds);
+      const freeCount = Math.max(0, totalUsers - premiumIds.size);
+
+      res.json({
+        range,
+        kpis: {
+          revenue: { value: revenue, deltaPct: deltaPct(revenue, revenuePrev) },
+          mrr: { value: computeMrr(monthly, yearly) },
+          arpu: { value: arpu(revenue, activeUsers) },
+          refundRate: { value: refundRate(refundedCount, paidCount) },
+        },
+        packages: [
+          { code: 'free', label: 'Free', priceVnd: 0, subscribers: freeCount },
+          { code: 'zen_pro_monthly', label: 'Zen Pro · Monthly', priceVnd: 29000, subscribers: monthly },
+          { code: 'zen_pro_yearly', label: 'Zen Pro · Yearly', priceVnd: 279000, subscribers: yearly },
+        ],
       });
     } catch (error) {
       next(error);
