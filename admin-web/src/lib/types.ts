@@ -24,3 +24,17 @@ export interface UserRow {
 }
 export interface UsersResponse { total: number; page: number; pageSize: number; items: UserRow[]; }
 export interface UsersQuery { q?: string; plan?: string; status?: string; page?: number; pageSize?: number; }
+
+export interface BillingKpi { value: number; deltaPct?: number | null; }
+export interface BillingSummary {
+  range: RangeKey;
+  kpis: { revenue: BillingKpi; mrr: BillingKpi; arpu: BillingKpi; refundRate: BillingKpi };
+  packages: { code: string; label: string; priceVnd: number; subscribers: number }[];
+}
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'review' | 'refunded';
+export interface PaymentRow {
+  id: string; vnpTxnRef: string; user: string; productCode: string; amountVnd: number;
+  status: PaymentStatus; bankCode: string | null; payDate: string | null; paidAt: string | null; createdAt: string;
+}
+export interface PaymentsResponse { total: number; page: number; pageSize: number; items: PaymentRow[]; }
+export interface PaymentsQuery { status?: string; from?: string; to?: string; page?: number; pageSize?: number; }

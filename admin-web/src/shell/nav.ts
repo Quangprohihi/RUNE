@@ -12,7 +12,7 @@ export const NAV_GROUPS: NavGroup[] = [
     wip('moderation', 'Kiểm duyệt', { text: '5', tone: 'amber' }),
   ]},
   { title: 'Dòng tiền', items: [
-    wip('billing', 'Thanh toán & Gói'),
+    { screen: 'billing', label: 'Thanh toán & Gói', to: '/billing', enabled: true },
     wip('ops', 'Vận hành & IPN'),
   ]},
   { title: 'Phân tích', items: [
@@ -43,8 +43,10 @@ export interface RouteMeta { crumb: string; title: string; }
 export const ROUTE_META: Record<string, RouteMeta> = {
   '/': { crumb: 'Lõi vận hành', title: 'Tổng quan' },
   '/users': { crumb: 'Lõi vận hành', title: 'Người dùng' },
+  '/billing': { crumb: 'Dòng tiền', title: 'Thanh toán & Gói' },
 };
 export function metaFor(pathname: string): RouteMeta {
   if (pathname.startsWith('/users')) return ROUTE_META['/users'];
+  if (pathname.startsWith('/billing')) return ROUTE_META['/billing'];
   return ROUTE_META['/'];
 }

@@ -10,9 +10,11 @@ interface KpiCardProps {
   color?: string;
   /** override the delta line note for point-in-time KPIs */
   note?: string;
+  /** hide the sparkline (billing KPIs have no sparkline) */
+  hideSpark?: boolean;
 }
 
-export function KpiCard({ label, valueText, suffix, kpi, color = 'var(--blue-500)', note }: KpiCardProps) {
+export function KpiCard({ label, valueText, suffix, kpi, color = 'var(--blue-500)', note, hideSpark }: KpiCardProps) {
   const d = kpi.deltaPct;
   const up = d != null && d >= 0;
   return (
@@ -38,7 +40,7 @@ export function KpiCard({ label, valueText, suffix, kpi, color = 'var(--blue-500
           </>
         )}
       </div>
-      <Sparkline data={kpi.spark} color={color} />
+      {!hideSpark && <Sparkline data={kpi.spark} color={color} />}
     </div>
   );
 }

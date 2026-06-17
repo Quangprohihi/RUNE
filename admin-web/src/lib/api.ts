@@ -3,6 +3,7 @@ import { getToken, clearToken } from './auth';
 import type {
   AdminMe, LoginResponse, OverviewResponse, HealthResponse,
   UsersResponse, UsersQuery, RangeKey,
+  BillingSummary, PaymentsResponse, PaymentsQuery,
 } from './types';
 
 const BASE = '/admin/api';
@@ -46,6 +47,17 @@ function buildUsersQuery(p: UsersQuery): string {
   return s ? `?${s}` : '';
 }
 
+function buildPaymentsQuery(p: PaymentsQuery): string {
+  const sp = new URLSearchParams();
+  if (p.status) sp.set('status', p.status);
+  if (p.from) sp.set('from', p.from);
+  if (p.to) sp.set('to', p.to);
+  if (p.page) sp.set('page', String(p.page));
+  if (p.pageSize) sp.set('pageSize', String(p.pageSize));
+  const s = sp.toString();
+  return s ? `?${s}` : '';
+}
+
 export const api = {
   login: (email: string, password: string) => {
     // Clear any stale token so a wrong-password 401 isn't mistaken for "session expired".
@@ -56,4 +68,6 @@ export const api = {
   overview: (range: RangeKey) => request<OverviewResponse>(`/overview?range=${range}`),
   health: () => request<HealthResponse>('/health'),
   users: (params: UsersQuery) => request<UsersResponse>(`/users${buildUsersQuery(params)}`),
+  payments: (params: PaymentsQuery = {}) => request<PaymentsResponse>(`/payments${buildPaymentsQuery(params)}`),
+  billing: { summary: (range: RangeKey) => request<BillingSummary>(`/billing/summary?range=${range}`) },
 };
