@@ -10,6 +10,7 @@ import { UserDetailPage } from './pages/UserDetailPage';
 import { BillingPage } from './pages/BillingPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AuditPage } from './pages/AuditPage';
+import { ShopPage } from './pages/ShopPage';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/audit" element={<AuditPage />} />
+            <Route path="/shop" element={<ShopPage />} />
             <Route path="/wip/:screen" element={<WipPage />} />
           </Route>
         </Route>

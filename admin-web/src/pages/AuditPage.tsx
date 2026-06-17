@@ -18,6 +18,7 @@ const ACTION_LABELS: Record<string, string> = {
   'subscription.extend': 'Gia hạn subscription',
   'package.update': 'Sửa gói',
   'user.force_logout': 'Buộc đăng xuất',
+  'shop.update': 'Sửa vật phẩm shop',
 };
 const actionLabel = (a: string) => ACTION_LABELS[a] ?? a;
 
@@ -27,11 +28,12 @@ const ACTION_FILTERS: { value: string; label: string }[] = [
   { value: 'subscription.extend', label: 'Gia hạn subscription' },
   { value: 'subscription.cancel', label: 'Hủy subscription' },
   { value: 'package.update', label: 'Sửa gói' },
+  { value: 'shop.update', label: 'Sửa vật phẩm shop' },
   { value: 'user.force_logout', label: 'Buộc đăng xuất' },
 ];
 
 const RESOURCE_LABELS: Record<string, string> = {
-  payment_order: 'Đơn TT', user: 'Người dùng', package: 'Gói',
+  payment_order: 'Đơn TT', user: 'Người dùng', package: 'Gói', shop_item: 'Vật phẩm',
 };
 
 const roleTone = (role: string): TagTone =>

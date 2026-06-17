@@ -6,6 +6,7 @@ import type {
   BillingSummary, PaymentsResponse, PaymentsQuery, PaymentStatus,
   UserDetail, SubscriptionAction, AnalyticsResponse, AnalyticsQuery,
   AdminAuditResponse, WalletAuditResponse, AuditQuery,
+  ShopItemsResponse, ShopItem, EconomyResponse, ShopItemUpdate,
 } from './types';
 
 const BASE = '/admin/api';
@@ -105,4 +106,8 @@ export const api = {
     const s = sp.toString();
     return request<WalletAuditResponse>(`/audit${s ? `?${s}` : ''}`);
   },
+  shopItems: () => request<ShopItemsResponse>('/shop-items'),
+  economy: (range: RangeKey) => request<EconomyResponse>(`/economy?range=${range}`),
+  updateShopItem: (id: string, body: ShopItemUpdate) =>
+    request<ShopItem>(`/shop-items/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 };

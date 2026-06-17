@@ -74,3 +74,12 @@ export interface WalletAuditRow {
 }
 export interface WalletAuditResponse { total: number; page: number; pageSize: number; items: WalletAuditRow[]; }
 export interface AuditQuery { action?: string; q?: string; page?: number; pageSize?: number; }
+
+export interface ShopItem {
+  id: string; code: string; name: string; emoji: string; itemType: string;
+  priceTokens: number; effectType: string; effectValue: number; isHot: boolean; isActive: boolean;
+}
+export interface ShopItemsResponse { items: ShopItem[]; }
+export interface EconomyKpis { tokenFaucet: number; tokenSink: number; tokenNet: number; diamondFaucet: number; }
+export interface EconomyResponse { range: RangeKey; kpis: EconomyKpis; activeItems: number; }
+export interface ShopItemUpdate { priceTokens?: number; isActive?: boolean; isHot?: boolean; }
