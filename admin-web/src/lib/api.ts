@@ -5,6 +5,7 @@ import type {
   UsersResponse, UsersQuery, RangeKey,
   BillingSummary, PaymentsResponse, PaymentsQuery, PaymentStatus,
   UserDetail, SubscriptionAction, AnalyticsResponse, AnalyticsQuery,
+  AdminAuditResponse, WalletAuditResponse, AuditQuery,
 } from './types';
 
 const BASE = '/admin/api';
@@ -87,5 +88,21 @@ export const api = {
     if (p.to) sp.set('to', p.to);
     const s = sp.toString();
     return request<AnalyticsResponse>(`/analytics${s ? `?${s}` : ''}`);
+  },
+  adminAudit: (p: AuditQuery = {}) => {
+    const sp = new URLSearchParams();
+    if (p.action) sp.set('action', p.action);
+    if (p.q) sp.set('q', p.q);
+    if (p.page) sp.set('page', String(p.page));
+    if (p.pageSize) sp.set('pageSize', String(p.pageSize));
+    const s = sp.toString();
+    return request<AdminAuditResponse>(`/admin-audit${s ? `?${s}` : ''}`);
+  },
+  walletAudit: (p: { page?: number; pageSize?: number } = {}) => {
+    const sp = new URLSearchParams();
+    if (p.page) sp.set('page', String(p.page));
+    if (p.pageSize) sp.set('pageSize', String(p.pageSize));
+    const s = sp.toString();
+    return request<WalletAuditResponse>(`/audit${s ? `?${s}` : ''}`);
   },
 };

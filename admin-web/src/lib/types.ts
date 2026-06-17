@@ -62,3 +62,15 @@ export interface AnalyticsResponse {
   hourly: { label: string; minutes: number }[];
 }
 export interface AnalyticsQuery { range?: string; granularity?: string; compare?: boolean; from?: string; to?: string; }
+
+export interface AdminAuditRow {
+  id: string; at: string; actorId: string; actorEmail: string; actorRole: string;
+  action: string; resourceType: string; resourceId: string; ip: string | null;
+  metadata: Record<string, unknown> | null;
+}
+export interface AdminAuditResponse { total: number; page: number; pageSize: number; items: AdminAuditRow[]; }
+export interface WalletAuditRow {
+  id: string; at: string; actor: string; reason: string; amount: number; currency: string; refType: string;
+}
+export interface WalletAuditResponse { total: number; page: number; pageSize: number; items: WalletAuditRow[]; }
+export interface AuditQuery { action?: string; q?: string; page?: number; pageSize?: number; }

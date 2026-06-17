@@ -8,6 +8,7 @@ import { api } from '../lib/api';
 import { friendlyError } from '../lib/friendlyError';
 import { formatVndShort, formatInt, formatDate } from '../lib/format';
 import { toCsv, downloadCsv } from '../lib/csv';
+import { pageList } from '../lib/pageList';
 import type { BillingSummary, PaymentsResponse, PaymentRow, PaymentStatus, RangeKey } from '../lib/types';
 
 const RANGE_OPTS: { value: RangeKey; label: string }[] = [
@@ -236,12 +237,3 @@ function planLabel(code: string): string {
 
 const dateInput: React.CSSProperties = { height: 32, padding: '0 8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', font: 'var(--fw-regular) 12px/1 var(--font-mono)', color: 'var(--text-body)', background: 'var(--surface-card)' };
 
-function pageList(current: number, total: number): (number | '…')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const wanted = [1, total, current, current - 1, current + 1].filter((n) => n >= 1 && n <= total);
-  const sorted = Array.from(new Set(wanted)).sort((a, b) => a - b);
-  const out: (number | '…')[] = [];
-  let prev = 0;
-  for (const n of sorted) { if (prev && n - prev > 1) out.push('…'); out.push(n); prev = n; }
-  return out;
-}

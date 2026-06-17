@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { friendlyError } from '../lib/friendlyError';
 import { formatInt, formatDate, formatDateTimeUtc } from '../lib/format';
 import { toCsv, downloadCsv } from '../lib/csv';
+import { pageList } from '../lib/pageList';
 import type { UsersResponse, UserRow, UsersQuery } from '../lib/types';
 
 type FilterKey = 'all' | 'active' | 'pro' | 'lock' | 'review';
@@ -160,20 +161,4 @@ export function UsersPage() {
       )}
     </section>
   );
-}
-
-function pageList(current: number, total: number): (number | '…')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  // Always expose first, last, and the current page ± 1 (each clickable), with
-  // ellipses bridging gaps — so any page is reachable by stepping or jumping.
-  const wanted = [1, total, current, current - 1, current + 1].filter((n) => n >= 1 && n <= total);
-  const sorted = Array.from(new Set(wanted)).sort((a, b) => a - b);
-  const out: (number | '…')[] = [];
-  let prev = 0;
-  for (const n of sorted) {
-    if (prev && n - prev > 1) out.push('…');
-    out.push(n);
-    prev = n;
-  }
-  return out;
 }
