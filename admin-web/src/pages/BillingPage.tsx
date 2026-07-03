@@ -130,7 +130,7 @@ export function BillingPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
         {/* transactions */}
-        <Card title="Giao dịch gần đây" subtitle="Cổng VNPay · mới nhất trước" padding="none">
+        <Card title="Giao dịch gần đây" subtitle="VNPay & VietQR · mới nhất trước" padding="none">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
             <div className="zz-seg zz-seg--lite">
               {STATUS_FILTERS.map((f) => (
@@ -164,7 +164,7 @@ export function BillingPage() {
                         <tr key={o.id}>
                           <td style={{ ...TD, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-body)' }}>{o.vnpTxnRef}</td>
                           <td style={{ ...TD, color: 'var(--text-strong)' }}>{o.user}</td>
-                          <td style={TD}>{o.productCode === 'zen_pro_yearly' ? <Tag tone="accent">Yearly</Tag> : o.productCode === 'zen_pro_monthly' ? <Tag tone="neutral">Monthly</Tag> : <Tag tone="outline">{o.productCode}</Tag>}</td>
+                          <td style={TD}>{o.productCode === 'zen_pro_yearly' ? <Tag tone="accent">Yearly</Tag> : o.productCode === 'zen_pro_monthly' ? <Tag tone="neutral">Monthly</Tag> : <Tag tone="outline">{o.productCode}</Tag>}{' '}<Tag tone="outline">{o.provider === 'vietqr' ? 'VietQR' : 'VNPay'}</Tag></td>
                           <td style={{ ...TD, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-strong)' }}>{formatInt(o.amountVnd)}đ</td>
                           <td style={TD}><StatusBadge status={b.status}>{b.label}</StatusBadge></td>
                           <td style={{ ...TD, textAlign: 'right' }}>{canConfirm && (

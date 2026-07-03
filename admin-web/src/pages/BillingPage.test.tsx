@@ -15,7 +15,7 @@ const summary: BillingSummary = {
 };
 const payments: PaymentsResponse = {
   total: 1, page: 1, pageSize: 25,
-  items: [{ id: 'p1', vnpTxnRef: 'VNP123', user: 'Lê Quốc Bảo', productCode: 'zen_pro_yearly', amountVnd: 279000, status: 'paid', bankCode: 'NCB', payDate: null, paidAt: '2026-06-13T09:14:00.000Z', createdAt: '2026-06-13T09:14:00.000Z' }],
+  items: [{ id: 'p1', provider: 'vnpay', vnpTxnRef: 'VNP123', user: 'Lê Quốc Bảo', productCode: 'zen_pro_yearly', amountVnd: 279000, status: 'paid', bankCode: 'NCB', payDate: null, paidAt: '2026-06-13T09:14:00.000Z', createdAt: '2026-06-13T09:14:00.000Z' }],
 };
 
 const { summaryMock, paymentsMock, confirmMock } = vi.hoisted(() => ({ summaryMock: vi.fn(), paymentsMock: vi.fn(), confirmMock: vi.fn() }));

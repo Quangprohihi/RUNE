@@ -379,6 +379,7 @@ export function registerAdminRoutes(app: any, deps: any) {
         pageSize,
         items: orders.map((o: any) => ({
           id: o.id,
+          provider: o.provider,
           vnpTxnRef: o.vnpTxnRef,
           user: o.user?.displayName ?? '—',
           productCode: o.productCode,

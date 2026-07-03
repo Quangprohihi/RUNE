@@ -33,7 +33,7 @@ export interface BillingSummary {
 }
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'review' | 'refunded';
 export interface PaymentRow {
-  id: string; vnpTxnRef: string; user: string; productCode: string; amountVnd: number;
+  id: string; provider: string; vnpTxnRef: string; user: string; productCode: string; amountVnd: number;
   status: PaymentStatus; bankCode: string | null; payDate: string | null; paidAt: string | null; createdAt: string;
 }
 export interface PaymentsResponse { total: number; page: number; pageSize: number; items: PaymentRow[]; }
