@@ -6,6 +6,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../providers/payment_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../routes/app_routes.dart';
+import '../payment/vietqr_payment_screen.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -26,8 +27,67 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   Future<void> _upgrade() async {
+    final method = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Text(
+                'Chọn phương thức thanh toán',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.qr_code_2, color: Color(0xFF48BB78)),
+              title: const Text('Chuyển khoản VietQR'),
+              subtitle: const Text('Quét mã QR, kích hoạt sau khi xác nhận'),
+              onTap: () => Navigator.of(sheetContext).pop('vietqr'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.credit_card, color: Color(0xFF2563EB)),
+              title: const Text('Thẻ / VNPay'),
+              subtitle: const Text('Thanh toán qua cổng VNPay'),
+              onTap: () => Navigator.of(sheetContext).pop('vnpay'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || method == null) return;
+
+    final productCode = _yearly ? 'zen_pro_yearly' : 'zen_pro_monthly';
+    if (method == 'vietqr') {
+      await _startVietqr(productCode);
+    } else {
+      await _startVnpay(productCode);
+    }
+  }
+
+  Future<void> _startVietqr(String productCode) async {
     try {
-      final productCode = _yearly ? 'zen_pro_yearly' : 'zen_pro_monthly';
+      final checkout = await context.read<PaymentProvider>().createVietqrPayment(
+        productCode,
+      );
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => VietqrPaymentScreen(checkout: checkout),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không tạo được mã VietQR: $error')),
+      );
+    }
+  }
+
+  Future<void> _startVnpay(String productCode) async {
+    try {
       final checkout = await context.read<PaymentProvider>().createVnpayPayment(
         productCode,
       );

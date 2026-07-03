@@ -44,7 +44,7 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshStatus();
       _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-        if (_pollCount >= 10 || _isTerminal(_status)) {
+        if (_pollCount >= 40 || _isTerminal(_status)) {
           _pollTimer?.cancel();
           return;
         }
@@ -191,7 +191,7 @@ class _PaymentVisual {
         icon: Icons.check_circle,
         title: 'Zen Pro activated',
         message:
-            'Your VNPAY payment was confirmed. Premium features are now unlocked.',
+            'Your payment was confirmed. Premium features are now unlocked.',
       );
     }
     if (status == 'failed' || status == 'canceled' || status == 'expired') {
@@ -220,7 +220,7 @@ class _PaymentVisual {
       icon: Icons.hourglass_top,
       title: 'Confirming payment',
       message:
-          'If you already paid, ZenZoo is waiting for VNPAY confirmation. This can take a few seconds.',
+          'If you already paid, ZenZoo is confirming your payment. This can take up to a few minutes.',
     );
   }
 
