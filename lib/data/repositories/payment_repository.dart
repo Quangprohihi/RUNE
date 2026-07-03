@@ -16,6 +16,16 @@ class PaymentRepository {
     return PaymentCheckout.fromJson(response);
   }
 
+  Future<VietqrCheckout> createVietqrPayment(String productCode) async {
+    final response =
+        await _api.post(
+              '/payments/vietqr/create',
+              body: {'productCode': productCode},
+            )
+            as Map<String, dynamic>;
+    return VietqrCheckout.fromJson(response);
+  }
+
   Future<PaymentStatus> getPaymentStatus(String orderId) async {
     final response =
         await _api.get('/payments/$orderId/status') as Map<String, dynamic>;
@@ -69,4 +79,36 @@ class PaymentStatus {
   bool get isPaid => status == 'paid';
   bool get isFailed =>
       status == 'failed' || status == 'canceled' || status == 'expired';
+}
+
+class VietqrCheckout {
+  const VietqrCheckout({
+    required this.orderId,
+    required this.qrImageUrl,
+    required this.bankName,
+    required this.accountNo,
+    required this.accountName,
+    required this.amountVnd,
+    required this.transferContent,
+  });
+
+  factory VietqrCheckout.fromJson(Map<String, dynamic> json) {
+    return VietqrCheckout(
+      orderId: json['orderId'] as String? ?? '',
+      qrImageUrl: json['qrImageUrl'] as String? ?? '',
+      bankName: json['bankName'] as String? ?? '',
+      accountNo: json['accountNo'] as String? ?? '',
+      accountName: json['accountName'] as String? ?? '',
+      amountVnd: json['amountVnd'] as int? ?? 0,
+      transferContent: json['transferContent'] as String? ?? '',
+    );
+  }
+
+  final String orderId;
+  final String qrImageUrl;
+  final String bankName;
+  final String accountNo;
+  final String accountName;
+  final int amountVnd;
+  final String transferContent;
 }

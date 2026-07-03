@@ -8,11 +8,13 @@ class PaymentProvider extends ChangeNotifier {
 
   final PaymentRepository _repository;
   PaymentCheckout? _checkout;
+  VietqrCheckout? _vietqrCheckout;
   PaymentStatus? _status;
   bool _isLoading = false;
   String? _error;
 
   PaymentCheckout? get checkout => _checkout;
+  VietqrCheckout? get vietqrCheckout => _vietqrCheckout;
   PaymentStatus? get status => _status;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -20,6 +22,7 @@ class PaymentProvider extends ChangeNotifier {
   /// Drops any in-flight checkout state from the previous account.
   void resetForAccountSwitch() {
     _checkout = null;
+    _vietqrCheckout = null;
     _status = null;
     _error = null;
     notifyListeners();
@@ -32,6 +35,24 @@ class PaymentProvider extends ChangeNotifier {
     try {
       final checkout = await _repository.createVnpayPayment(productCode);
       _checkout = checkout;
+      _status = null;
+      return checkout;
+    } catch (error) {
+      _error = friendlyError(error);
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<VietqrCheckout> createVietqrPayment(String productCode) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final checkout = await _repository.createVietqrPayment(productCode);
+      _vietqrCheckout = checkout;
       _status = null;
       return checkout;
     } catch (error) {
