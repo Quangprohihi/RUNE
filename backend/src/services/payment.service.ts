@@ -6,6 +6,7 @@ import {
   verifyVnpayParams,
   vnpayResponse,
 } from './vnpay.service';
+import { buildVietQrImageUrl, getVietqrConfig } from './vietqr.service';
 
 const paymentProducts = {
   zen_pro_monthly: {
@@ -117,6 +118,45 @@ export async function createVnpayPaymentOrder({
   });
 
   return { orderId: order.id, paymentUrl };
+}
+
+export async function createVietqrPaymentOrder({
+  productCode,
+  userId,
+}: {
+  productCode: string;
+  userId: string;
+}) {
+  const product = await getProduct(productCode);
+  const txnRef = createTxnRef();
+  const order = await prisma.paymentOrder.create({
+    data: {
+      userId,
+      provider: 'vietqr',
+      productType: product.productType,
+      productCode: product.productCode,
+      amountVnd: product.amountVnd,
+      currency: 'VND',
+      status: 'pending',
+      vnpTxnRef: txnRef,
+    },
+  });
+
+  const { accountNo, accountName, bankName } = getVietqrConfig();
+  const qrImageUrl = buildVietQrImageUrl({
+    amountVnd: product.amountVnd,
+    addInfo: txnRef,
+  });
+
+  return {
+    orderId: order.id,
+    qrImageUrl,
+    bankName,
+    accountNo,
+    accountName,
+    amountVnd: product.amountVnd,
+    transferContent: txnRef,
+  };
 }
 
 export async function getPaymentOrderStatus(userId: string, orderId: string) {

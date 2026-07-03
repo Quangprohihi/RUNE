@@ -2,6 +2,7 @@ import { Express, Request } from 'express';
 import { z } from 'zod';
 import {
   createVnpayPaymentOrder,
+  createVietqrPaymentOrder,
   getPaymentOrderStatus,
   handleVnpayIpn,
   recordVnpayReturn,
@@ -119,6 +120,21 @@ export function registerPaymentRoutes(app: Express, deps: any) {
           userId,
           productCode: body.productCode,
           ipAddress: clientIp(req),
+        }),
+      );
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/payments/vietqr/create', async (req, res, next) => {
+    try {
+      const userId = requireUser(req);
+      const body = createVnpayPaymentSchema.parse(req.body);
+      res.json(
+        await createVietqrPaymentOrder({
+          userId,
+          productCode: body.productCode,
         }),
       );
     } catch (error) {
