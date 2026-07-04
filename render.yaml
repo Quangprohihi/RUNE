@@ -1,0 +1,52 @@
+# Render Blueprint — deploys the Rune backend (which also serves the admin
+# console at /console) as a single free web service.
+#
+# Setup: Render dashboard -> New -> Blueprint -> pick this repo/branch.
+# You'll be prompted for the sync:false values below (Neon DATABASE_URL etc.).
+# DB: create a free Postgres at https://neon.tech and paste its connection
+# string (must end with ?sslmode=require) as DATABASE_URL.
+services:
+  - type: web
+    name: rune-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    # 1) install + generate Prisma client + compile TS
+    # 2) build the admin console into backend/admin-web/dist (gitignored, so it
+    #    must be built here or /console 404s)
+    # 3) push the Prisma schema to the DB (no committed migrations; mirrors
+    #    the docker-compose flow)
+    buildCommand: npm ci && npx prisma generate && npm run build && cd ../admin-web && npm ci && npm run build && cd ../backend && npx prisma db push
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL # Neon connection string, with ?sslmode=require
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ADMIN_JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL # admin console login — do NOT keep the defaults
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GOOGLE_WEB_CLIENT_ID # Google Sign-In web client ID
+        sync: false
+      - key: GEMINI_API_KEY # optional: AI Focus Designer; falls back to rule-based
+        sync: false
+      - key: VIETQR_ACCOUNT_NO
+        sync: false
+      - key: VIETQR_ACCOUNT_NAME
+        sync: false
+      - key: VIETQR_BANK_BIN
+        value: "970426"
+      - key: VIETQR_BANK_NAME
+        value: MSB
+      - key: CORS_ORIGIN
+        value: "*"
+      # VNPay vars (VNP_TMN_CODE, VNP_HASH_SECRET, VNP_PAY_URL, VNP_RETURN_URL)
+      # are optional — add them in the Render dashboard if VNPay checkout is
+      # needed; VNP_RETURN_URL must point at the public Render/custom-domain URL.
