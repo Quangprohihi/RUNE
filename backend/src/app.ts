@@ -1665,6 +1665,8 @@ app.post('/pet/evolution/select', async (req, res, next) => {
     adminWebCandidates[0];
   const adminWebRoot = path.normalize(adminWebDir);
   console.log('[admin] console served from', adminWebRoot);
+  // Bare domain (e.g. admin.rune.id.vn) lands on the console.
+  app.get('/', (_req: any, res: any) => res.redirect('/console'));
   // Express 5: prefix-mount static is unreliable; use explicit routes.
   // Note: req.path under a regex route in Express 5 is the full path,
   // so strip /console prefix manually instead of relying on req.params[0].
