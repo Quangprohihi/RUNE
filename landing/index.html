@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZenZoo — Tập trung để nuôi lớn thế giới của bạn 🦊</title>
+  <meta name="description" content="ZenZoo là ứng dụng Pomodoro nuôi thú ảo: gặp Kiki 🦊 — người bạn tập trung trên hòn đảo bay. Mỗi phút bạn học và làm việc, Kiki lớn lên, đảo thêm xanh. Không cày cuốc, không pay-to-win.">
+  <meta name="theme-color" content="#3A9BBE">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ZenZoo — Tập trung để nuôi lớn thế giới của bạn 🦊">
+  <meta property="og:description" content="App Pomodoro nuôi thú ảo dành cho học sinh, sinh viên và người đi làm Việt Nam. Focus to grow your world 🌱">
+  <link rel="icon" type="image/png" href="assets/img/fox_standard.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Montserrat+Alternates:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div style="min-height:100vh; background:linear-gradient(180deg,#F7FDFF 0%,#E6F7F6 100%); font-size:16px; line-height:1.6; color:#111111;">
+
+  <div style="background:linear-gradient(90deg,#226698,#3A9BBE); color:#FFFFFF; text-align:center; padding:9px 16px; font-size:13.5px; font-weight:500;">
+      🦊 ZenZoo beta đã mở trên Android — tải sớm để nhận <strong style="color:#FFE2B8;">200 ⚡ token</strong> chào mừng! <a href="#tai-app" style="color:#FFFFFF; text-decoration:underline; font-weight:700;" class="zz-hv-1">Tải ngay →</a>
+    </div>
+
+  <header style="position:sticky; top:0; z-index:60; background:rgba(247,253,255,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid rgba(34,102,152,.08);">
+    <nav style="max-width:1140px; margin:0 auto; padding:12px clamp(16px,4vw,44px); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+      <a href="#hero" style="display:flex; align-items:center; gap:10px;">
+        <span style="width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); display:grid; place-items:center; box-shadow:0 4px 10px rgba(58,155,190,.28);"><img src="assets/img/fox_standard.png" alt="Kiki" style="width:26px; height:26px; object-fit:contain;"></span>
+        <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:21px; color:#226698;">ZenZoo</span>
+      </a>
+      <div style="display:flex; align-items:center; gap:clamp(14px,2.6vw,30px); flex-wrap:wrap;">
+        <a href="#tinh-nang" style="font-size:14.5px; font-weight:600; color:#44637A;" class="zz-hv-2">Tính năng</a>
+        <a href="#kiki" style="font-size:14.5px; font-weight:600; color:#44637A;" class="zz-hv-2">Kiki</a>
+        <a href="#bang-gia" style="font-size:14.5px; font-weight:600; color:#44637A;" class="zz-hv-2">Bảng giá</a>
+        <a href="#faq" style="font-size:14.5px; font-weight:600; color:#44637A;" class="zz-hv-2">FAQ</a>
+      </div>
+      <a href="#tai-app" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:12px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); color:#FFFFFF; font-weight:700; font-size:14px; box-shadow:0 6px 14px rgba(58,155,190,.28); transition:transform .25s cubic-bezier(.33,1,.68,1), box-shadow .25s cubic-bezier(.33,1,.68,1);" class="zz-hv-3">Tải app</a>
+    </nav>
+  </header>
+
+  <section id="hero" style="position:relative; padding:clamp(44px,6vw,76px) clamp(16px,4vw,44px) clamp(56px,8vw,90px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:clamp(36px,5vw,56px);">
+
+      <div data-reveal="" style="flex:1 1 470px; min-width:min(100%,300px); display:flex; flex-direction:column; gap:22px; align-items:flex-start;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(104,199,191,.16); border:1px solid rgba(104,199,191,.30); color:#1F6CA4; font-weight:700; font-size:13px;">🏝️ Pomodoro × thú cưng ảo trên đảo bay</span>
+        <h1 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(34px,5.2vw,58px); line-height:1.14; letter-spacing:-.015em; color:#226698;">Tập trung thật sâu, nuôi lớn <span style="color:#1F6CA4; background:linear-gradient(180deg,transparent 66%,rgba(104,199,191,.5) 66%); padding:0 6px; border-radius:8px;">thế giới của bạn</span></h1>
+        <p style="margin:0; max-width:520px; font-size:clamp(15px,1.7vw,18px); line-height:1.7; color:#5A7280;">Gặp <strong style="color:#226698;">Kiki 🦊</strong> — người bạn tập trung sống trên một hòn đảo bay nhỏ. Mỗi phút bạn học và làm việc, Kiki vui hơn, mạnh hơn, đảo lại thêm xanh. Trò chơi chỉ để tiếp động lực nhẹ nhàng — <strong style="color:#226698;">không cày cuốc, không pay-to-win</strong>.</p>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <a href="#tai-app" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 28px; border-radius:12px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); color:#FFFFFF; font-weight:700; font-size:16px; box-shadow:0 8px 18px rgba(58,155,190,.30), 0 2px 6px rgba(34,102,152,.14); transition:transform .25s cubic-bezier(.33,1,.68,1), box-shadow .25s cubic-bezier(.33,1,.68,1);" class="zz-hv-4">⬇ Tải cho Android</a>
+          <a href="#cach-hoat-dong" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:15px 24px; border-radius:12px; background:#FFFFFF; border:1.5px solid #CFE6E4; color:#1F6CA4; font-weight:700; font-size:15.5px; box-shadow:0 2px 6px rgba(34,102,152,.06); transition:transform .25s cubic-bezier(.33,1,.68,1), border-color .25s ease;" class="zz-hv-5">Xem cách hoạt động ↓</a>
+        </div>
+        <div style="font-size:13px; color:#828282; display:flex; gap:14px; flex-wrap:wrap;">
+          <span>✓ Miễn phí bắt đầu</span><span>✓ Không quảng cáo giữa phiên</span><span>✓ Giữ cuộc gọi khẩn cấp</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:2px;">
+          <div style="display:flex; align-items:center;">
+            <span style="width:36px; height:36px; border-radius:999px; background:#E4F4F2; border:2px solid #FFFFFF; display:grid; place-items:center; font-size:17px;">🧑‍🎓</span>
+            <span style="width:36px; height:36px; border-radius:999px; background:#DFF0F7; border:2px solid #FFFFFF; display:grid; place-items:center; font-size:17px; margin-left:-9px;">👩‍💻</span>
+            <span style="width:36px; height:36px; border-radius:999px; background:#FDF1DE; border:2px solid #FFFFFF; display:grid; place-items:center; font-size:17px; margin-left:-9px;">🧑‍🔬</span>
+          </div>
+          <div style="font-size:13px; color:#5A7280; line-height:1.5;">
+            <span style="color:#F6A53A; letter-spacing:2px;">★★★★★</span> <strong style="color:#226698;">4.9/5</strong> từ cộng đồng beta<br>25.000+ phiên tập trung đã hoàn thành cùng Kiki
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="" data-rd="120" style="flex:1 1 420px; position:relative; min-height:690px; max-width:560px; width:100%; margin:0 auto;">
+        <div style="position:absolute; top:6%; right:0; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(104,199,191,.38), rgba(104,199,191,0) 68%); filter:blur(28px); z-index:0;"></div>
+        <div style="position:absolute; bottom:8%; left:0; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, rgba(58,155,190,.30), rgba(58,155,190,0) 68%); filter:blur(28px); z-index:0;"></div>
+
+        <div data-float="" style="position:absolute; top:1%; left:40%; width:88px; height:26px; border-radius:999px; background:#FFFFFF; opacity:.85; box-shadow:0 6px 14px rgba(34,102,152,.08); animation:zzDrift 10s ease-in-out -2s infinite; z-index:0;"></div>
+        <div data-float="" style="position:absolute; top:27%; right:1%; width:64px; height:20px; border-radius:999px; background:#FFFFFF; opacity:.7; box-shadow:0 6px 14px rgba(34,102,152,.08); animation:zzDrift 12s ease-in-out -6s infinite; z-index:0;"></div>
+        <div data-float="" style="position:absolute; bottom:32%; left:0; width:72px; height:22px; border-radius:999px; background:#FFFFFF; opacity:.75; box-shadow:0 6px 14px rgba(34,102,152,.08); animation:zzDrift 11s ease-in-out -4s infinite; z-index:0;"></div>
+
+        <div data-float="" style="position:absolute; top:10px; left:0; width:min(340px,62%); z-index:1; animation:zzFloat 7s ease-in-out infinite;">
+          <div style="position:relative;">
+            <img src="assets/img/island_web.png" alt="Hòn đảo bay của Kiki" style="display:block; width:100%; height:auto; filter:drop-shadow(0 30px 24px rgba(34,102,152,.22));">
+            <img src="assets/img/fox_standard.png" alt="Kiki" style="position:absolute; left:26%; top:11%; width:20%; height:auto; filter:drop-shadow(0 6px 8px rgba(20,60,40,.35));">
+            <span data-float="" style="position:absolute; top:0; left:58%; font-size:20px; animation:zzSparkle 3.2s ease-in-out infinite;">✨</span>
+            <div style="position:absolute; left:22%; bottom:-26px; width:56%; height:16px; border-radius:50%; background:radial-gradient(ellipse, rgba(34,102,152,.22), rgba(34,102,152,0) 70%);"></div>
+          </div>
+        </div>
+        <span data-float="" style="position:absolute; top:46%; left:10%; width:26px; height:20px; border-radius:40% 40% 50% 50%; background:linear-gradient(180deg,#D9AC7E,#95693F); animation:zzFloatSm 5.5s ease-in-out -1s infinite; z-index:1;"></span>
+        <span data-float="" style="position:absolute; top:39%; left:42%; font-size:18px; animation:zzSparkle 4s ease-in-out -2s infinite; z-index:1;">💎</span>
+
+        <div style="position:absolute; right:0; bottom:0; width:min(300px,76%); z-index:2;">
+          <div data-float="" style="animation:zzFloatSm 9s ease-in-out -3s infinite; border-radius:48px; padding:11px; background:linear-gradient(160deg,#2E4E6C,#132C42); box-shadow:0 30px 60px rgba(34,102,152,.30), 0 6px 16px rgba(34,102,152,.18);">
+            <div style="border-radius:38px; overflow:hidden; background:linear-gradient(180deg,#0F2C44 0%,#123A54 52%,#175472 100%); color:#FFFFFF; padding:14px 16px 18px; aspect-ratio:9/18.6; display:flex; flex-direction:column; position:relative;">
+              <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:rgba(255,255,255,.85); font-weight:600;">
+                <span>21:07</span>
+                <span style="position:absolute; left:50%; transform:translateX(-50%); top:12px; width:78px; height:22px; border-radius:999px; background:#0A1B29;"></span>
+                <span style="letter-spacing:1px;">📶 ▮▮▮</span>
+              </div>
+              <div style="text-align:center; margin-top:24px; font-size:10.5px; letter-spacing:.34em; color:#8FD4CE; font-weight:700;">DEEP FOCUS</div>
+              <div style="display:flex; justify-content:center; margin-top:10px;"><span style="background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.10); padding:6px 12px; border-radius:999px; font-size:12px; font-weight:600;">📚 Ôn Giải tích 1 · 25 phút</span></div>
+              <div style="margin:18px auto 0; width:176px; height:176px; border-radius:50%; background:conic-gradient(#68C7BF 0% 68%, rgba(255,255,255,.10) 68% 100%); display:grid; place-items:center; box-shadow:0 0 42px rgba(104,199,191,.28);">
+                <div style="width:148px; height:148px; border-radius:50%; background:#0F2C44; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                  <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:38px;">17:26</span>
+                  <span style="font-size:11px; color:rgba(255,255,255,.6);">còn lại · cố lên nhé</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; justify-content:center; margin-top:16px;">
+                <img src="assets/img/fox_standard.png" alt="Kiki" style="width:26px; height:26px; object-fit:contain;">
+                <span style="background:rgba(255,255,255,.12); border-radius:12px; padding:7px 11px; font-size:12px; font-weight:600;">Cố lên chủ nhân ơi! 💪</span>
+              </div>
+              <div style="display:flex; justify-content:center; margin-top:12px;"><span style="display:inline-flex; align-items:center; gap:6px; background:rgba(104,199,191,.14); color:#8FD4CE; border-radius:999px; padding:6px 12px; font-size:11px; font-weight:700;">🛡️ Focus Guard · đã chặn 12 xao nhãng</span></div>
+              <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:10px;">
+                  <span style="flex:1; text-align:center; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:10px 0; font-size:12.5px; font-weight:700;">⏸ Tạm dừng</span>
+                  <span style="flex:1; text-align:center; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 0; font-size:12.5px; font-weight:700; color:rgba(255,255,255,.55);">Kết thúc</span>
+                </div>
+                <div style="text-align:center; font-size:10px; color:rgba(255,255,255,.45);">🔅 Màn hình tự giảm sáng để tiết kiệm pin</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-float="" style="position:absolute; right:2%; top:4%; z-index:3; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; padding:12px 16px; box-shadow:0 2px 6px rgba(34,102,152,.06), 0 12px 24px rgba(34,102,152,.12); display:flex; align-items:center; gap:10px; animation:zzFloatSm 7s ease-in-out -3s infinite;">
+          <span style="width:36px; height:36px; border-radius:12px; background:rgba(246,165,58,.16); display:grid; place-items:center; font-size:18px;">🔥</span>
+          <div>
+            <div style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:14px; color:#226698;">Chuỗi 7 ngày</div>
+            <div style="font-size:11.5px; color:#828282;">+50% bonus hôm nay</div>
+          </div>
+        </div>
+        <div data-float="" style="position:absolute; left:0; top:47%; z-index:3; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; padding:12px 16px; box-shadow:0 2px 6px rgba(34,102,152,.06), 0 12px 24px rgba(34,102,152,.12); display:flex; align-items:center; gap:10px; animation:zzFloatSm 6s ease-in-out -1.5s infinite;">
+          <span style="width:36px; height:36px; border-radius:12px; background:rgba(66,167,121,.14); display:grid; place-items:center; font-size:18px;">🎉</span>
+          <div>
+            <div style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:14px; color:#F6A53A;">+20 ⚡ · +50 EXP</div>
+            <div style="font-size:11.5px; color:#828282;">Phiên 25 phút hoàn thành</div>
+          </div>
+        </div>
+        <div data-float="" style="position:absolute; left:3%; bottom:2%; z-index:3; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; padding:12px 16px; box-shadow:0 2px 6px rgba(34,102,152,.06), 0 12px 24px rgba(34,102,152,.12); display:flex; align-items:center; gap:10px; animation:zzFloatSm 8s ease-in-out -4.5s infinite;">
+          <span style="width:36px; height:36px; border-radius:12px; background:rgba(104,199,191,.18); display:grid; place-items:center; font-size:18px;">🛡️</span>
+          <div>
+            <div style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:14px; color:#226698;">Kiki chặn 12 xao nhãng</div>
+            <div style="font-size:11.5px; color:#828282;">TikTok ơi, hẹn 17 phút nữa nhé</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cach-hoat-dong" style="padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(28px,4vw,44px);">
+      <div data-reveal="" style="text-align:center; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(104,199,191,.16); border:1px solid rgba(104,199,191,.30); color:#1F6CA4; font-weight:700; font-size:13px;">🔄 Vòng lặp ZenZoo</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; letter-spacing:-.01em; color:#226698;">Bốn bước, một thói quen</h2>
+        <p style="margin:0; font-size:clamp(15px,1.6vw,17.5px); line-height:1.7; color:#5A7280;">Một vòng lặp nhỏ lặp lại mỗi ngày — đủ nhẹ để bắt đầu, đủ vui để bạn muốn quay lại.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px;">
+        <div data-reveal="" data-rd="0" style="position:relative; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:12px;">
+          <span style="position:absolute; top:12px; right:18px; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:40px; color:rgba(34,102,152,.08);">01</span>
+          <span style="width:50px; height:50px; border-radius:16px; background:rgba(104,199,191,.18); display:grid; place-items:center; font-size:24px;">🎯</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:17.5px; color:#1D4E74;">Chọn mục tiêu</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Bạn muốn tập trung vào gì? Study, Write hay Break — chọn 25 / 45 / 50 phút là lên đường.</p>
+        </div>
+        <div data-reveal="" data-rd="80" style="position:relative; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:12px;">
+          <span style="position:absolute; top:12px; right:18px; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:40px; color:rgba(34,102,152,.08);">02</span>
+          <span style="width:50px; height:50px; border-radius:16px; background:rgba(58,155,190,.16); display:grid; place-items:center; font-size:24px;">🌙</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:17.5px; color:#1D4E74;">Vào Deep Focus</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Màn hình tối giản, tự giảm sáng. Focus Guard khoá app xao nhãng nhưng vẫn giữ cuộc gọi khẩn cấp.</p>
+        </div>
+        <div data-reveal="" data-rd="160" style="position:relative; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:12px;">
+          <span style="position:absolute; top:12px; right:18px; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:40px; color:rgba(34,102,152,.08);">03</span>
+          <span style="width:50px; height:50px; border-radius:16px; background:rgba(246,165,58,.16); display:grid; place-items:center; font-size:24px;">⚡</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:17.5px; color:#1D4E74;">Nhận thưởng</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Xong phiên: +20 ⚡, thêm 1 ⚡ mỗi phút tập trung và +50 EXP. Kiki nhảy cẫng lên vì bạn!</p>
+        </div>
+        <div data-reveal="" data-rd="240" style="position:relative; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:12px;">
+          <span style="position:absolute; top:12px; right:18px; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:40px; color:rgba(34,102,152,.08);">04</span>
+          <span style="width:50px; height:50px; border-radius:16px; background:rgba(66,167,121,.16); display:grid; place-items:center;"><img src="assets/img/fox_standard.png" alt="Kiki" style="width:28px; height:28px; object-fit:contain;"></span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:17.5px; color:#1D4E74;">Chăm Kiki</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Đổi ⚡ lấy đồ ăn, potion; giữ Energy · Mood · Hunger · Love luôn đầy để đảo ngày càng xanh.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tinh-nang" style="padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(28px,4vw,44px);">
+      <div data-reveal="" style="text-align:center; max-width:660px; margin:0 auto; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(104,199,191,.16); border:1px solid rgba(104,199,191,.30); color:#1F6CA4; font-weight:700; font-size:13px;">✨ Tính năng chính</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; letter-spacing:-.01em; color:#226698;">Đủ đồ nghề cho những phiên học chất lượng</h2>
+        <p style="margin:0; font-size:clamp(15px,1.6vw,17.5px); line-height:1.7; color:#5A7280;">Mỗi tính năng chỉ phục vụ một việc: giúp bạn ngồi xuống, tập trung — và muốn quay lại vào ngày mai.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px;">
+        <div data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(104,199,191,.18); display:grid; place-items:center; font-size:26px;">🌙</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Deep Focus Mode</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Pomodoro 25–5 với màn hình tối giản, tự giảm sáng tiết kiệm pin. Chỉ còn bạn, vòng đếm ngược và một chú cáo thầm cổ vũ.</p>
+        </div>
+        <div data-reveal="" data-rd="70" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(58,155,190,.16); display:grid; place-items:center; font-size:26px;">🛡️</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Focus Guard</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Chặn đúng những app hay rủ rê — TikTok, Instagram, Facebook, YouTube — và bật Do Not Disturb, nhưng luôn giữ cuộc gọi &amp; tin nhắn khẩn cấp.</p>
+        </div>
+        <div data-reveal="" data-rd="140" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(246,165,58,.16); display:grid; place-items:center; font-size:26px;">🧠</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">AI Focus Designer</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Mô tả mục tiêu, AI gợi ý thời lượng, số phiên Pomodoro, lời khuyên và dự đoán phần thưởng cho bạn.</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); color:#FFFFFF; font-size:12px; font-weight:700;">✨ Analyze Focus</span>
+            <span style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:rgba(104,199,191,.14); color:#1F6CA4; font-size:12px; font-weight:700;">✓ Apply Plan</span>
+          </div>
+        </div>
+        <div data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(66,167,121,.16); display:grid; place-items:center;"><img src="assets/img/fox_standard.png" alt="Kiki" style="width:30px; height:30px; object-fit:contain;"></span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Nuôi &amp; tiến hoá Kiki</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Feed · Play · Pet mỗi ngày. Kiki lớn lên qua 3 dạng: Standard → Spirit Form → Celestial Form.</p>
+        </div>
+        <div data-reveal="" data-rd="70" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(104,199,191,.18); display:grid; place-items:center;"><img src="assets/img/companion_eagle.png" alt="Eagle" style="width:32px; height:32px; object-fit:contain;"></span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">4 bạn đồng hành, 4 buff</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Kiki 🦊 +5% EXP · Eagle 🦅 +10% token · Frog 🐸 −20% hao năng lượng · Giraffe 🦒 +10 ⚡ cho phiên dài 45 phút trở lên.</p>
+          <div style="display:flex; gap:14px; align-items:flex-end;">
+            <img src="assets/img/fox_standard.png" alt="Kiki" style="height:40px; width:auto;">
+            <img src="assets/img/companion_eagle.png" alt="Eagle" style="height:42px; width:auto;">
+            <img src="assets/img/companion_frog.png" alt="Frog" style="height:36px; width:auto;">
+            <img src="assets/img/companion_giraffe.png" alt="Giraffe" style="height:48px; width:auto;">
+          </div>
+        </div>
+        <div data-reveal="" data-rd="140" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(246,165,58,.16); display:grid; place-items:center; font-size:26px;">🧪</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">ZenZoo Shop</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Đổi token ⚡ lấy potion, đồ ăn và companion mới. Token chỉ kiếm được bằng tập trung — không nạp tiền mua sức mạnh.</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span style="padding:7px 12px; border-radius:999px; background:#F3FAF9; border:1px solid rgba(34,102,152,.10); font-size:12px; font-weight:600; color:#44637A;">🧪 Energy Potion · 150 ⚡</span>
+            <span style="padding:7px 12px; border-radius:999px; background:#F3FAF9; border:1px solid rgba(34,102,152,.10); font-size:12px; font-weight:600; color:#44637A;">🍎 Fresh Berries · 100 ⚡</span>
+            <span style="padding:7px 12px; border-radius:999px; background:#F3FAF9; border:1px solid rgba(34,102,152,.10); font-size:12px; font-weight:600; color:#44637A;">🦅 Eagle · 260 ⚡</span>
+          </div>
+        </div>
+        <div data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(58,155,190,.16); display:grid; place-items:center; font-size:26px;">📋</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Daily Tasks &amp; Milestones</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Điểm danh, hoàn thành Pomodoro, phiên sâu 45 phút — gom 💎 theo mốc và bảng 7-DAY STREAK thưởng +50%.</p>
+        </div>
+        <div data-reveal="" data-rd="70" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(66,167,121,.16); display:grid; place-items:center; font-size:26px;">🏅</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Achievements</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Huy hiệu nhiều tier gắn sao, thưởng ⚡ + EXP — mỗi cột mốc tập trung của bạn đều được ghi nhớ.</p>
+        </div>
+        <div data-reveal="" data-rd="140" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; padding:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); display:flex; flex-direction:column; gap:13px; transition:transform .3s cubic-bezier(.33,1,.68,1), box-shadow .3s cubic-bezier(.33,1,.68,1);" class="zz-hv-6">
+          <span style="width:52px; height:52px; border-radius:16px; background:rgba(104,199,191,.18); display:grid; place-items:center; font-size:26px;">📊</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#1D4E74;">Focus Stats</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.65; color:#5A7280;">Tổng phút tập trung, biểu đồ 7 ngày, thống kê theo danh mục và best streak — nhìn thấy mình tiến bộ mỗi tuần.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kiki" style="background:linear-gradient(180deg,#DDF7F4 0%,#EAFFD9 100%); padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(28px,4vw,44px);">
+      <div data-reveal="" style="text-align:center; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(255,255,255,.7); border:1px solid rgba(104,199,191,.35); color:#1F6CA4; font-weight:700; font-size:13px;">🦊 Kiki &amp; những người bạn</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; letter-spacing:-.01em; color:#226698;">Người bạn nhỏ trên hòn đảo bay</h2>
+        <p style="margin:0; font-size:clamp(15px,1.6vw,17.5px); line-height:1.7; color:#4E6B5F;">Kiki không phạt bạn. Kiki chỉ lớn lên — đáng yêu hơn, lấp lánh hơn — theo từng phút bạn tập trung.</p>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:22px; align-items:stretch;">
+        <div data-reveal="" style="flex:1 1 330px; max-width:460px; margin:0 auto; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:26px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:28px; display:flex; flex-direction:column; gap:16px; align-items:center;">
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="background:#F0FAF9; border:1px solid rgba(34,102,152,.12); border-radius:14px; padding:10px 16px; font-weight:700; font-size:14.5px; color:#226698;">Cố lên chủ nhân ơi! 💪</div>
+            <div style="width:12px; height:12px; background:#F0FAF9; border-right:1px solid rgba(34,102,152,.12); border-bottom:1px solid rgba(34,102,152,.12); transform:rotate(45deg); margin-top:-7px;"></div>
+          </div>
+          <img data-float="" src="assets/img/fox_standard.png" alt="Kiki" style="width:128px; height:auto; animation:zzFloatSm 4.5s ease-in-out infinite; filter:drop-shadow(0 12px 14px rgba(34,102,152,.18));">
+          <div style="width:100%; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:#44637A;"><span>⚡ Energy</span><span>82%</span></div>
+              <div style="height:10px; border-radius:999px; background:#EAF3F2;"><div style="width:82%; height:100%; border-radius:999px; background:linear-gradient(90deg,#68C7BF,#3A9BBE);"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:#44637A;"><span>😊 Mood</span><span>74%</span></div>
+              <div style="height:10px; border-radius:999px; background:#EAF3F2;"><div style="width:74%; height:100%; border-radius:999px; background:linear-gradient(90deg,#3A9BBE,#226698);"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:#44637A;"><span>🍎 Hunger</span><span>60%</span></div>
+              <div style="height:10px; border-radius:999px; background:#EAF3F2;"><div style="width:60%; height:100%; border-radius:999px; background:linear-gradient(90deg,#F6C36E,#F6A53A);"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:#44637A;"><span>💗 Love</span><span>90%</span></div>
+              <div style="height:10px; border-radius:999px; background:#EAF3F2;"><div style="width:90%; height:100%; border-radius:999px; background:linear-gradient(90deg,#F2A6BC,#E58FA8);"></div></div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; width:100%;">
+            <span style="flex:1; text-align:center; padding:11px 0; border-radius:12px; background:rgba(104,199,191,.16); color:#1F6CA4; font-weight:700; font-size:13.5px;">🍎 Feed</span>
+            <span style="flex:1; text-align:center; padding:11px 0; border-radius:12px; background:rgba(58,155,190,.14); color:#1F6CA4; font-weight:700; font-size:13.5px;">🎾 Play</span>
+            <span style="flex:1; text-align:center; padding:11px 0; border-radius:12px; background:rgba(246,165,58,.16); color:#B9741F; font-weight:700; font-size:13.5px;">🤍 Pet</span>
+          </div>
+        </div>
+
+        <div style="flex:1 1 400px; display:flex; flex-direction:column; gap:0; justify-content:center;">
+          <div data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:18px 22px; display:flex; align-items:center; gap:16px;">
+            <span style="flex:none; width:56px; height:56px; border-radius:18px; background:rgba(104,199,191,.16); display:grid; place-items:center;"><img src="assets/img/fox_standard.png" alt="Kiki Standard" style="width:38px; height:38px; object-fit:contain;"></span>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16.5px; color:#1D4E74;">Standard</strong>
+                <span style="padding:3px 10px; border-radius:999px; background:rgba(58,155,190,.12); color:#3A9BBE; font-size:11.5px; font-weight:800;">Lv 1–9</span>
+              </div>
+              <div style="font-size:13.5px; color:#5A7280;">Chú cáo nhỏ tràn năng lượng, luôn chờ bạn bắt đầu phiên đầu tiên trong ngày.</div>
+            </div>
+          </div>
+          <div style="width:2px; height:16px; background:rgba(34,102,152,.20); margin-left:49px; border-radius:2px;"></div>
+          <div data-reveal="" data-rd="90" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:18px 22px; display:flex; align-items:center; gap:16px;">
+            <span style="flex:none; width:56px; height:56px; border-radius:18px; background:rgba(104,199,191,.30); display:grid; place-items:center; font-size:28px; box-shadow:0 0 22px rgba(104,199,191,.5);"><img src="assets/img/fox_standard.png" alt="Kiki Spirit Form" style="width:38px; height:38px; object-fit:contain; filter:hue-rotate(165deg) saturate(.85) brightness(1.08);"><span style="position:absolute; margin:-34px 0 0 34px; font-size:15px;">✨</span></span>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16.5px; color:#1D4E74;">Spirit Form</strong>
+                <span style="padding:3px 10px; border-radius:999px; background:rgba(104,199,191,.18); color:#1F6CA4; font-size:11.5px; font-weight:800;">Lv 10–29</span>
+              </div>
+              <div style="font-size:13.5px; color:#5A7280;">Khoác lớp linh khí xanh dịu, đuôi phát sáng theo từng chuỗi ngày của bạn.</div>
+            </div>
+          </div>
+          <div style="width:2px; height:16px; background:rgba(34,102,152,.20); margin-left:49px; border-radius:2px;"></div>
+          <div data-reveal="" data-rd="180" style="background:#FFFFFF; border:1px solid rgba(246,165,58,.35); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 24px rgba(246,165,58,.16); padding:18px 22px; display:flex; align-items:center; gap:16px;">
+            <span style="flex:none; width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg,rgba(246,165,58,.28),rgba(104,199,191,.24)); display:grid; place-items:center; font-size:28px; box-shadow:0 0 26px rgba(246,165,58,.42);"><img src="assets/img/fox_standard.png" alt="Kiki Celestial Form" style="width:38px; height:38px; object-fit:contain; filter:saturate(1.3) brightness(1.12) drop-shadow(0 0 6px rgba(246,165,58,.9));"><span style="position:absolute; margin:-34px 0 0 34px; font-size:15px;">🌟</span></span>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16.5px; color:#1D4E74;">Celestial Form</strong>
+                <span style="padding:3px 10px; border-radius:999px; background:rgba(246,165,58,.16); color:#B9741F; font-size:11.5px; font-weight:800;">Lv 30+</span>
+              </div>
+              <div style="font-size:13.5px; color:#5A7280;">Dáng hình thiên thể — minh chứng lấp lánh cho hàng nghìn phút tập trung.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;">
+        <div data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:22px; text-align:center; display:flex; flex-direction:column; gap:9px; align-items:center;">
+          <img src="assets/img/fox_standard.png" alt="Kiki" style="height:76px; width:auto; object-fit:contain;">
+          <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; color:#1D4E74;">Kiki</strong>
+          <span style="padding:5px 12px; border-radius:999px; background:rgba(66,167,121,.13); color:#2F8B63; font-size:12.5px; font-weight:700;">+5% EXP mỗi phiên</span>
+          <span style="font-size:12px; color:#828282;">Đồng hành từ ngày đầu 💙</span>
+        </div>
+        <div data-reveal="" data-rd="70" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:22px; text-align:center; display:flex; flex-direction:column; gap:9px; align-items:center;">
+          <img src="assets/img/companion_eagle.png" alt="Eagle" style="height:76px; width:auto; object-fit:contain;">
+          <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; color:#1D4E74;">Eagle</strong>
+          <span style="padding:5px 12px; border-radius:999px; background:rgba(66,167,121,.13); color:#2F8B63; font-size:12.5px; font-weight:700;">+10% token ⚡</span>
+          <span style="font-size:12px; color:#828282;">Mở khoá 260 ⚡ trong Shop</span>
+        </div>
+        <div data-reveal="" data-rd="140" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:22px; text-align:center; display:flex; flex-direction:column; gap:9px; align-items:center;">
+          <img src="assets/img/companion_frog.png" alt="Frog" style="height:72px; width:auto; object-fit:contain;">
+          <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; color:#1D4E74;">Frog</strong>
+          <span style="padding:5px 12px; border-radius:999px; background:rgba(66,167,121,.13); color:#2F8B63; font-size:12.5px; font-weight:700;">−20% hao Energy</span>
+          <span style="font-size:12px; color:#828282;">Bạn của những đêm ôn thi</span>
+        </div>
+        <div data-reveal="" data-rd="210" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:20px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:22px; text-align:center; display:flex; flex-direction:column; gap:9px; align-items:center;">
+          <img src="assets/img/companion_giraffe.png" alt="Giraffe" style="height:82px; width:auto; object-fit:contain;">
+          <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; color:#1D4E74;">Giraffe</strong>
+          <span style="padding:5px 12px; border-radius:999px; background:rgba(66,167,121,.13); color:#2F8B63; font-size:12.5px; font-weight:700;">+10 ⚡ phiên 45 phút+</span>
+          <span style="font-size:12px; color:#828282;">Càng học dài, càng hời</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="phan-thuong" style="padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(28px,4vw,44px);">
+      <div data-reveal="" style="text-align:center; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(246,165,58,.14); border:1px solid rgba(246,165,58,.30); color:#B9741F; font-weight:700; font-size:13px;">🔥 Streak &amp; phần thưởng</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; letter-spacing:-.01em; color:#226698;">Kỷ luật, nhưng tử tế</h2>
+        <p style="margin:0; font-size:clamp(15px,1.6vw,17.5px); line-height:1.7; color:#5A7280;">Nhiệm vụ ngày, chuỗi 7 ngày và huy hiệu — được thiết kế để khích lệ, không phải để doạ nạt.</p>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:stretch;">
+        <div data-reveal="" data-rd="0" style="flex:1 1 300px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:14px;">
+          <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; color:#1D4E74;">📋 Nhiệm vụ hôm nay</strong>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 13px; background:#F7FCFB; border-radius:12px;">
+            <span style="flex:none; width:22px; height:22px; border-radius:999px; background:#42A779; color:#FFFFFF; display:grid; place-items:center; font-size:12px; font-weight:800;">✓</span>
+            <span style="flex:1; font-size:14px; color:#44637A; font-weight:600; text-decoration:line-through; text-decoration-color:rgba(68,99,122,.4);">Điểm danh buổi sáng</span>
+            <span style="font-size:13px; font-weight:800; color:#F6A53A;">+5 ⚡</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 13px; background:#F7FCFB; border-radius:12px;">
+            <span style="flex:none; width:22px; height:22px; border-radius:999px; background:#42A779; color:#FFFFFF; display:grid; place-items:center; font-size:12px; font-weight:800;">✓</span>
+            <span style="flex:1; font-size:14px; color:#44637A; font-weight:600; text-decoration:line-through; text-decoration-color:rgba(68,99,122,.4);">Hoàn thành 1 phiên Pomodoro</span>
+            <span style="font-size:13px; font-weight:800; color:#F6A53A;">+10 ⚡</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 13px; background:#F7FCFB; border-radius:12px;">
+            <span style="flex:none; width:22px; height:22px; border-radius:999px; background:#FFFFFF; border:2px solid #D8E6E4;"></span>
+            <span style="flex:1; font-size:14px; color:#44637A; font-weight:600;">1 phiên Deep Focus 45 phút</span>
+            <span style="font-size:13px; font-weight:800; color:#3A9BBE;">+1 💎</span>
+          </div>
+          <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+            <div style="height:8px; border-radius:999px; background:#EAF3F2;"><div style="width:66%; height:100%; border-radius:999px; background:linear-gradient(90deg,#68C7BF,#3A9BBE);"></div></div>
+            <span style="font-size:12px; color:#828282;">2/3 nhiệm vụ · làm mới lúc 0:00 mỗi ngày</span>
+          </div>
+        </div>
+
+        <div data-reveal="" data-rd="90" style="flex:1 1 320px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:24px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:16px; letter-spacing:.05em; color:#1D4E74;">🔥 7-DAY STREAK</strong>
+            <span data-float="" style="background:#F6A53A; color:#FFFFFF; border-radius:999px; padding:5px 12px; font-size:12px; font-weight:800; animation:zzGlow 3s ease-in-out infinite;">+50% bonus</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; gap:4px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:linear-gradient(135deg,#F6C36E,#F6A53A); display:grid; place-items:center; font-size:14px;">🔥</span><span style="font-size:11px; font-weight:700; color:#828282;">T2</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:linear-gradient(135deg,#F6C36E,#F6A53A); display:grid; place-items:center; font-size:14px;">🔥</span><span style="font-size:11px; font-weight:700; color:#828282;">T3</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:linear-gradient(135deg,#F6C36E,#F6A53A); display:grid; place-items:center; font-size:14px;">🔥</span><span style="font-size:11px; font-weight:700; color:#828282;">T4</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:linear-gradient(135deg,#F6C36E,#F6A53A); display:grid; place-items:center; font-size:14px;">🔥</span><span style="font-size:11px; font-weight:700; color:#828282;">T5</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:linear-gradient(135deg,#F6C36E,#F6A53A); display:grid; place-items:center; font-size:14px;">🔥</span><span style="font-size:11px; font-weight:700; color:#828282;">T6</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:#FFFFFF; border:2px dashed #68C7BF; display:grid; place-items:center; font-size:13px; font-weight:800; color:#1F6CA4;">6</span><span style="font-size:11px; font-weight:800; color:#1F6CA4;">T7</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="width:34px; height:34px; border-radius:999px; background:#EAF3F2; display:grid; place-items:center; font-size:13px; font-weight:800; color:#A9C0BD;">7</span><span style="font-size:11px; font-weight:700; color:#A9C0BD;">CN</span></div>
+          </div>
+          <div style="font-size:13px; color:#5A7280; background:#F3FAF9; border-radius:12px; padding:11px 14px; line-height:1.6;">💎 Mốc 3 · 5 · 7 ngày tặng thêm kim cương. Đủ 7 ngày, mọi phần thưởng được <strong style="color:#F6A53A;">+50% bonus</strong>.</div>
+        </div>
+
+        <div data-reveal="" data-rd="180" style="flex:1 1 300px; background:#FFF9F0; border:1px solid rgba(246,165,58,.30); border-radius:22px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(246,165,58,.12); padding:24px; display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+          <span style="font-size:36px; line-height:1;">😌</span>
+          <h3 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:18px; color:#9A6215;">Lỡ một ngày? Không sao cả.</h3>
+          <p style="margin:0; font-size:14.5px; line-height:1.7; color:#6E6252;">Streak chỉ tụt nhẹ một nấc — không bao giờ reset về 0. ZenZoo được thiết kế kiểu anti-guilt: động lực bền lâu đến từ sự tử tế với chính mình, không phải nỗi sợ mất chuỗi.</p>
+          <span style="margin-top:auto; padding:8px 14px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(246,165,58,.35); color:#B9741F; font-size:12.5px; font-weight:800;">−1 nấc thôi, không về 0 🤝</span>
+        </div>
+      </div>
+
+      <div data-reveal="" style="display:flex; flex-direction:column; gap:14px; align-items:center;">
+        <span style="font-size:12px; font-weight:800; letter-spacing:.18em; color:#828282;">MỘT VÀI HUY HIỆU ĐANG CHỜ BẠN</span>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+          <span style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); box-shadow:0 2px 6px rgba(34,102,152,.06);"><span style="font-size:16px;">🌱</span><strong style="font-size:13.5px; color:#1D4E74;">Khởi đầu nhỏ</strong><span style="color:#F6A53A; font-size:12px;">★</span><span style="font-size:12px; color:#828282;">+10 ⚡</span></span>
+          <span style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); box-shadow:0 2px 6px rgba(34,102,152,.06);"><span style="font-size:16px;">🔥</span><strong style="font-size:13.5px; color:#1D4E74;">Tuần rực lửa</strong><span style="color:#F6A53A; font-size:12px;">★★</span><span style="font-size:12px; color:#828282;">+50 ⚡</span></span>
+          <span style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); box-shadow:0 2px 6px rgba(34,102,152,.06);"><span style="font-size:16px;">🌊</span><strong style="font-size:13.5px; color:#1D4E74;">Thợ lặn sâu</strong><span style="color:#F6A53A; font-size:12px;">★★★</span><span style="font-size:12px; color:#828282;">+80 ⚡</span></span>
+          <span style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); box-shadow:0 2px 6px rgba(34,102,152,.06);"><span style="font-size:16px;">🛡️</span><strong style="font-size:13.5px; color:#1D4E74;">Bất khả xao nhãng</strong><span style="color:#F6A53A; font-size:12px;">★★</span><span style="font-size:12px; color:#828282;">+40 ⚡</span></span>
+          <span style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:999px; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); box-shadow:0 2px 6px rgba(34,102,152,.06);"><span style="font-size:16px;">👑</span><strong style="font-size:13.5px; color:#1D4E74;">Bậc thầy tập trung</strong><span style="color:#F6A53A; font-size:12px;">★★★★</span><span style="font-size:12px; color:#828282;">+200 ⚡</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="bang-gia" style="padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(26px,4vw,40px);">
+      <div data-reveal="" style="text-align:center; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(104,199,191,.16); border:1px solid rgba(104,199,191,.30); color:#1F6CA4; font-weight:700; font-size:13px;">💙 Bảng giá</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; letter-spacing:-.01em; color:#226698;">Bắt đầu miễn phí, nâng cấp khi sẵn sàng</h2>
+        <p style="margin:0; font-size:clamp(15px,1.6vw,17.5px); line-height:1.7; color:#5A7280;">Zen Pro mở thêm không gian cho hòn đảo của bạn — còn sức mạnh thì vẫn chỉ đến từ sự tập trung.</p>
+        <div style="display:inline-flex; background:#E3F1F0; border-radius:999px; padding:5px; gap:4px; margin-top:6px;">
+          <button type="button" id="zz-bill-monthly" style="border:none; cursor:pointer; padding:9px 20px; border-radius:999px; font-family:'Be Vietnam Pro',sans-serif; font-size:14px; font-weight:700; transition:all .25s ease; background:transparent; color:#5E7A88; box-shadow:none;">Hàng tháng</button>
+          <button type="button" id="zz-bill-yearly" style="border:none; cursor:pointer; padding:9px 20px; border-radius:999px; font-family:'Be Vietnam Pro',sans-serif; font-size:14px; font-weight:700; transition:all .25s ease; display:inline-flex; align-items:center; gap:8px; background:#FFFFFF; color:#1F4E74; box-shadow:0 3px 10px rgba(34,102,152,.16);">Hàng năm <span style="background:rgba(66,167,121,.14); color:#2F8B63; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:999px;">−20%</span></button>
+        </div>
+      </div>
+
+      <div data-reveal="" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:20px; max-width:1080px; margin:0 auto; width:100%; align-items:stretch;">
+        <div style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:24px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:30px 28px; display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:18px; color:#1D4E74;">Standard</strong>
+            <span style="font-size:13.5px; color:#828282;">Đủ để bắt đầu thói quen tập trung.</span>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:36px; color:#226698;">0đ</span>
+            <span style="font-size:14px; color:#828282;">/mãi mãi</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Basic Focus Timer (25–5)</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">1 Habitat cho Kiki</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Nuôi Kiki, shop &amp; streak cơ bản</span></div>
+          </div>
+          <a href="#tai-app" style="margin-top:auto; text-align:center; padding:13px 20px; border-radius:12px; background:#FFFFFF; border:1.5px solid #CFE6E4; color:#1F6CA4; font-weight:700; font-size:14.5px; transition:transform .25s ease, border-color .25s ease;" class="zz-hv-5">Bắt đầu miễn phí</a>
+        </div>
+
+        <div style="position:relative; background:#FFFFFF; border:2px solid #68C7BF; border-radius:24px; box-shadow:0 4px 10px rgba(34,102,152,.08), 0 22px 44px rgba(58,155,190,.20); padding:34px 28px 30px; display:flex; flex-direction:column; gap:18px; transform:translateY(-8px);">
+          <span style="position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:#F6A53A; color:#FFFFFF; border-radius:999px; padding:6px 16px; font-size:12px; font-weight:800; letter-spacing:.06em; box-shadow:0 6px 14px rgba(246,165,58,.35); white-space:nowrap;">BEST VALUE ⭐</span>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:18px; color:#1D4E74;">Zen Pro</strong>
+            <span style="font-size:13.5px; color:#828282;">Cho người muốn đảo của mình thật rộng.</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; align-items:baseline; gap:6px;">
+              <span id="zz-pro-price" style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:36px; color:#226698;">279.000đ</span>
+              <span id="zz-pro-unit" style="font-size:14px; color:#828282;">/năm</span>
+            </div>
+            <span id="zz-pro-note" style="font-size:13px; font-weight:700; color:#42A779;">Chỉ ≈ 23.000đ/tháng — tiết kiệm 20% 🎉</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Tất cả tính năng của Standard</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Advanced AI Planner</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">New Habitats cho hòn đảo</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Cloud Sync &amp; Backup</span></div>
+          </div>
+          <a href="#tai-app" style="margin-top:auto; text-align:center; padding:14px 20px; border-radius:12px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); color:#FFFFFF; font-weight:700; font-size:15px; box-shadow:0 8px 18px rgba(58,155,190,.30); transition:transform .25s ease, box-shadow .25s ease;" class="zz-hv-7">Nâng cấp Zen Pro</a>
+        </div>
+
+        <div style="position:relative; background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:24px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.08); padding:30px 28px; display:flex; flex-direction:column; gap:18px; opacity:.94;">
+          <span style="position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:#EAF3F7; color:#3A9BBE; border:1px solid rgba(58,155,190,.3); border-radius:999px; padding:5px 14px; font-size:11.5px; font-weight:800; letter-spacing:.06em; white-space:nowrap;">COMING SOON</span>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <strong style="font-family:'Montserrat Alternates',sans-serif; font-size:18px; color:#1D4E74;">Master</strong>
+            <span style="font-size:13.5px; color:#828282;">Dành cho huyền thoại tập trung.</span>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:36px; color:#226698;">49.000đ</span>
+            <span style="font-size:14px; color:#828282;">/tháng</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(104,199,191,.2); color:#1F6CA4; display:grid; place-items:center; font-size:11px; font-weight:800;">✓</span><span style="font-size:14px; color:#44637A;">Mọi thứ trong Zen Pro</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(246,165,58,.18); color:#B9741F; display:grid; place-items:center; font-size:11px; font-weight:800;">★</span><span style="font-size:14px; color:#44637A;">9-Tailed Fox Avatar 🦊✨</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start;"><span style="flex:none; width:20px; height:20px; border-radius:999px; background:rgba(246,165,58,.18); color:#B9741F; display:grid; place-items:center; font-size:11px; font-weight:800;">★</span><span style="font-size:14px; color:#44637A;">Lifetime Access</span></div>
+          </div>
+          <span style="margin-top:auto; text-align:center; padding:13px 20px; border-radius:12px; background:#EEF5F8; color:#8AA5B4; font-weight:700; font-size:14.5px; cursor:default;">Sắp ra mắt 🔒</span>
+        </div>
+      </div>
+
+      <div data-reveal="" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:14px; background:rgba(255,255,255,.75); border:1px solid rgba(34,102,152,.10); border-radius:18px; padding:16px 22px; max-width:860px; margin:0 auto; width:100%;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; background:#F3FAF9; border:1px solid rgba(34,102,152,.12); font-size:13px; font-weight:700; color:#226698;"><span style="display:inline-grid; grid-template-columns:repeat(2,5px); gap:2px;"><span style="width:5px; height:5px; background:#226698;"></span><span style="width:5px; height:5px; background:#68C7BF;"></span><span style="width:5px; height:5px; background:#68C7BF;"></span><span style="width:5px; height:5px; background:#226698;"></span></span>VietQR — quét mã là xong</span>
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; background:#F3FAF9; border:1px solid rgba(34,102,152,.12); font-size:13px; font-weight:700; color:#226698;">💳 VNPay</span>
+        <span style="font-size:13.5px; color:#5A7280; line-height:1.6;">🤝 <strong style="color:#226698;">Không pay-to-win:</strong> gói trả phí chỉ mở tiện ích &amp; trang trí — sức mạnh của Kiki chỉ đến từ phút tập trung của bạn.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding:clamp(60px,8vw,100px) clamp(16px,4vw,44px); scroll-margin-top:92px;">
+    <div style="max-width:780px; margin:0 auto; display:flex; flex-direction:column; gap:clamp(24px,4vw,36px);">
+      <div data-reveal="" style="text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(104,199,191,.16); border:1px solid rgba(104,199,191,.30); color:#1F6CA4; font-weight:700; font-size:13px;">💬 Hỏi nhanh đáp gọn</span>
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(27px,3.4vw,40px); line-height:1.2; color:#226698;">Câu hỏi thường gặp</h2>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <details data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">ZenZoo chặn app gây xao nhãng như thế nào?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">Khi phiên bắt đầu, Focus Guard chặn những app bạn tự chọn (TikTok, Instagram, Facebook, YouTube…) và bật Do Not Disturb. Cuộc gọi và tin nhắn khẩn cấp vẫn đến bình thường — bạn không bao giờ bị "nhốt" khỏi việc quan trọng.</p>
+        </details>
+        <details data-reveal="" data-rd="60" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">Lỡ một ngày, tôi có mất hết streak không?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">Không. Lỡ một ngày, streak chỉ tụt nhẹ một nấc chứ không reset về 0. ZenZoo tin rằng động lực bền vững đến từ sự tử tế với chính mình — không phải từ nỗi sợ mất chuỗi.</p>
+        </details>
+        <details data-reveal="" data-rd="120" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">Bỏ phiên giữa chừng thì sao?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">App sẽ hỏi lại "Give up on Kiki?" cùng gương mặt buồn xo của Kiki 🥺 — nếu vẫn dừng, bạn mất 10 ⚡. Chỉ vậy thôi: không màn hình đỏ, không lời trách móc. Nghỉ ngơi rồi quay lại, Kiki vẫn đợi.</p>
+        </details>
+        <details data-reveal="" data-rd="0" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">Zen Pro khác gì bản miễn phí?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">Zen Pro mở Advanced AI Planner, các habitat mới cho hòn đảo và Cloud Sync &amp; Backup để dữ liệu an toàn khi đổi máy. Bản Standard vẫn đủ để tập trung mỗi ngày — và miễn phí mãi mãi.</p>
+        </details>
+        <details data-reveal="" data-rd="60" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">Có mua được sức mạnh bằng tiền không?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">Không. Token ⚡ chỉ kiếm được bằng cách tập trung. Gói trả phí chỉ mở tiện ích và vật phẩm trang trí — không buff, không pay-to-win. Kiki mạnh lên là nhờ bạn, không nhờ ví của bạn.</p>
+        </details>
+        <details data-reveal="" data-rd="120" style="background:#FFFFFF; border:1px solid rgba(34,102,152,.10); border-radius:16px; box-shadow:0 2px 6px rgba(34,102,152,.05), 0 10px 20px rgba(34,102,152,.06); overflow:hidden;">
+          <summary style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; cursor:pointer;">
+            <span style="flex:1; font-weight:700; font-size:15.5px; color:#1D4E74;">Thanh toán thế nào? Có bản iOS chưa?</span>
+            <span data-chev="" style="flex:none; width:26px; height:26px; border-radius:999px; background:rgba(104,199,191,.16); color:#1F6CA4; display:grid; place-items:center; font-size:17px; font-weight:700; transition:transform .3s ease;">+</span>
+          </summary>
+          <p style="margin:0; padding:0 22px 20px; font-size:14.5px; line-height:1.75; color:#5A7280;">ZenZoo hỗ trợ VietQR (quét mã chuyển khoản) và VNPay, huỷ bất cứ lúc nào. App ra mắt trên Android trước — bản iOS đang được Kiki ấp ủ và sẽ đến sớm thôi.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="tai-app" style="padding:clamp(16px,3vw,40px) clamp(16px,4vw,44px) clamp(70px,9vw,104px); scroll-margin-top:92px;">
+    <div data-reveal="" style="max-width:1140px; margin:0 auto; position:relative; overflow:hidden; border-radius:32px; background:linear-gradient(135deg,#68C7BF 0%,#3A9BBE 100%); padding:clamp(44px,7vw,72px) clamp(20px,5vw,64px); text-align:center; color:#FFFFFF; box-shadow:0 24px 48px rgba(58,155,190,.35);">
+      <span style="position:absolute; top:-30px; right:-16px; font-size:130px; opacity:.16; transform:rotate(-8deg);">🏝️</span>
+      <span data-float="" style="position:absolute; top:22%; left:6%; font-size:26px; opacity:.5; animation:zzSparkle 3.6s ease-in-out infinite;">✨</span>
+      <span data-float="" style="position:absolute; bottom:18%; right:9%; font-size:24px; opacity:.55; animation:zzFloatSm 5s ease-in-out -2s infinite;">⚡</span>
+      <span data-float="" style="position:absolute; bottom:26%; left:12%; font-size:20px; opacity:.5; animation:zzFloatSm 6s ease-in-out -1s infinite;">💎</span>
+      <div style="position:relative; z-index:2; display:flex; flex-direction:column; gap:18px; align-items:center;">
+        <img data-float="" src="assets/img/fox_standard.png" alt="Kiki" style="width:96px; height:auto; animation:zzFloatSm 4.5s ease-in-out infinite; filter:drop-shadow(0 12px 18px rgba(18,60,88,.3));">
+        <h2 style="margin:0; font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:clamp(28px,4vw,44px); line-height:1.2; color:#FFFFFF;">Kiki đang đợi bạn trên hòn đảo bay</h2>
+        <p style="margin:0; max-width:560px; color:rgba(255,255,255,.92); font-size:clamp(15px,1.7vw,17.5px); line-height:1.7;">Phiên tập trung đầu tiên chỉ mất 25 phút — và thế giới nhỏ của bạn bắt đầu lớn lên từ đó. Focus to grow your world 🌱</p>
+        <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
+          <a href="#" style="display:inline-flex; align-items:center; gap:10px; padding:15px 28px; border-radius:12px; background:#FFFFFF; color:#1F6CA4; font-weight:800; font-size:16px; box-shadow:0 10px 22px rgba(18,60,88,.25); transition:transform .25s ease, box-shadow .25s ease;" class="zz-hv-8">⬇ Tải cho Android — miễn phí</a>
+          <a href="#" style="display:inline-flex; align-items:center; gap:8px; padding:15px 24px; border-radius:12px; border:1.5px solid rgba(255,255,255,.65); color:#FFFFFF; font-weight:700; font-size:15.5px; transition:background .25s ease;" class="zz-hv-9">iOS — sắp ra mắt</a>
+        </div>
+        <span style="font-size:12.5px; color:rgba(255,255,255,.85);">Miễn phí bắt đầu · Thanh toán VietQR / VNPay khi nâng cấp · Không pay-to-win</span>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid rgba(34,102,152,.10); background:rgba(255,255,255,.55); padding:44px clamp(16px,4vw,44px) 30px;">
+    <div style="max-width:1140px; margin:0 auto; display:flex; flex-wrap:wrap; gap:36px; justify-content:space-between;">
+      <div style="display:flex; flex-direction:column; gap:10px; max-width:300px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#68C7BF,#3A9BBE); display:grid; place-items:center;"><img src="assets/img/fox_standard.png" alt="Kiki" style="width:22px; height:22px; object-fit:contain;"></span>
+          <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:800; font-size:19px; color:#226698;">ZenZoo</span>
+        </div>
+        <span style="font-family:'Montserrat Alternates',sans-serif; font-weight:700; font-size:14.5px; color:#226698;">Focus to grow your world.</span>
+        <span style="font-size:13px; color:#828282; line-height:1.6;">Ứng dụng Pomodoro nuôi thú ảo dành cho học sinh, sinh viên và người đi làm Việt Nam.</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <strong style="font-size:12px; letter-spacing:.14em; color:#226698;">SẢN PHẨM</strong>
+        <a href="#tinh-nang" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Tính năng</a>
+        <a href="#cach-hoat-dong" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Cách hoạt động</a>
+        <a href="#bang-gia" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Bảng giá</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <strong style="font-size:12px; letter-spacing:.14em; color:#226698;">CỘNG ĐỒNG</strong>
+        <a href="#kiki" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Gặp Kiki</a>
+        <a href="#phan-thuong" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Streak &amp; thưởng</a>
+        <a href="#faq" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">FAQ</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <strong style="font-size:12px; letter-spacing:.14em; color:#226698;">LIÊN HỆ</strong>
+        <a href="mailto:hello@zenzoo.app" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">hello@zenzoo.app</a>
+        <a href="#" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Điều khoản</a>
+        <a href="#" style="font-size:13.5px; color:#5A7280;" class="zz-hv-2">Quyền riêng tư</a>
+      </div>
+    </div>
+    <div style="max-width:1140px; margin:26px auto 0; padding-top:18px; border-top:1px solid rgba(34,102,152,.08); display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; font-size:12.5px; color:#828282;">
+      <span>© 2026 ZenZoo. Made with 💙 tại Việt Nam.</span>
+      <span>🦊 Kiki chúc bạn một phiên tập trung thật ngọt.</span>
+    </div>
+  </footer>
+</div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

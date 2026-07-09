@@ -6,6 +6,13 @@
 # DB: create a free Postgres at https://neon.tech and paste its connection
 # string (must end with ?sslmode=require) as DATABASE_URL.
 services:
+  # ZenZoo landing page (rune.id.vn) — plain static site, no build step.
+  - type: web
+    name: zenzoo-landing
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: landing
+
   - type: web
     name: rune-api
     runtime: node
