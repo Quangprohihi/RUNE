@@ -100,7 +100,7 @@ export function registerAdminRoutes(app: any, deps: any) {
         prisma.focusSession.findMany({ where: { status: 'completed', startedAt: { gte: curStart, lte: end } }, select: { startedAt: true, plannedMinutes: true } }),
         prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: curStart, lte: end } } }),
         prisma.paymentOrder.aggregate({ _sum: { amountVnd: true }, where: { status: 'paid', paidAt: { gte: prevStart, lt: prevEnd } } }),
-        prisma.paymentOrder.findMany({ where: { status: 'paid', paidAt: { gte: curStart, lte: end } }, select: { paidAt: true, amountVnd: true } }),
+        prisma.paymentOrder.findMany({ where: { status: 'paid', paidAt: { gte: curStart, lte: end } }, select: { paidAt: true, amountVnd: true, provider: true } }),
         prisma.userStreak.aggregate({ _avg: { currentStreak: true } }),
         prisma.focusSession.findMany({ where: { startedAt: { gte: curStart, lte: end } }, select: { userId: true, startedAt: true } }),
         prisma.activityEvent.findMany({ where: { createdAt: { gte: curStart, lte: end } }, select: { userId: true, createdAt: true } }),
@@ -133,8 +133,21 @@ export function registerAdminRoutes(app: any, deps: any) {
 
       const point = (value: number) => ({ value, deltaPct: null as number | null, spark: [] as number[] });
 
+      // Composition data for the overview donuts: plan mix (point-in-time)
+      // and range-scoped revenue split per payment provider.
+      const providerTotals = new Map<string, number>();
+      for (const r of paymentRows as { amountVnd: number; provider: string | null }[]) {
+        const key = (r.provider ?? 'other').toLowerCase();
+        providerTotals.set(key, (providerTotals.get(key) ?? 0) + r.amountVnd);
+      }
+      const mix = {
+        plans: { free: Math.max(0, totalUsers - premiumUsers), pro: premiumUsers },
+        revenueByProvider: [...providerTotals.entries()].map(([provider, amountVnd]) => ({ provider, amountVnd })),
+      };
+
       res.json({
         range,
+        mix,
         kpis: {
           dau: { value: dau, deltaPct: null, spark: dauSpark },
           stickiness: point(stickiness),

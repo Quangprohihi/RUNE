@@ -19,6 +19,13 @@ const { overview, health } = vi.hoisted(() => {
     },
     goals: [{ label: 'Doanh thu quý', value: 78, max: 100, unit: '%' }],
     recent: [{ eventType: 'focus_completed', title: 'hoàn thành phiên Deep Focus 45′', subtitle: 'đồng hành Eagle', actor: 'Trần Minh Anh', at: new Date().toISOString() }],
+    mix: {
+      plans: { free: 41, pro: 9 },
+      revenueByProvider: [
+        { provider: 'vietqr', amountVnd: 58000 },
+        { provider: 'vnpay', amountVnd: 29000 },
+      ],
+    },
   };
   const health: HealthResponse = { db: 'ok', vnpay: true, gemini: true, apiLatencyMs: 142 };
   return { overview, health };
@@ -76,6 +83,20 @@ describe('OverviewPage', () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Xu hướng doanh thu')).toBeInTheDocument());
     expect(screen.getByText('Xu hướng người dùng hoạt động')).toBeInTheDocument();
+  });
+
+  it('renders the composition donuts with legend values', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Cơ cấu người dùng')).toBeInTheDocument());
+    expect(screen.getByText('Doanh thu theo cổng thanh toán')).toBeInTheDocument();
+    // plan mix legend: Free 41 · Zen Pro 9 (9 also appears as the KPI value → getAllByText)
+    expect(screen.getByText('Free')).toBeInTheDocument();
+    expect(screen.getByText('41')).toBeInTheDocument();
+    // provider legend with formatted money
+    expect(screen.getByText('VietQR')).toBeInTheDocument();
+    expect(screen.getByText('VNPay')).toBeInTheDocument();
+    expect(screen.getByText('58k đ')).toBeInTheDocument();
+    expect(screen.getByText('29k đ')).toBeInTheDocument();
   });
 
   it('shows the recent activity actor', async () => {

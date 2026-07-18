@@ -9,7 +9,11 @@ export interface OverviewKpis {
 
 export interface Goal { label: string; value: number; max: number; unit?: string; }
 export interface RecentEvent { eventType: string; title: string; subtitle: string; actor: string; at: string; }
-export interface OverviewResponse { range: RangeKey; kpis: OverviewKpis; goals: Goal[]; recent: RecentEvent[]; }
+export interface OverviewMix {
+  plans: { free: number; pro: number };
+  revenueByProvider: { provider: string; amountVnd: number }[];
+}
+export interface OverviewResponse { range: RangeKey; kpis: OverviewKpis; goals: Goal[]; recent: RecentEvent[]; mix?: OverviewMix; }
 
 export interface HealthResponse { db: 'ok' | 'down'; vnpay: boolean; gemini: boolean; apiLatencyMs: number; }
 

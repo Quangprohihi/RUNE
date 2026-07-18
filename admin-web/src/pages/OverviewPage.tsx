@@ -4,6 +4,7 @@ import { KpiCard } from '../components/KpiCard';
 import { KpiGridSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { LineChart } from '../components/LineChart';
+import { DonutChart } from '../components/DonutChart';
 import { api } from '../lib/api';
 import { friendlyError } from '../lib/friendlyError';
 import { formatInt, formatVndShort, relativeTime } from '../lib/format';
@@ -11,6 +12,13 @@ import { rangePhrase, revenueLabel, bucketNoun, sparkLabels } from '../lib/range
 import type { OverviewResponse, HealthResponse, RangeKey, RecentEvent } from '../lib/types';
 
 const pct = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(n) + '%';
+
+// Fixed colors per payment provider — color follows the entity, never the rank.
+const PROVIDER_META: Record<string, { label: string; color: string }> = {
+  vietqr: { label: 'VietQR', color: 'var(--green-500)' },
+  vnpay: { label: 'VNPay', color: 'var(--blue-500)' },
+};
+const providerMeta = (p: string) => PROVIDER_META[p] ?? { label: p.toUpperCase(), color: 'var(--slate-400)' };
 
 const RANGE_OPTS: { value: RangeKey; label: string }[] = [
   { value: 'today', label: 'Hôm nay' }, { value: '7d', label: '7 ngày' },
@@ -89,6 +97,30 @@ export function OverviewPage() {
               />
             </Card>
           </div>
+
+          {data.mix && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 20, alignItems: 'start', marginBottom: 22 }}>
+              <Card title="Cơ cấu người dùng" subtitle="Free vs Zen Pro · tổng hiện tại" padding="md">
+                <DonutChart
+                  centerLabel="người dùng"
+                  slices={[
+                    { label: 'Zen Pro', value: data.mix.plans.pro, color: 'var(--teal-500)' },
+                    { label: 'Free', value: data.mix.plans.free, color: 'var(--slate-400)' },
+                  ]}
+                />
+              </Card>
+              <Card title="Doanh thu theo cổng thanh toán" subtitle={`${rangePhrase(range)} · đơn đã thanh toán`} padding="md">
+                <DonutChart
+                  centerLabel="doanh thu"
+                  format={formatVndShort}
+                  slices={data.mix.revenueByProvider.map((r) => {
+                    const m = providerMeta(r.provider);
+                    return { label: m.label, value: r.amountVnd, color: m.color };
+                  })}
+                />
+              </Card>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
             <Card title="Hoạt động gần đây" subtitle="Toàn hệ thống · mới nhất trước" padding="none">
