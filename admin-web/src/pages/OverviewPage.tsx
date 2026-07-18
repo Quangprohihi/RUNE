@@ -3,12 +3,13 @@ import { Card, Button, SegmentedControl, StatusBadge, ProgressMeter, Icon, icons
 import { KpiCard } from '../components/KpiCard';
 import { KpiGridSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
+import { LineChart } from '../components/LineChart';
 import { api } from '../lib/api';
 import { friendlyError } from '../lib/friendlyError';
 import { formatInt, formatVndShort, relativeTime } from '../lib/format';
+import { rangePhrase, revenueLabel, bucketNoun, sparkLabels } from '../lib/rangeLabels';
 import type { OverviewResponse, HealthResponse, RangeKey, RecentEvent } from '../lib/types';
 
-const dec1 = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(n);
 const pct = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(n) + '%';
 
 const RANGE_OPTS: { value: RangeKey; label: string }[] = [
@@ -61,18 +62,32 @@ export function OverviewPage() {
       ) : (
         <>
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 'var(--kpi-gap, 1px)',
+            display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 'var(--kpi-gap, 1px)',
             background: 'var(--kpi-wrap-bg, var(--border-subtle))', border: 'var(--kpi-wrap-border, 1px solid var(--border-subtle))',
             borderRadius: 'var(--kpi-wrap-radius, var(--radius-lg))', overflow: 'var(--kpi-wrap-overflow, hidden)', marginBottom: 22,
           }}>
-            <KpiCard label="Người dùng hoạt động / ngày" valueText={formatInt(data.kpis.dau.value)} kpi={data.kpis.dau} color="var(--blue-500)" note="trong kỳ" />
-            <KpiCard label="Độ bám DAU/MAU" valueText={pct(data.kpis.stickiness.value)} kpi={data.kpis.stickiness} color="var(--teal-500)" note="dải lành mạnh ≥20%" />
+            <KpiCard label="Người dùng hoạt động" valueText={formatInt(data.kpis.dau.value)} kpi={data.kpis.dau} color="var(--blue-500)" note={rangePhrase(range)} />
             <KpiCard label="Tổng phút focus" valueText={formatInt(data.kpis.focusMinutes.value)} suffix="′" kpi={data.kpis.focusMinutes} color="var(--blue-500)" />
-            <KpiCard label="Phiên focus hoàn thành" valueText={formatInt(data.kpis.focusSessions.value)} kpi={data.kpis.focusSessions} color="var(--blue-500)" />
+            <KpiCard label={revenueLabel(range)} valueText={formatVndShort(data.kpis.revenue.value)} kpi={data.kpis.revenue} color="var(--blue-500)" />
             <KpiCard label="Người dùng Zen Pro" valueText={formatInt(data.kpis.premiumUsers.value)} kpi={data.kpis.premiumUsers} color="var(--teal-500)" note="tổng hiện tại" />
-            <KpiCard label="Doanh thu hôm nay" valueText={formatVndShort(data.kpis.revenue.value)} kpi={data.kpis.revenue} color="var(--blue-500)" />
-            <KpiCard label="Streak trung bình" valueText={dec1(data.kpis.avgStreak.value)} suffix=" ngày" kpi={data.kpis.avgStreak} color="var(--green-500)" note="trên toàn hệ thống" />
             <KpiCard label="Free → Zen Pro" valueText={pct(data.kpis.conversion.value)} kpi={data.kpis.conversion} color="var(--green-500)" note="tỉ lệ chuyển đổi" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 20, alignItems: 'start', marginBottom: 22 }}>
+            <Card title="Xu hướng doanh thu" subtitle={`${rangePhrase(range)} · gom theo ${bucketNoun(range)}`} padding="md">
+              <LineChart
+                labels={sparkLabels(range, data.kpis.revenue.spark.length)}
+                cur={data.kpis.revenue.spark} prev={null}
+                color="var(--blue-500)" format={formatVndShort}
+              />
+            </Card>
+            <Card title="Xu hướng người dùng hoạt động" subtitle={`${rangePhrase(range)} · gom theo ${bucketNoun(range)}`} padding="md">
+              <LineChart
+                labels={sparkLabels(range, data.kpis.dau.spark.length)}
+                cur={data.kpis.dau.spark} prev={null}
+                color="var(--teal-500)" format={formatInt}
+              />
+            </Card>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>

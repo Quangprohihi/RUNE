@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { OverviewPage } from './OverviewPage';
 import type { OverviewResponse, HealthResponse } from '../lib/types';
@@ -8,12 +8,12 @@ const { overview, health } = vi.hoisted(() => {
   const overview: OverviewResponse = {
     range: 'today',
     kpis: {
-      dau: { value: 1842, deltaPct: 6.3, spark: [1, 2, 3, 4] },
+      dau: { value: 1842, deltaPct: 6.3, spark: [1, 2, 3, 4, 5, 6, 7] },
       stickiness: { value: 27, deltaPct: null, spark: [] },
       focusMinutes: { value: 41250, deltaPct: 4.8, spark: [1, 2, 3] },
       focusSessions: { value: 1310, deltaPct: -2.1, spark: [3, 2, 1] },
       premiumUsers: { value: 312, deltaPct: null, spark: [] },
-      revenue: { value: 1247000, deltaPct: 9.4, spark: [1, 2] },
+      revenue: { value: 1247000, deltaPct: 9.4, spark: [10, 20, 30, 40, 50, 60, 70] },
       avgStreak: { value: 4.2, deltaPct: null, spark: [] },
       conversion: { value: 4.6, deltaPct: null, spark: [] },
     },
@@ -31,6 +31,8 @@ vi.mock('../lib/api', () => ({
   },
 }));
 
+import { api } from '../lib/api';
+
 function renderPage() {
   return render(<MemoryRouter><OverviewPage /></MemoryRouter>);
 }
@@ -38,12 +40,42 @@ function renderPage() {
 describe('OverviewPage', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders the 8 KPI labels and the DAU value once loaded', async () => {
+  it('renders the trimmed KPI set and the DAU value once loaded', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('Người dùng hoạt động / ngày')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Người dùng hoạt động')).toBeInTheDocument());
     expect(screen.getByText('1.842')).toBeInTheDocument();
-    expect(screen.getByText('Doanh thu hôm nay')).toBeInTheDocument();
-    expect(screen.getByText('Streak trung bình')).toBeInTheDocument();
+    expect(screen.getByText('Tổng phút focus')).toBeInTheDocument();
+    expect(screen.getByText('Người dùng Zen Pro')).toBeInTheDocument();
+    expect(screen.getByText('Free → Zen Pro')).toBeInTheDocument();
+  });
+
+  it('does not render the removed KPI tiles', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Người dùng hoạt động')).toBeInTheDocument());
+    expect(screen.queryByText(/\/ ngày/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Độ bám DAU/MAU')).not.toBeInTheDocument();
+    expect(screen.queryByText('Phiên focus hoàn thành')).not.toBeInTheDocument();
+    expect(screen.queryByText('Streak trung bình')).not.toBeInTheDocument();
+  });
+
+  it('keeps the revenue label in sync with the selected range', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Doanh thu hôm nay')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('30 ngày'));
+    await waitFor(() => expect(screen.getByText('Doanh thu 30 ngày')).toBeInTheDocument());
+    expect(screen.queryByText('Doanh thu hôm nay')).not.toBeInTheDocument();
+    expect(api.overview).toHaveBeenLastCalledWith('30d');
+
+    fireEvent.click(screen.getByText('Quý'));
+    // "Doanh thu quý" giờ xuất hiện 2 nơi: thẻ KPI + nhãn trong "Mục tiêu quý"
+    await waitFor(() => expect(screen.getAllByText('Doanh thu quý').length).toBe(2));
+  });
+
+  it('renders the two trend charts', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Xu hướng doanh thu')).toBeInTheDocument());
+    expect(screen.getByText('Xu hướng người dùng hoạt động')).toBeInTheDocument();
   });
 
   it('shows the recent activity actor', async () => {
