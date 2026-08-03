@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { OverviewPage } from './OverviewPage';
-import type { OverviewResponse, HealthResponse } from '../lib/types';
+import type { OverviewResponse, HealthResponse, ReviewsResponse } from '../lib/types';
 
-const { overview, health } = vi.hoisted(() => {
+const { overview, health, reviews } = vi.hoisted(() => {
   const overview: OverviewResponse = {
     range: 'today',
     kpis: {
@@ -28,13 +28,32 @@ const { overview, health } = vi.hoisted(() => {
     },
   };
   const health: HealthResponse = { db: 'ok', vnpay: true, gemini: true, apiLatencyMs: 142 };
-  return { overview, health };
+  const reviews: ReviewsResponse = {
+    items: [{
+      id: 'rv-01', author: 'Nguyễn Ngọc Ánh', rating: 4, at: '2026-07-14T09:12:00.000Z',
+      platform: 'Android', appVersion: '1.0.0', text: 'Giao diện bắt mắt.',
+      tags: [{ theme: 'pet', tone: 'request' }],
+    }],
+    themes: [{ key: 'pet', label: 'Nuôi pet & sưu tầm' }],
+    summary: {
+      total: 20, average: 3.6,
+      distribution: [
+        { stars: 5, count: 3, pct: 15 }, { stars: 4, count: 8, pct: 40 }, { stars: 3, count: 7, pct: 35 },
+        { stars: 2, count: 2, pct: 10 }, { stars: 1, count: 0, pct: 0 },
+      ],
+      sentiment: { positive: 11, neutral: 7, negative: 2 },
+      satisfactionPct: 55, requestCount: 11, issueCount: 5,
+      themes: [{ key: 'pet', label: 'Nuôi pet & sưu tầm', mentions: 8, praise: 2, request: 7, issue: 0 }],
+    },
+  };
+  return { overview, health, reviews };
 });
 
 vi.mock('../lib/api', () => ({
   api: {
     overview: vi.fn().mockResolvedValue(overview),
     health: vi.fn().mockResolvedValue(health),
+    reviews: vi.fn().mockResolvedValue(reviews),
   },
 }));
 
@@ -102,5 +121,16 @@ describe('OverviewPage', () => {
   it('shows the recent activity actor', async () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Trần Minh Anh')).toBeInTheDocument());
+  });
+
+  it('summarises user reviews with the average, sentiment split and top request', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Phản hồi người dùng')).toBeInTheDocument());
+    expect(screen.getByText('Khảo sát bản dùng thử · 20 đánh giá')).toBeInTheDocument();
+    expect(screen.getByLabelText('3.6 trên 5 sao')).toBeInTheDocument();
+    expect(screen.getByText('11 lượt từ 4★ trở lên')).toBeInTheDocument();
+    expect(screen.getByText('Tích cực 11')).toBeInTheDocument();
+    expect(screen.getByText('Nuôi pet & sưu tầm')).toBeInTheDocument();
+    expect(screen.getByText('Xem tất cả →')).toHaveAttribute('href', '/reviews');
   });
 });

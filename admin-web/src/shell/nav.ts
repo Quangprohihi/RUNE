@@ -9,6 +9,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { title: 'Lõi vận hành', items: [
     { screen: 'overview', label: 'Tổng quan', to: '/', enabled: true },
     { screen: 'users', label: 'Người dùng', to: '/users', enabled: true, badge: { text: '6.8k', tone: 'muted' } },
+    { screen: 'reviews', label: 'Đánh giá người dùng', to: '/reviews', enabled: true, badge: { text: '20', tone: 'muted' } },
     wip('moderation', 'Kiểm duyệt', { text: '5', tone: 'amber' }),
   ]},
   { title: 'Dòng tiền', items: [
@@ -43,6 +44,7 @@ export interface RouteMeta { crumb: string; title: string; }
 export const ROUTE_META: Record<string, RouteMeta> = {
   '/': { crumb: 'Lõi vận hành', title: 'Tổng quan' },
   '/users': { crumb: 'Lõi vận hành', title: 'Người dùng' },
+  '/reviews': { crumb: 'Lõi vận hành', title: 'Đánh giá người dùng' },
   '/billing': { crumb: 'Dòng tiền', title: 'Thanh toán & Gói' },
   '/analytics': { crumb: 'Phân tích', title: 'Phân tích' },
   '/audit': { crumb: 'Phân tích', title: 'Nhật ký kiểm toán' },
@@ -51,6 +53,7 @@ export const ROUTE_META: Record<string, RouteMeta> = {
 };
 export function metaFor(pathname: string): RouteMeta {
   if (pathname.startsWith('/users')) return ROUTE_META['/users'];
+  if (pathname.startsWith('/reviews')) return ROUTE_META['/reviews'];
   if (pathname.startsWith('/billing')) return ROUTE_META['/billing'];
   if (pathname.startsWith('/analytics')) return ROUTE_META['/analytics'];
   if (pathname.startsWith('/audit')) return ROUTE_META['/audit'];

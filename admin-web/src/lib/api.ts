@@ -8,6 +8,7 @@ import type {
   AdminAuditResponse, WalletAuditResponse, AuditQuery,
   ShopItemsResponse, ShopItem, EconomyResponse, ShopItemUpdate,
   TaskConfigResponse, TaskTemplate, DailyMilestone, TaskUpdate, MilestoneUpdate,
+  ReviewsResponse,
 } from './types';
 
 const BASE = '/admin/api';
@@ -116,4 +117,5 @@ export const api = {
     request<TaskTemplate>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   updateMilestone: (id: string, body: MilestoneUpdate) =>
     request<DailyMilestone>(`/milestones/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  reviews: () => request<ReviewsResponse>('/reviews'),
 };

@@ -11,6 +11,8 @@ import {
 import { clientIp } from '../admin/audit.util';
 import { economySummary, parsePriceTokens } from '../admin/shop.metrics';
 import { parseReward, dailyTokenFaucet } from '../admin/task.metrics';
+import { APP_REVIEWS, REVIEW_THEMES } from '../admin/review.data';
+import { sortNewestFirst, summarizeReviews } from '../admin/review.metrics';
 
 /**
  * Admin API — read-mostly operations console over the existing data.
@@ -717,6 +719,18 @@ export function registerAdminRoutes(app: any, deps: any) {
         action: 'milestone.update', resourceType: 'milestone', resourceId: req.params.id, metadata: data,
       });
       res.json(row);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ---- user reviews (khảo sát người dùng thử, tổng hợp tại chỗ) ----
+  // Nguồn hiện là file review.data.ts; đổi sang bảng Review chỉ cần thay `APP_REVIEWS`.
+  app.get('/admin/api/reviews', (req: any, res: any, next: any) => {
+    try {
+      requireAdmin(req);
+      const items = sortNewestFirst(APP_REVIEWS);
+      res.json({ items, themes: REVIEW_THEMES, summary: summarizeReviews(items) });
     } catch (error) {
       next(error);
     }

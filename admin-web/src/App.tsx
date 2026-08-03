@@ -12,6 +12,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AuditPage } from './pages/AuditPage';
 import { ShopPage } from './pages/ShopPage';
 import { TasksPage } from './pages/TasksPage';
+import { ReviewsPage } from './pages/ReviewsPage';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/" element={<OverviewPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:id" element={<UserDetailPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/audit" element={<AuditPage />} />

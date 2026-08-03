@@ -99,3 +99,23 @@ export interface TaskKpis { activeTasks: number; dailyTokenFaucet: number; activ
 export interface TaskConfigResponse { kpis: TaskKpis; tasks: TaskTemplate[]; milestones: DailyMilestone[]; }
 export interface TaskUpdate { rewardTokens?: number; rewardDiamonds?: number; rewardPoints?: number; isActive?: boolean; }
 export interface MilestoneUpdate { rewardTokens?: number; rewardDiamonds?: number; isActive?: boolean; }
+
+export type ReviewTone = 'praise' | 'request' | 'issue';
+export interface ReviewTag { theme: string; tone: ReviewTone; }
+export interface AppReview {
+  id: string; author: string; rating: number; at: string;
+  platform: string; appVersion: string; text: string; tags: ReviewTag[];
+}
+export interface ReviewTheme { key: string; label: string; }
+export interface RatingBucket { stars: number; count: number; pct: number; }
+export interface ThemeStat {
+  key: string; label: string; mentions: number; praise: number; request: number; issue: number;
+}
+export interface ReviewSummary {
+  total: number; average: number;
+  distribution: RatingBucket[];
+  sentiment: { positive: number; neutral: number; negative: number };
+  satisfactionPct: number; requestCount: number; issueCount: number;
+  themes: ThemeStat[];
+}
+export interface ReviewsResponse { items: AppReview[]; themes: ReviewTheme[]; summary: ReviewSummary; }

@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, Button, SegmentedControl, StatusBadge, ProgressMeter, Icon, icons } from '../ds';
 import { KpiCard } from '../components/KpiCard';
 import { KpiGridSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { LineChart } from '../components/LineChart';
 import { DonutChart } from '../components/DonutChart';
+import { Stars } from '../components/Stars';
 import { api } from '../lib/api';
 import { friendlyError } from '../lib/friendlyError';
 import { formatInt, formatVndShort, relativeTime } from '../lib/format';
 import { rangePhrase, revenueLabel, bucketNoun, sparkLabels } from '../lib/rangeLabels';
-import type { OverviewResponse, HealthResponse, RangeKey, RecentEvent } from '../lib/types';
+import type { OverviewResponse, HealthResponse, RangeKey, RecentEvent, ReviewsResponse } from '../lib/types';
 
 const pct = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(n) + '%';
 
@@ -38,6 +40,7 @@ export function OverviewPage() {
   const [range, setRange] = useState<RangeKey>('today');
   const [data, setData] = useState<OverviewResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [reviews, setReviews] = useState<ReviewsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +55,8 @@ export function OverviewPage() {
 
   useEffect(() => { load(range); }, [range]);
   useEffect(() => { api.health().then(setHealth).catch(() => setHealth(null)); }, []);
+  // Best-effort: thẻ phản hồi chỉ là tóm tắt, hỏng thì ẩn chứ không chặn dashboard.
+  useEffect(() => { api.reviews().then(setReviews).catch(() => setReviews(null)); }, []);
 
   return (
     <section style={{ padding: '24px 32px 90px' }}>
@@ -161,11 +166,73 @@ export function OverviewPage() {
                   ))}
                 </div>
               </Card>
+
+              {reviews && <ReviewPulse reviews={reviews} />}
             </div>
           </div>
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * Tóm tắt phản hồi người dùng ngay trên dashboard: điểm trung bình, sắc thái,
+ * và top chủ đề đang được xin thêm. Chi tiết nằm ở /reviews.
+ */
+function ReviewPulse({ reviews }: { reviews: ReviewsResponse }) {
+  const s = reviews.summary;
+  const sentiment = [
+    { label: 'Tích cực', value: s.sentiment.positive, color: 'var(--green-500)' },
+    { label: 'Trung tính', value: s.sentiment.neutral, color: 'var(--amber-500)' },
+    { label: 'Tiêu cực', value: s.sentiment.negative, color: 'var(--red-500)' },
+  ];
+  const topRequests = s.themes.filter((t) => t.request > 0).sort((a, b) => b.request - a.request).slice(0, 3);
+
+  return (
+    <Card
+      title="Phản hồi người dùng"
+      subtitle={`Khảo sát bản dùng thử · ${formatInt(s.total)} đánh giá`}
+      padding="md"
+      actions={<Link to="/reviews" style={{ font: 'var(--fw-semibold) 12px/1 var(--font-sans)', color: 'var(--brand)', textDecoration: 'none', whiteSpace: 'nowrap' }}>Xem tất cả →</Link>}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 2 }}>
+        <span style={{ font: 'var(--fw-extra) 30px/1 var(--font-sans)', letterSpacing: '-.02em', color: 'var(--text-strong)', fontVariantNumeric: 'tabular-nums' }}>
+          {s.average.toLocaleString('vi-VN')}<span style={{ fontSize: 15, color: 'var(--text-muted)', fontWeight: 600 }}>/5</span>
+        </span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Stars value={s.average} size={14} />
+          <span style={{ font: 'var(--fw-regular) 11.5px/1 var(--font-sans)', color: 'var(--text-faint)' }}>{s.sentiment.positive} lượt từ 4★ trở lên</span>
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', height: 8, borderRadius: 'var(--radius-pill)', overflow: 'hidden', margin: '13px 0 9px', background: 'var(--surface-sunken)' }}>
+        {sentiment.map((x) => x.value > 0 && (
+          <span key={x.label} title={`${x.label}: ${x.value}`} style={{ width: `${(x.value / Math.max(1, s.total)) * 100}%`, background: x.color }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {sentiment.map((x) => (
+          <span key={x.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, font: 'var(--fw-regular) 11.5px/1 var(--font-sans)', color: 'var(--text-muted)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: x.color }} />{x.label} {x.value}
+          </span>
+        ))}
+      </div>
+
+      {topRequests.length > 0 && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ font: 'var(--fw-semibold) 11px/1 var(--font-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 9 }}>Được xin nhiều nhất</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {topRequests.map((t) => (
+              <div key={t.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, font: 'var(--fw-medium) 12.5px/1.3 var(--font-sans)', color: 'var(--text-body)' }}>
+                {t.label}
+                <span style={{ font: 'var(--fw-semibold) 12px/1 var(--font-mono)', color: 'var(--text-strong)' }}>{t.request}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 
