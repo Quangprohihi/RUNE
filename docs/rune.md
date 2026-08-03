@@ -3,7 +3,8 @@ ZenZoo là ứng dụng hỗ trợ học tập và làm việc tập trung, dùn
 Cơ chế Focus & token
 ●ZenZoo dùng Pomodoro: bật Chế độ Focus (khóa có chọn lọc các app phân tâm bạn chọn, luôn giữ lại kênh quan trọng như gọi điện/tin nhắn khẩn) → 25 phút tập trung + 5 phút nghỉ lặp lại đến hết phiên.
 ●Ở bản Premium, người dùng có thêm preset “Focus mềm” (cho phép mở tài liệu, YouTube học, app làm việc nhưng chặn TikTok/IG/social) và “Focus nghiêm túc” (chặn tối đa app giải trí, chat không cần thiết, chỉ whitelist kênh thật sự quan trọng), giúp linh hoạt với từng bối cảnh học/làm.
-●Mỗi phút tập trung, bạn nhận token thường để dùng cho việc chăm sóc thú cưng (thức ăn, nước uống) và một ít trang trí đơn giản; mục tiêu chính của token là phản hồi tiến bộ, không phải để cày như game.
+●Mỗi phút tập trung, bạn nhận token thường để dùng cho việc 
+chăm sóc thú cưng (thức ăn, nước uống) và một ít trang trí đơn giản; mục tiêu chính của token là phản hồi tiến bộ, không phải để cày như game.
 ●Người dùng Premium có thêm một lượng token VIP nhỏ mỗi ngày, dùng mở một số vật phẩm trang trí nâng cao hoặc chủ đề giao diện, nhưng không làm tăng tốc độ farm token thường, không ảnh hưởng hiệu quả học/làm.
 ●Ngoài ra, Premium mở thêm preset Pomodoro linh hoạt (25–5, 50–10, 90–15) và công cụ đặt mục tiêu Focus theo tuần/tháng, giúp bạn quản lý thời gian bài bản hơn chứ không chỉ bấm giờ.
 Cách sử dụng (đơn giản tối đa)

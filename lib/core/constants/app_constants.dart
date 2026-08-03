@@ -13,7 +13,7 @@ class AppConstants {
   // Set to true ONLY for local testing — makes every focus/break run for
   // `testFocusSeconds` (10s) instead of the real minutes. Must stay false for
   // real users / demos.
-  static const bool useTestFocusDuration = true;
+  static const bool useTestFocusDuration = false;
 
   static int get focusDurationSeconds {
     return useTestFocusDuration ? testFocusSeconds : focusMinutes * 60;

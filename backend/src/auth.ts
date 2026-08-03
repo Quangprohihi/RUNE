@@ -36,7 +36,16 @@ export function signAccessToken(userId: string) {
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
   assertAuthSecrets();
-  const payload = jwt.verify(token, accessSecret) as AccessTokenPayload;
+  let payload: AccessTokenPayload;
+  try {
+    payload = jwt.verify(token, accessSecret) as AccessTokenPayload;
+  } catch (error) {
+    // jsonwebtoken throws plain Errors (TokenExpiredError, JsonWebTokenError)
+    // with no status, which the error handler would report as 500. Clients
+    // only refresh on 401, so an expired access token has to answer 401 or the
+    // session dies until the user signs in again.
+    throw Object.assign(error as Error, { status: 401 });
+  }
   if (!payload?.userId) {
     throw Object.assign(new Error('Invalid access token'), { status: 401 });
   }
